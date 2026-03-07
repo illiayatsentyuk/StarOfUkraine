@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { RouterView } from "vue-router";
+import Header from "@/components/AppComponents/HeaderCompetition.vue";
 </script>
 
 <template lang="pug">
