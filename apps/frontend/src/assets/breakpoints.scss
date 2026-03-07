@@ -1,6 +1,32 @@
-// Breakpoint values (mobile-first)
-$sm: 576px;
-$md: 768px;
-$lg: 992px;
-$xl: 1200px;
-$xxl: 1400px;
+// Width breakpoints
+$xs: 360px; // >= 360px
+$s: 576px; // >= 576px
+$ss: 640px; // >= 640px
+$md: 768px; // >= 768px\
+$mmd: 992px; // >= 992px
+$lg: 1024px; // >= 1024px
+$xlg: 1140px; // >= 1140px
+$xl: 1280px; // >= 1280px
+$xml: 1366px; // >= 1366px
+$xxl: 1440px; // >= 1440px
+$xxxl: 1600px; // >= 1600px
+$xxxxl: 1650px; // >= 1650px
+// Height breakpoints
+$xs-height: 650px; // >= 650px
+$s-height: 800px; // >= 800px
+$sm-height: 900px; // >= 900px
+$m-height: 950px; // >= 950px
+$l-height: 1024px; // >= 1024px
+$xl-height: 1200px; // >= 1200px
+
+@mixin media($size) {
+  @media (min-width: #{$size}) {
+    @content;
+  }
+}
+
+@mixin media-height($size) {
+  @media (min-height: #{$size}) {
+    @content;
+  }
+}
