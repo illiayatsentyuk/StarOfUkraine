@@ -22,35 +22,35 @@ import AppButton from '@/components/AppComponents/AppButton.vue'
   max-width: 40rem;
   margin: 0 auto;
 
+  &__title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0 0 var(--space-4);
+    color: var(--color-text);
+
+    @include media($md) {
+      font-size: 1.5rem;
+    }
+  }
+
+  &__text {
+    font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+    margin: 0 0 var(--space-6);
+    line-height: 1.6;
+  }
+
+  &__link {
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
   @include media($md) {
     padding: var(--space-10) var(--space-6);
-  }
-}
-
-.home__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--space-4);
-  color: var(--color-text);
-
-  @include media($md) {
-    font-size: 1.5rem;
-  }
-}
-
-.home__text {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
-  margin: 0 0 var(--space-6);
-  line-height: 1.6;
-}
-
-.home__link {
-  color: var(--color-primary);
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
   }
 }
 </style>
