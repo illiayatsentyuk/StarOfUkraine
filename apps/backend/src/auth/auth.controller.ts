@@ -1,7 +1,7 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { RegisterUserDto } from './dto/register-user.dto';
-import { AuthCredentialsDto } from './dto/auth-credentials.dto';
+import { signupDto } from './dto/signup.dto';
+import { signinDto } from './dto/signin.dto';
 
 import {
   ApiBearerAuth,
@@ -18,14 +18,14 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User successfully registered' })
-  register(@Body() dto: RegisterUserDto) {
+  register(@Body() dto: signupDto) {
     return this.authService.register(dto);
   }
 
   @Post('login')
   @ApiOperation({ summary: 'Login and receive access token' })
   @ApiResponse({ status: 201, description: 'User successfully logged in' })
-  login(@Body() dto: AuthCredentialsDto) {
+  login(@Body() dto: signinDto) {
     return this.authService.login(dto);
   }
 
