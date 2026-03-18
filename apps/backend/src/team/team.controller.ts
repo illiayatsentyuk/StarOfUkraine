@@ -2,7 +2,8 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { teamExamples } from '../examples/team/team.examples';
 
 @ApiTags('Teams')
 @Controller('teams')
@@ -11,7 +12,17 @@ export class TeamController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new team' })
-  @ApiResponse({ status: 201, description: 'Team successfully created' })
+  @ApiBody({
+    type: CreateTeamDto,
+    examples: {
+      create: { value: teamExamples.createRequest },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Team successfully created',
+    schema: { example: teamExamples.response },
+  })
   create(@Body() data: CreateTeamDto) {
     return this.teamService.create(data);
   }
