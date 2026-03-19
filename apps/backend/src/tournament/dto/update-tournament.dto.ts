@@ -1,4 +1,4 @@
-import { TournamentStatus } from '@prisma/client';
+import { TournamentStatus } from '../../../generated/prisma';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateTournamentDto {
@@ -35,4 +35,3 @@ export class UpdateTournamentDto {
   @ApiProperty({ required: false })
   hideTeamsUntilRegistrationEnds?: boolean;
 }
-

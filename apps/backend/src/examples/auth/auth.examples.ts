@@ -20,4 +20,3 @@ export const authExamples = {
     error: 'Unauthorized',
   },
 } as const;
-

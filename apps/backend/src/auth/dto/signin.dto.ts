@@ -7,4 +7,3 @@ export class signinDto {
   @ApiProperty()
   password: string;
 }
-

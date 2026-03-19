@@ -22,4 +22,3 @@ export const teamExamples = {
     createdAt: '2026-03-12T10:00:00.000Z',
   },
 } as const;
-

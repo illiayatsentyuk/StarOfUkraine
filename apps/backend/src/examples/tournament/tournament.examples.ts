@@ -1,4 +1,4 @@
-import { TournamentStatus } from '@prisma/client';
+import { TournamentStatus } from '../../../generated/prisma';
 
 export const tournamentExamples = {
   createRequest: {
@@ -30,4 +30,3 @@ export const tournamentExamples = {
     createdAt: '2026-03-12T10:00:00.000Z',
   },
 } as const;
-

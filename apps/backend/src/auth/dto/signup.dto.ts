@@ -14,4 +14,3 @@ export class signupDto {
   @ApiProperty({ enum: Role, required: false })
   role?: Role;
 }
-

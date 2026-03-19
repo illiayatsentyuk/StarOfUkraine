@@ -56,4 +56,3 @@ export class TeamService {
     return this.prisma.team.delete({ where: { id } });
   }
 }
-

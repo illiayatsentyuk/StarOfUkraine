@@ -61,7 +61,9 @@ export class AuthController {
 
   @Post('me')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get current authenticated user info (test endpoint)' })
+  @ApiOperation({
+    summary: 'Get current authenticated user info (test endpoint)',
+  })
   @ApiResponse({ status: 200, description: 'Authenticated request successful' })
   me() {
     // This endpoint is just to test JWT guard;
@@ -69,4 +71,3 @@ export class AuthController {
     return { ok: true };
   }
 }
-

@@ -25,4 +25,3 @@ export class UpdateTeamDto {
   @ApiProperty({ required: false })
   discord?: string;
 }
-

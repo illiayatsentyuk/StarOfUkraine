@@ -31,7 +31,9 @@ export class TournamentService {
   }
 
   async findOne(id: string) {
-    const tournament = await this.prisma.tournament.findUnique({ where: { id } });
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+    });
     if (!tournament) {
       throw new NotFoundException('Tournament not found');
     }
@@ -53,8 +55,7 @@ export class TournamentService {
         teamSizeMin: data.teamSizeMin,
         teamSizeMax: data.teamSizeMax,
         status: data.status,
-        hideTeamsUntilRegistrationEnds:
-          data.hideTeamsUntilRegistrationEnds,
+        hideTeamsUntilRegistrationEnds: data.hideTeamsUntilRegistrationEnds,
       },
     });
   }
@@ -64,4 +65,3 @@ export class TournamentService {
     return this.prisma.tournament.delete({ where: { id } });
   }
 }
-
