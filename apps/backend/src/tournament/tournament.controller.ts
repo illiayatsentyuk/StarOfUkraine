@@ -2,7 +2,9 @@ import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/commo
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { tournamentExamples } from '../examples/tournament/tournament.examples';
+import { Public } from '../common/decorators/public.decorator';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -11,11 +13,22 @@ export class TournamentController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new tournament' })
-  @ApiResponse({ status: 201, description: 'Tournament successfully created' })
+  @ApiBody({
+    type: CreateTournamentDto,
+    examples: {
+      create: { value: tournamentExamples.createRequest },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Tournament successfully created',
+    schema: { example: tournamentExamples.response },
+  })
   create(@Body() data: CreateTournamentDto) {
     return this.tournamentService.create(data);
   }
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List all tournaments' })
   @ApiResponse({ status: 200, description: 'List of tournaments returned' })
@@ -23,6 +36,7 @@ export class TournamentController {
     return this.tournamentService.findAll();
   }
 
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a tournament by id' })
   @ApiResponse({ status: 200, description: 'Tournament returned' })
