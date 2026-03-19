@@ -1,0 +1,1061 @@
+{
+  "version": "2.9",
+  "children": [
+    {
+      "type": "frame",
+      "id": "28Opc",
+      "x": 80,
+      "y": 80,
+      "name": "01 Home",
+      "width": 1280,
+      "height": 920,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 32,
+      "children": [
+        {
+          "type": "frame",
+          "id": "rMfnH",
+          "name": "hero",
+          "width": "fill_container",
+          "layout": "vertical",
+          "gap": 12,
+          "children": [
+            {
+              "type": "text",
+              "id": "YgiaW",
+              "name": "heroTitle",
+              "fill": "#18181B",
+              "content": "Star of Ukraine Tournament Platform",
+              "fontFamily": "Inter",
+              "fontSize": 28,
+              "fontWeight": "600",
+              "letterSpacing": -0.5
+            },
+            {
+              "type": "text",
+              "id": "yKumw",
+              "name": "heroSub",
+              "fill": "#71717A",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Турнірна платформа для Admin, Team та Jury: реєстрація, раунди, сабміти, оцінювання і leaderboard.",
+              "lineHeight": 1.5,
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "normal"
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "jQd8k",
+          "name": "filters",
+          "width": "fill_container",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "22qvc",
+              "name": "f1",
+              "fill": "#EFF6FF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                8,
+                12
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "sd9QC",
+                  "name": "f1t",
+                  "fill": "#2563EB",
+                  "content": "Registration open",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "G49XQ",
+              "name": "f2",
+              "fill": "#EFF6FF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                8,
+                12
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "O793v",
+                  "name": "f2t",
+                  "fill": "#2563EB",
+                  "content": "Running",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "yHZc3",
+              "name": "f3",
+              "fill": "#FFFFFF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                8,
+                12
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "wFDpZ",
+                  "name": "f3t",
+                  "fill": "#71717A",
+                  "content": "Finished",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "x1gdL",
+          "name": "grid",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "cTtjD",
+              "name": "cardA",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4Chpf",
+                  "name": "cardAT",
+                  "fill": "#18181B",
+                  "content": "Турнір: Spring Challenge 2026",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "UCqIV",
+                  "name": "cardAD",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Статус: Registration\nКоманди: 27/40\nВікно реєстрації: 20.03 - 05.04",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4LFyV",
+              "name": "cardB",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4E51Y",
+                  "name": "cardBT",
+                  "fill": "#18181B",
+                  "content": "Турнір: Backend Battle",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "jk5dl",
+                  "name": "cardBD",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Статус: Running\nРаунд: Task #1 Active\nДедлайн: 23:59, 27.03",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "uY8Zv",
+              "name": "cardC",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 10,
+              "padding": 20,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "2Ll56",
+                  "name": "cardCT",
+                  "fill": "#18181B",
+                  "content": "Турнір: Winter Archive",
+                  "fontFamily": "Inter",
+                  "fontSize": 16,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "2hMWb",
+                  "name": "cardCD",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Статус: Finished\nПереможець: Team Polaris\nРезультати доступні",
+                  "lineHeight": 1.4,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tEeKk",
+          "name": "quick",
+          "width": "fill_container",
+          "fill": "#EFF6FF",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 1.5,
+            "fill": "#E4E4E7"
+          },
+          "gap": 12,
+          "padding": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "tC3PL",
+              "name": "quickT",
+              "fill": "#2563EB",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Ваш турнір: Backend Battle | Ваше завдання: API + UI | Ваш сабміт: Оновлено 2 год тому",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "8LASz",
+      "x": 1460,
+      "y": 80,
+      "name": "02 Admin - Tournament Setup",
+      "width": 1280,
+      "height": 920,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 28,
+      "children": [
+        {
+          "type": "text",
+          "id": "TIHHT",
+          "name": "adminHead",
+          "fill": "#18181B",
+          "content": "Admin Panel: Tournament & Round Management",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600",
+          "letterSpacing": -0.5
+        },
+        {
+          "type": "frame",
+          "id": "b5MqC",
+          "name": "adminStatus",
+          "width": "fill_container",
+          "gap": 8,
+          "children": [
+            {
+              "type": "frame",
+              "id": "lxoca",
+              "name": "s1",
+              "fill": "#FFFFFF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                6,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "Zls7U",
+                  "name": "s1t",
+                  "fill": "#71717A",
+                  "content": "Draft",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "9tQ6a",
+              "name": "s2",
+              "fill": "#EFF6FF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                6,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "X6DgV",
+                  "name": "s2t",
+                  "fill": "#2563EB",
+                  "content": "Registration",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bWMsf",
+              "name": "s3",
+              "fill": "#FFFFFF",
+              "cornerRadius": 999,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "padding": [
+                6,
+                10
+              ],
+              "children": [
+                {
+                  "type": "text",
+                  "id": "PZivF",
+                  "name": "s3t",
+                  "fill": "#71717A",
+                  "content": "Running",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "lcyEh",
+          "name": "adminMain",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "jBBw0",
+              "name": "left",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "9hpjA",
+                  "name": "lt",
+                  "fill": "#18181B",
+                  "content": "Створення турніру",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "QpYRh",
+                  "name": "lf",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Поля: Назва, Опис/Правила, Дата старту, Вікно реєстрації, Макс. команд, Формат раундів",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "FFpNd",
+                  "name": "left2",
+                  "fill": "#2563EB",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Кнопки: Save Draft | Open Registration | Start Round #1",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "4m7DL",
+              "name": "right",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "027fi",
+                  "name": "rt",
+                  "fill": "#18181B",
+                  "content": "Task / Round Builder",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "QIYmt",
+                  "name": "rf",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Параметри: Назва, Опис функціоналу, Tech requirements, must-have checklist, start/end time, attachments",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "Irm1z",
+                  "name": "rr",
+                  "fill": "#2563EB",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Після дедлайну: статус SubmissionClosed -> Evaluated",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "8p0sg",
+          "name": "assign",
+          "width": "fill_container",
+          "fill": "#EFF6FF",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 1.5,
+            "fill": "#E4E4E7"
+          },
+          "gap": 12,
+          "padding": 14,
+          "children": [
+            {
+              "type": "text",
+              "id": "XCwvu",
+              "name": "assignT",
+              "fill": "#2563EB",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Random assignment для журі: 3-5 робіт на члена, кожна робота оцінюється мінімум K=2",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "XviMf",
+      "x": 80,
+      "y": 1080,
+      "name": "03 Team - Task & Submission",
+      "width": 1280,
+      "height": 920,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 28,
+      "children": [
+        {
+          "type": "text",
+          "id": "M0Atf",
+          "name": "teamHead",
+          "fill": "#18181B",
+          "content": "Team Workspace: Active Task & Submission",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600",
+          "letterSpacing": -0.5
+        },
+        {
+          "type": "frame",
+          "id": "BFHML",
+          "name": "teamMain",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "lzEoz",
+              "name": "tLeft",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "ziexD",
+                  "name": "tlTitle",
+                  "fill": "#18181B",
+                  "content": "Active Task #1",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "L3cDo",
+                  "name": "tlDesc",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Реалізуйте веб-платформу турніру: ролі, раунди, сабміти, оцінювання, лідерборд.",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "UrJCa",
+                  "name": "tlReq",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Must have:\n- Ролі Admin/Team/Jury\n- Валідації реєстрації\n- Дедлайни і блокування сабміту\n- Прозора формула оцінки",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "lYLCl",
+                  "name": "tlTimer",
+                  "fill": "#EFF6FF",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "thickness": 1.5,
+                    "fill": "#E4E4E7"
+                  },
+                  "padding": [
+                    10,
+                    14
+                  ],
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "lU7vF",
+                      "name": "tlTimerT",
+                      "fill": "#2563EB",
+                      "content": "Deadline: 27.03, 23:59 (24h left)",
+                      "fontFamily": "Inter",
+                      "fontSize": 14,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "BejTX",
+              "name": "tRight",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "fS6Vh",
+                  "name": "trTitle",
+                  "fill": "#18181B",
+                  "content": "Submission Form",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "QYwYz",
+                  "name": "trFields",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Обов'язково:\n- GitHub repository URL\n- Video demo URL\nОпціонально:\n- Live demo URL\n- Короткий опис (1-2 абзаци)",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "El8b7",
+                  "name": "trRule",
+                  "fill": "#2563EB",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Редагування дозволене до дедлайну. Після дедлайну сабміт блокується.",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "78Kc4",
+          "name": "teamReg",
+          "width": "fill_container",
+          "fill": "#EFF6FF",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 1.5,
+            "fill": "#E4E4E7"
+          },
+          "gap": 12,
+          "padding": 14,
+          "children": [
+            {
+              "type": "text",
+              "id": "4ZXL7",
+              "name": "teamRegT",
+              "fill": "#2563EB",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Team Registration: 2..N учасників, унікальні email в межах команди, захист від дублювання капітана",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "cIC1S",
+      "x": 1460,
+      "y": 1080,
+      "name": "04 Jury - Evaluation",
+      "width": 1280,
+      "height": 920,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 28,
+      "children": [
+        {
+          "type": "text",
+          "id": "L7lPy",
+          "name": "juryHead",
+          "fill": "#18181B",
+          "content": "Jury Workspace: Assigned Works & Scoring",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600",
+          "letterSpacing": -0.5
+        },
+        {
+          "type": "frame",
+          "id": "poDtx",
+          "name": "juryMain",
+          "width": "fill_container",
+          "height": "fill_container",
+          "gap": 20,
+          "children": [
+            {
+              "type": "frame",
+              "id": "8y9hg",
+              "name": "jLeft",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4qrIU",
+                  "name": "jlTitle",
+                  "fill": "#18181B",
+                  "content": "Assigned submissions",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "dCq6b",
+                  "name": "jlList",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "- Team Orion | GitHub | Video | Status: Pending\n- Team Nova | GitHub | Video | Status: In progress\n- Team Atlas | GitHub | Video | Status: Done",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "PpKeH",
+              "name": "jRight",
+              "width": "fill_container",
+              "height": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 12,
+              "padding": 18,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "4KroV",
+                  "name": "jrTitle",
+                  "fill": "#18181B",
+                  "content": "Scoring form",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "YEM6C",
+                  "name": "jrTech",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "I. Technical:\n- Backend code quality\n- Database structure\n- Frontend quality + UX/UI",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "jvnmC",
+                  "name": "jrFunc",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "II. Functionality:\n- Must-have completion\n- Stability / bugs\n- Usability",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "text",
+                  "id": "798W7",
+                  "name": "jrScale",
+                  "fill": "#2563EB",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Scale: 0-100 per category. Final score = weighted average (transparent formula).",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "a4FXw",
+                  "name": "jrComment",
+                  "fill": "#A1A1AA",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Comment (optional): strengths, weaknesses, recommendations.",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "F3OLE",
+      "x": 2840,
+      "y": 80,
+      "name": "05 Leaderboard & Profiles",
+      "width": 1280,
+      "height": 920,
+      "fill": "#FFFFFF",
+      "layout": "vertical",
+      "gap": 24,
+      "padding": 28,
+      "children": [
+        {
+          "type": "text",
+          "id": "a3Z8d",
+          "name": "leadHead",
+          "fill": "#18181B",
+          "content": "Leaderboard + User Profiles",
+          "fontFamily": "Inter",
+          "fontSize": 28,
+          "fontWeight": "600",
+          "letterSpacing": -0.5
+        },
+        {
+          "type": "frame",
+          "id": "7KVao",
+          "name": "leadTop",
+          "width": "fill_container",
+          "gap": 16,
+          "children": [
+            {
+              "type": "frame",
+              "id": "rLddm",
+              "name": "lt1",
+              "width": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "WGfgX",
+                  "name": "lt1t",
+                  "fill": "#18181B",
+                  "content": "Top 3 Teams",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "rQoBh",
+                  "name": "lt1c",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "1) Team Polaris - 92.4\n2) Team Orion - 89.8\n3) Team Nova - 87.1",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Uoqej",
+              "name": "lt2",
+              "width": "fill_container",
+              "fill": "#FFFFFF",
+              "cornerRadius": 16,
+              "stroke": {
+                "thickness": 1.5,
+                "fill": "#E4E4E7"
+              },
+              "layout": "vertical",
+              "gap": 8,
+              "padding": 16,
+              "children": [
+                {
+                  "type": "text",
+                  "id": "xEfYJ",
+                  "name": "lt2t",
+                  "fill": "#18181B",
+                  "content": "Profile blocks by role",
+                  "fontFamily": "Inter",
+                  "fontSize": 20,
+                  "fontWeight": "600"
+                },
+                {
+                  "type": "text",
+                  "id": "VnRZL",
+                  "name": "lt2c",
+                  "fill": "#71717A",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "Team: roster + submission history\nJury: evaluated works + statuses\nAdmin: created tournaments/tasks",
+                  "lineHeight": 1.5,
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "normal"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "MtxZm",
+          "name": "leadBottom",
+          "width": "fill_container",
+          "fill": "#EFF6FF",
+          "cornerRadius": 12,
+          "stroke": {
+            "thickness": 1.5,
+            "fill": "#E4E4E7"
+          },
+          "gap": 12,
+          "padding": 14,
+          "children": [
+            {
+              "type": "text",
+              "id": "7FoUB",
+              "name": "leadBottomT",
+              "fill": "#2563EB",
+              "textGrowth": "fixed-width",
+              "width": "fill_container",
+              "content": "Опціонально: per-jury score breakdown, CSV/Google Sheet export, archive, announcements, certificates",
+              "fontFamily": "Inter",
+              "fontSize": 14,
+              "fontWeight": "600"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
