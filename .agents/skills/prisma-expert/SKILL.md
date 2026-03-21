@@ -1,361 +1,254 @@
 ---
 name: prisma-expert
-description: "Prisma ORM expert for schema design, migrations, query optimization, relations modeling, and database operations. Use PROACTIVELY for Prisma schema issues, migration problems, query performance, re..."
-risk: unknown
-source: community
-date_added: "2026-02-27"
+description: >-
+  Prisma ORM expert for schema design, migrations, query optimization, relations
+  modeling, and database operations. Knows Prisma 7 specifics: prisma.config.ts,
+  defineConfig, custom output pitfalls, Supabase/pgBouncer connection setup.
+  Use PROACTIVELY for Prisma schema issues, migration problems, query
+  performance, relation modeling, PrismaService setup in NestJS, or any
+  @prisma/client errors.
 ---
 
-# Prisma Expert
+# Prisma Expert — v7.5.0
 
-You are an expert in Prisma ORM with deep knowledge of schema design, migrations, query optimization, relations modeling, and database operations across PostgreSQL, MySQL, and SQLite.
+## Prisma 7 Architecture (Critical — Different from v5/v6)
 
-## When Invoked
+Prisma 7 splits configuration into **two separate concerns**:
 
-### Step 0: Recommend Specialist and Stop
-If the issue is specifically about:
-- **Raw SQL optimization**: Stop and recommend postgres-expert or mongodb-expert
-- **Database server configuration**: Stop and recommend database-expert
-- **Connection pooling at infrastructure level**: Stop and recommend devops-expert
+| File | Purpose | Used by |
+|---|---|---|
+| `prisma.config.ts` | CLI config (schema path, migrations path, datasource URL) | `prisma migrate`, `prisma generate`, `prisma studio` |
+| `prisma/schema.prisma` | Schema definition + runtime datasource | `PrismaClient` at runtime |
 
-### Environment Detection
-```bash
-# Check Prisma version
-npx prisma --version 2>/dev/null || echo "Prisma not installed"
+**The schema datasource MUST have `url` for runtime.** `prisma.config.ts` only feeds the CLI — the runtime `PrismaClient` never reads it.
 
-# Check database provider
-grep "provider" prisma/schema.prisma 2>/dev/null | head -1
+### Correct prisma.config.ts (v7)
+```typescript
+import 'dotenv/config';
+import { defineConfig, env } from 'prisma/config';
 
-# Check for existing migrations
-ls -la prisma/migrations/ 2>/dev/null | head -5
-
-# Check Prisma Client generation status
-ls -la node_modules/.prisma/client/ 2>/dev/null | head -3
+export default defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+  },
+  datasource: {
+    url: env('DATABASE_URL'),
+  },
+});
 ```
 
-### Apply Strategy
-1. Identify the Prisma-specific issue category
-2. Check for common anti-patterns in schema or queries
-3. Apply progressive fixes (minimal → better → complete)
-4. Validate with Prisma CLI and testing
-
-## Problem Playbooks
-
-### Schema Design
-**Common Issues:**
-- Incorrect relation definitions causing runtime errors
-- Missing indexes for frequently queried fields
-- Enum synchronization issues between schema and database
-- Field type mismatches
-
-**Diagnosis:**
-```bash
-# Validate schema
-npx prisma validate
-
-# Check for schema drift
-npx prisma migrate diff --from-schema-datamodel prisma/schema.prisma --to-schema-datasource prisma/schema.prisma
-
-# Format schema
-npx prisma format
-```
-
-**Prioritized Fixes:**
-1. **Minimal**: Fix relation annotations, add missing `@relation` directives
-2. **Better**: Add proper indexes with `@@index`, optimize field types
-3. **Complete**: Restructure schema with proper normalization, add composite keys
-
-**Best Practices:**
+### Correct schema.prisma datasource (Supabase + pgBouncer)
 ```prisma
-// Good: Explicit relations with clear naming
-model User {
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+```
+
+`DATABASE_URL` uses pgBouncer (`?pgbouncer=true`, port 6543) for app connections.  
+`DIRECT_URL` uses direct connection (port 5432) so migrations work correctly.
+
+---
+
+## Custom Output — Do NOT Use
+
+**Never** set a custom `output` in the generator:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+```
+
+Always import from `@prisma/client`:
+```typescript
+import { PrismaClient, TournamentStatus, Role } from '@prisma/client';
+```
+
+---
+
+## NestJS PrismaService Pattern (v7)
+
+```typescript
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+
+@Injectable()
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
+  }
+}
+```
+
+**No custom constructor needed** — `PrismaClient` reads `DATABASE_URL` from the environment automatically when `url = env("DATABASE_URL")` is in the schema.
+
+If you see `PrismaClientInitializationError: needs to be constructed with valid PrismaClientOptions`:
+→ The schema `datasource` block is **missing `url`**. Add `url = env("DATABASE_URL")`.
+
+---
+
+## CLI Commands (v7)
+
+```bash
+npx prisma generate
+npx prisma migrate dev --name descriptive_name
+npx prisma migrate deploy
+npx prisma migrate status
+npx prisma validate
+npx prisma format
+npx prisma studio
+npx prisma db push
+```
+
+---
+
+## Schema Design
+
+### Field conventions
+```prisma
+model Example {
   id        String   @id @default(cuid())
-  email     String   @unique
-  posts     Post[]   @relation("UserPosts")
-  profile   Profile? @relation("UserProfile")
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  @@index([email])
-  @@map("users")
+}
+```
+
+### Relations
+```prisma
+model User {
+  id    String @id @default(cuid())
+  posts Post[]
 }
 
 model Post {
   id       String @id @default(cuid())
-  title    String
-  author   User   @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
   authorId String
-  
+
   @@index([authorId])
-  @@map("posts")
 }
 ```
 
-**Resources:**
-- https://www.prisma.io/docs/concepts/components/prisma-schema
-- https://www.prisma.io/docs/concepts/components/prisma-schema/relations
-
-### Migrations
-**Common Issues:**
-- Migration conflicts in team environments
-- Failed migrations leaving database in inconsistent state
-- Shadow database issues during development
-- Production deployment migration failures
-
-**Diagnosis:**
-```bash
-# Check migration status
-npx prisma migrate status
-
-# View pending migrations
-ls -la prisma/migrations/
-
-# Check migration history table
-# (use database-specific command)
+### Enums
+```prisma
+enum Status {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
 ```
 
-**Prioritized Fixes:**
-1. **Minimal**: Reset development database with `prisma migrate reset`
-2. **Better**: Manually fix migration SQL, use `prisma migrate resolve`
-3. **Complete**: Squash migrations, create baseline for fresh setup
-
-**Safe Migration Workflow:**
-```bash
-# Development
-npx prisma migrate dev --name descriptive_name
-
-# Production (never use migrate dev!)
-npx prisma migrate deploy
-
-# If migration fails in production
-npx prisma migrate resolve --applied "migration_name"
-# or
-npx prisma migrate resolve --rolled-back "migration_name"
+Import enums from `@prisma/client` — never redeclare them:
+```typescript
+import { Status } from '@prisma/client';
 ```
 
-**Resources:**
-- https://www.prisma.io/docs/concepts/components/prisma-migrate
-- https://www.prisma.io/docs/guides/deployment/deploy-database-changes
+---
 
-### Query Optimization
-**Common Issues:**
-- N+1 query problems with relations
-- Over-fetching data with excessive includes
-- Missing select for large models
-- Slow queries without proper indexing
+## Query Patterns
 
-**Diagnosis:**
-```bash
-# Enable query logging
-# In schema.prisma or client initialization:
-# log: ['query', 'info', 'warn', 'error']
+### Avoid N+1
+```typescript
+const users = await prisma.user.findMany();
+for (const u of users) {
+  const posts = await prisma.post.findMany({ where: { authorId: u.id } });
+}
 ```
 
 ```typescript
-// Enable query events
-const prisma = new PrismaClient({
-  log: [
-    { emit: 'event', level: 'query' },
-  ],
+const usersWithPosts = await prisma.user.findMany({
+  include: { posts: true },
+});
+```
+
+```typescript
+const usersSelected = await prisma.user.findMany({
+  select: { id: true, email: true, posts: { select: { id: true, title: true } } },
+});
+```
+
+### Transactions
+```typescript
+const [user, team] = await prisma.$transaction([
+  prisma.user.create({ data: userData }),
+  prisma.team.create({ data: teamData }),
+]);
+
+const result = await prisma.$transaction(async (tx) => {
+  const user = await tx.user.create({ data: userData });
+  if (!user) throw new Error('User creation failed');
+  return tx.team.update({ where: { id: teamId }, data: { captainEmail: user.email } });
+}, { timeout: 10000 });
+```
+
+### Pagination
+```typescript
+const page = await prisma.tournament.findMany({
+  skip: (pageNumber - 1) * pageSize,
+  take: pageSize,
+  orderBy: { createdAt: 'desc' },
+});
+```
+
+---
+
+## Query Logging (Development)
+
+```typescript
+new PrismaClient({
+  log: [{ emit: 'event', level: 'query' }],
 });
 
 prisma.$on('query', (e) => {
-  console.log('Query: ' + e.query);
-  console.log('Duration: ' + e.duration + 'ms');
+  console.log(`${e.query} — ${e.duration}ms`);
 });
 ```
 
-**Prioritized Fixes:**
-1. **Minimal**: Add includes for related data to avoid N+1
-2. **Better**: Use select to fetch only needed fields
-3. **Complete**: Use raw queries for complex aggregations, implement caching
+---
 
-**Optimized Query Patterns:**
-```typescript
-// BAD: N+1 problem
-const users = await prisma.user.findMany();
-for (const user of users) {
-  const posts = await prisma.post.findMany({ where: { authorId: user.id } });
-}
+## Migration Safety
 
-// GOOD: Include relations
-const users = await prisma.user.findMany({
-  include: { posts: true }
-});
+| Environment | Command | Notes |
+|---|---|---|
+| Development | `prisma migrate dev` | Creates migration + applies |
+| Production | `prisma migrate deploy` | Applies pending only, never creates |
+| Prototype | `prisma db push` | No migration file, dangerous on prod |
 
-// BETTER: Select only needed fields
-const users = await prisma.user.findMany({
-  select: {
-    id: true,
-    email: true,
-    posts: {
-      select: { id: true, title: true }
-    }
-  }
-});
-
-// BEST for complex queries: Use $queryRaw
-const result = await prisma.$queryRaw`
-  SELECT u.id, u.email, COUNT(p.id) as post_count
-  FROM users u
-  LEFT JOIN posts p ON p.author_id = u.id
-  GROUP BY u.id
-`;
-```
-
-**Resources:**
-- https://www.prisma.io/docs/guides/performance-and-optimization
-- https://www.prisma.io/docs/concepts/components/prisma-client/raw-database-access
-
-### Connection Management
-**Common Issues:**
-- Connection pool exhaustion
-- "Too many connections" errors
-- Connection leaks in serverless environments
-- Slow initial connections
-
-**Diagnosis:**
+**Never use `migrate dev` in production.** If a migration fails:
 ```bash
-# Check current connections (PostgreSQL)
-psql -c "SELECT count(*) FROM pg_stat_activity WHERE datname = 'your_db';"
+npx prisma migrate resolve --applied "20240101_migration_name"
+npx prisma migrate resolve --rolled-back "20240101_migration_name"
 ```
 
-**Prioritized Fixes:**
-1. **Minimal**: Configure connection limit in DATABASE_URL
-2. **Better**: Implement proper connection lifecycle management
-3. **Complete**: Use connection pooler (PgBouncer) for high-traffic apps
+---
 
-**Connection Configuration:**
-```typescript
-// For serverless (Vercel, AWS Lambda)
-import { PrismaClient } from '@prisma/client';
+## Common Errors
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+| Error | Cause | Fix |
+|---|---|---|
+| `PrismaClientInitializationError: needs valid PrismaClientOptions` | `datasource` in schema has no `url` | Add `url = env("DATABASE_URL")` to schema |
+| `Cannot find module '../../generated/prisma'` | Custom output + tsc doesn't copy JS | Remove `output`, use `@prisma/client` |
+| `Error: Direct URL needed for migrations` | pgBouncer doesn't support migrations | Add `directUrl = env("DIRECT_URL")` to schema |
+| `P2002: Unique constraint failed` | Duplicate value on `@unique` field | Check data before insert, handle error |
+| `P2025: Record not found` | `update`/`delete` on non-existent id | Use `findFirst` to check, or `upsert` |
+| `P2034: Transaction conflict` | Concurrent write conflict | Retry transaction logic |
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query'] : [],
-  });
+---
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
-
-// Graceful shutdown
-process.on('beforeExit', async () => {
-  await prisma.$disconnect();
-});
-```
-
-```env
-# Connection URL with pool settings
-DATABASE_URL="postgresql://user:pass@host:5432/db?connection_limit=5&pool_timeout=10"
-```
-
-**Resources:**
-- https://www.prisma.io/docs/guides/performance-and-optimization/connection-management
-- https://www.prisma.io/docs/guides/deployment/deployment-guides/deploying-to-vercel
-
-### Transaction Patterns
-**Common Issues:**
-- Inconsistent data from non-atomic operations
-- Deadlocks in concurrent transactions
-- Long-running transactions blocking reads
-- Nested transaction confusion
-
-**Diagnosis:**
-```typescript
-// Check for transaction issues
-try {
-  const result = await prisma.$transaction([...]);
-} catch (e) {
-  if (e.code === 'P2034') {
-    console.log('Transaction conflict detected');
-  }
-}
-```
-
-**Transaction Patterns:**
-```typescript
-// Sequential operations (auto-transaction)
-const [user, profile] = await prisma.$transaction([
-  prisma.user.create({ data: userData }),
-  prisma.profile.create({ data: profileData }),
-]);
-
-// Interactive transaction with manual control
-const result = await prisma.$transaction(async (tx) => {
-  const user = await tx.user.create({ data: userData });
-  
-  // Business logic validation
-  if (user.email.endsWith('@blocked.com')) {
-    throw new Error('Email domain blocked');
-  }
-  
-  const profile = await tx.profile.create({
-    data: { ...profileData, userId: user.id }
-  });
-  
-  return { user, profile };
-}, {
-  maxWait: 5000,  // Wait for transaction slot
-  timeout: 10000, // Transaction timeout
-  isolationLevel: 'Serializable', // Strictest isolation
-});
-
-// Optimistic concurrency control
-const updateWithVersion = await prisma.post.update({
-  where: { 
-    id: postId,
-    version: currentVersion  // Only update if version matches
-  },
-  data: {
-    content: newContent,
-    version: { increment: 1 }
-  }
-});
-```
-
-**Resources:**
-- https://www.prisma.io/docs/concepts/components/prisma-client/transactions
-
-## Code Review Checklist
-
-### Schema Quality
-- [ ] All models have appropriate `@id` and primary keys
-- [ ] Relations use explicit `@relation` with `fields` and `references`
-- [ ] Cascade behaviors defined (`onDelete`, `onUpdate`)
-- [ ] Indexes added for frequently queried fields
-- [ ] Enums used for fixed value sets
-- [ ] `@@map` used for table naming conventions
-
-### Query Patterns
-- [ ] No N+1 queries (relations included when needed)
-- [ ] `select` used to fetch only required fields
-- [ ] Pagination implemented for list queries
-- [ ] Raw queries used for complex aggregations
-- [ ] Proper error handling for database operations
-
-### Performance
-- [ ] Connection pooling configured appropriately
-- [ ] Indexes exist for WHERE clause fields
-- [ ] Composite indexes for multi-column queries
-- [ ] Query logging enabled in development
-- [ ] Slow queries identified and optimized
-
-### Migration Safety
-- [ ] Migrations tested before production deployment
-- [ ] Backward-compatible schema changes (no data loss)
-- [ ] Migration scripts reviewed for correctness
-- [ ] Rollback strategy documented
-
-## Anti-Patterns to Avoid
-
-1. **Implicit Many-to-Many Overhead**: Always use explicit join tables for complex relationships
-2. **Over-Including**: Don't include relations you don't need
-3. **Ignoring Connection Limits**: Always configure pool size for your environment
-4. **Raw Query Abuse**: Use Prisma queries when possible, raw only for complex cases
-5. **Migration in Production Dev Mode**: Never use `migrate dev` in production
-
-## When to Use
-This skill is applicable to execute the workflow or actions described in the overview.
+## Additional Reference
+- For query examples and advanced patterns, see [reference.md](reference.md)

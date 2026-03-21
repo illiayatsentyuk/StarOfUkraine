@@ -1,4 +1,4 @@
-import { TournamentStatus } from '../../../generated/prisma';
+import { TournamentStatus } from '@prisma/client';
 
 export const tournamentExamples = {
   createRequest: {
