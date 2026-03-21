@@ -12,7 +12,9 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { teamExamples } from '../examples/team/team.examples';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @ApiTags('Teams')
 @Controller('teams')
 export class TeamController {
