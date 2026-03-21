@@ -14,6 +14,7 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { tournamentExamples } from '../examples/tournament/tournament.examples';
 import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @ApiTags('Tournaments')
 @Controller('tournaments')
 export class TournamentController {
