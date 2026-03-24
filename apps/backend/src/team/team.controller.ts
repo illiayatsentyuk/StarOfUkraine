@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -13,6 +14,7 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { teamExamples } from '../examples/team/team.examples';
 import { Public } from '../common/decorators/public.decorator';
+import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Public()
 @ApiTags('Teams')
@@ -40,8 +42,8 @@ export class TeamController {
   @Get()
   @ApiOperation({ summary: 'List all teams' })
   @ApiResponse({ status: 200, description: 'List of teams returned' })
-  findAll() {
-    return this.teamService.findAll();
+  findAll(@Query() query: FindQueryDto) {
+    return this.teamService.findAll(query);
   }
 
   @Get(':id')

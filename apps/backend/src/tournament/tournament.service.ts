@@ -1,14 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
+import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Injectable()
 export class TournamentService {
   constructor(private readonly prisma: PrismaService) {}
+  private readonly defaultPageSize = Number(process.env.PAGE_SIZE) || 10;
 
-  create(data: CreateTournamentDto) {
-    return this.prisma.tournament.create({
+  async create(data: CreateTournamentDto) {
+    const existingTournament = await this.prisma.tournament.findFirst({
+      where: {
+        name: data.name,
+      },
+    });
+    if (existingTournament) {
+      throw new BadRequestException('Tournament already exists');
+    }
+    const tournament = await this.prisma.tournament.create({
       data: {
         name: data.name,
         description: data.description,
@@ -24,10 +34,17 @@ export class TournamentService {
           data.hideTeamsUntilRegistrationEnds ?? false,
       },
     });
+    return tournament;
   }
 
-  findAll() {
-    return this.prisma.tournament.findMany();
+  findAll(query: FindQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? this.defaultPageSize;
+
+    return this.prisma.tournament.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
   async findOne(id: string) {
@@ -42,7 +59,11 @@ export class TournamentService {
 
   async update(id: string, data: UpdateTournamentDto) {
     await this.findOne(id);
-    return this.prisma.tournament.update({
+    const isTheSameName = data.name === (await this.findOne(id)).name;
+    if (isTheSameName) {
+      throw new BadRequestException('Tournament with this name already exists');
+    }
+    const updatedTournament = await this.prisma.tournament.update({
       where: { id },
       data: {
         name: data.name,
@@ -58,6 +79,7 @@ export class TournamentService {
         hideTeamsUntilRegistrationEnds: data.hideTeamsUntilRegistrationEnds,
       },
     });
+    return updatedTournament;
   }
 
   async remove(id: string) {

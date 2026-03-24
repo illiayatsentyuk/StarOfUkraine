@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
@@ -13,6 +14,7 @@ import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { tournamentExamples } from '../examples/tournament/tournament.examples';
 import { Public } from '../common/decorators/public.decorator';
+import { FindQueryDto } from 'src/common/dto/find-query.dto';
 
 @Public()
 @ApiTags('Tournaments')
@@ -41,8 +43,8 @@ export class TournamentController {
   @Get()
   @ApiOperation({ summary: 'List all tournaments' })
   @ApiResponse({ status: 200, description: 'List of tournaments returned' })
-  findAll() {
-    return this.tournamentService.findAll();
+  findAll(@Query() query: FindQueryDto) {
+    return this.tournamentService.findAll(query);
   }
 
   @Public()

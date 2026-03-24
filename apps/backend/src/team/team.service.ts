@@ -1,14 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
+import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Injectable()
 export class TeamService {
   constructor(private readonly prisma: PrismaService) {}
+  private readonly defaultPageSize = Number(process.env.PAGE_SIZE) || 10;
 
-  create(data: CreateTeamDto) {
-    return this.prisma.team.create({
+  async create(data: CreateTeamDto) {
+    const existingTeam = await this.prisma.team.findFirst({
+      where: {
+        teamName: data.teamName,
+      },
+    });
+    if (existingTeam) {
+      throw new BadRequestException('Team already exists');
+    }
+    const team = await this.prisma.team.create({
       data: {
         teamName: data.teamName,
         captainName: data.captainName,
@@ -20,10 +30,17 @@ export class TeamService {
         discord: data.discord,
       },
     });
+    return team;
   }
 
-  findAll() {
-    return this.prisma.team.findMany();
+  findAll(query: FindQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? this.defaultPageSize;
+
+    return this.prisma.team.findMany({
+      skip: (page - 1) * limit,
+      take: limit,
+    });
   }
 
   async findOne(id: string) {
@@ -36,7 +53,11 @@ export class TeamService {
 
   async update(id: string, data: UpdateTeamDto) {
     await this.findOne(id);
-    return this.prisma.team.update({
+    const isTheSameName = data.teamName === (await this.findOne(id)).teamName;
+    if (isTheSameName) {
+      throw new BadRequestException('Team with this name already exists');
+    }
+    const updatedTeam = await this.prisma.team.update({
       where: { id },
       data: {
         teamName: data.teamName,
@@ -49,10 +70,12 @@ export class TeamService {
         discord: data.discord,
       },
     });
+    return updatedTeam;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.team.delete({ where: { id } });
+    const deletedTeam = await this.prisma.team.delete({ where: { id } });
+    return deletedTeam;
   }
 }
