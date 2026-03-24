@@ -38,12 +38,14 @@ export class TournamentService {
   }
 
   async findAll(query: FindQueryDto) {
-    const maximuxPage = Math.ceil(Number(this.prisma.tournament.count()) / Number(this.defaultPageSize));
-    const page = query.page ?? 1;
-    if (page > maximuxPage) {
-      throw new BadRequestException('Page number is too high');
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? this.defaultPageSize);
+    const totalCount = await this.prisma.tournament.count();
+    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
+
+    if (page > maximumPage || page < 1) {
+      throw new BadRequestException('Page number is out of range');
     }
-    const limit = query.limit ?? this.defaultPageSize;
 
     const tournaments = await this.prisma.tournament.findMany({
       skip: Number(page - 1) * Number(limit),
@@ -51,7 +53,12 @@ export class TournamentService {
     });
 
     return {
-      
+      data: tournaments, 
+      currentPage: Number(page),
+      nextPage: page < maximumPage ? Number(page) + 1 : null,
+      previousPage: page > 1 ? Number(page) - 1 : null,
+      totalPages: Number(maximumPage),
+      itemsPerPage: Number(limit),
     }
   }
 

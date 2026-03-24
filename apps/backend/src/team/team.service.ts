@@ -33,14 +33,29 @@ export class TeamService {
     return team;
   }
 
-  findAll(query: FindQueryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? this.defaultPageSize;
+  async findAll(query: FindQueryDto) {
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? this.defaultPageSize);
+    const totalCount = await this.prisma.team.count();
+    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 
-    return this.prisma.team.findMany({
+    if (page > maximumPage || page < 1) {
+      throw new BadRequestException('Page number is out of range');
+    }
+
+    const teams = await this.prisma.team.findMany({
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
     });
+
+    return {
+      data: teams,
+      currentPage: Number(page),
+      nextPage: page < maximumPage ? Number(page) + 1 : null,
+      previousPage: page > 1 ? Number(page) - 1 : null,
+      totalPages: Number(maximumPage),
+      itemsPerPage: Number(limit),
+    };
   }
 
   async findOne(id: string) {
