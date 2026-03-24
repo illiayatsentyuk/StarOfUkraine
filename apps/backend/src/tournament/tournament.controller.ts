@@ -14,7 +14,7 @@ import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { tournamentExamples } from '../examples/tournament/tournament.examples';
 import { Public } from '../common/decorators/public.decorator';
-import { FindQueryDto } from 'src/common/dto/find-query.dto';
+import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Public()
 @ApiTags('Tournaments')
