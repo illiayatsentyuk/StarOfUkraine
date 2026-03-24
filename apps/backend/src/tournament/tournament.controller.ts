@@ -46,7 +46,7 @@ export class TournamentController {
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
-    schema: { example: [tournamentExamples.response] },
+    schema: { example: tournamentExamples.paginatedResponse },
   })
   findAll(@Query() query: FindQueryDto) {
     return this.tournamentService.findAll(query);

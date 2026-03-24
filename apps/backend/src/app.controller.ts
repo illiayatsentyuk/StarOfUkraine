@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from './common/decorators/public.decorator';
 
 @ApiTags('Root')
@@ -11,6 +11,11 @@ export class AppController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'Health check / hello endpoint' })
+  @ApiResponse({
+    status: 200,
+    description: 'Service is reachable',
+    schema: { example: 'Hello World!' },
+  })
   getHello(): string {
     return this.appService.getHello();
   }

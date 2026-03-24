@@ -45,7 +45,7 @@ export class TeamController {
   @ApiResponse({
     status: 200,
     description: 'List of teams returned',
-    schema: { example: [teamExamples.response] },
+    schema: { example: teamExamples.paginatedResponse },
   })
   findAll(@Query() query: FindQueryDto) {
     return this.teamService.findAll(query);

@@ -14,6 +14,9 @@ export const authExamples = {
   tokenResponse: {
     accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   },
+  meResponse: {
+    ok: true,
+  },
   unauthorized: {
     statusCode: 401,
     message: 'Invalid credentials',

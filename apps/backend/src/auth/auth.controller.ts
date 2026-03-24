@@ -66,7 +66,11 @@ export class AuthController {
   @ApiOperation({
     summary: 'Get current authenticated user info (test endpoint)',
   })
-  @ApiResponse({ status: 200, description: 'Authenticated request successful' })
+  @ApiResponse({
+    status: 200,
+    description: 'Authenticated request successful',
+    schema: { example: authExamples.meResponse },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   me() {
     // This endpoint is just to test JWT guard;

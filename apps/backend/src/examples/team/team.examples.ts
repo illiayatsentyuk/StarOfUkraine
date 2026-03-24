@@ -21,4 +21,25 @@ export const teamExamples = {
     discord: 'starofukraine#1234',
     createdAt: '2026-03-12T10:00:00.000Z',
   },
+  paginatedResponse: {
+    data: [
+      {
+        id: 'clx_team_123',
+        teamName: 'Star of Ukraine',
+        captainName: 'Olena Kovalenko',
+        captainEmail: 'olena@example.com',
+        members: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+        city: 'Kyiv',
+        organization: 'UA Esports',
+        telegram: '@starofukraine',
+        discord: 'starofukraine#1234',
+        createdAt: '2026-03-12T10:00:00.000Z',
+      },
+    ],
+    currentPage: 1,
+    nextPage: 2,
+    previousPage: null,
+    totalPages: 3,
+    itemsPerPage: 10,
+  },
 } as const;
