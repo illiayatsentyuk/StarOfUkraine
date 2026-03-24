@@ -38,8 +38,8 @@ export class TeamService {
     const limit = query.limit ?? this.defaultPageSize;
 
     return this.prisma.team.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: Number(page - 1) * Number(limit),
+      take: Number(limit),
     });
   }
 

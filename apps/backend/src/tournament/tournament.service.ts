@@ -37,14 +37,22 @@ export class TournamentService {
     return tournament;
   }
 
-  findAll(query: FindQueryDto) {
+  async findAll(query: FindQueryDto) {
+    const maximuxPage = Math.ceil(Number(this.prisma.tournament.count()) / Number(this.defaultPageSize));
     const page = query.page ?? 1;
+    if (page > maximuxPage) {
+      throw new BadRequestException('Page number is too high');
+    }
     const limit = query.limit ?? this.defaultPageSize;
 
-    return this.prisma.tournament.findMany({
-      skip: (page - 1) * limit,
-      take: limit,
+    const tournaments = await this.prisma.tournament.findMany({
+      skip: Number(page - 1) * Number(limit),
+      take: Number(limit),
     });
+
+    return {
+      
+    }
   }
 
   async findOne(id: string) {
