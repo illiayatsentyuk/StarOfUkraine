@@ -32,6 +32,7 @@ export class AuthController {
     description: 'User successfully registered',
     schema: { example: authExamples.tokenResponse },
   })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
   register(@Body() dto: signupDto) {
     return this.authService.register(dto);
   }
@@ -50,6 +51,7 @@ export class AuthController {
     description: 'User successfully logged in',
     schema: { example: authExamples.tokenResponse },
   })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
   @ApiResponse({
     status: 401,
     description: 'Invalid credentials',
@@ -65,6 +67,7 @@ export class AuthController {
     summary: 'Get current authenticated user info (test endpoint)',
   })
   @ApiResponse({ status: 200, description: 'Authenticated request successful' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   me() {
     // This endpoint is just to test JWT guard;
     // real implementation could return user profile from request.

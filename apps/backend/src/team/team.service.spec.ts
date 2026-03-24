@@ -1,0 +1,173 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { PrismaService } from '../prisma/prisma.service';
+import { TeamService } from './team.service';
+
+describe('TeamService', () => {
+  let service: TeamService;
+
+  const mockPrisma = {
+    team: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
+    },
+  };
+
+  const teamMock = {
+    id: 'team-1',
+    teamName: 'Star of Ukraine',
+    captainName: 'Olena Kovalenko',
+    captainEmail: 'olena@example.com',
+    members: ['Olena Kovalenko', 'Taras Shevchenko'],
+    city: 'Kyiv',
+    organization: 'UA Esports',
+    telegram: '@starofukraine',
+    discord: 'starofukraine#1234',
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TeamService,
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
+      ],
+    }).compile();
+
+    service = module.get<TeamService>(TeamService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('create', () => {
+    it('creates a team when name is unique', async () => {
+      mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.team.create.mockResolvedValue(teamMock);
+
+      const result = await service.create({
+        teamName: teamMock.teamName,
+        captainName: teamMock.captainName,
+        captainEmail: teamMock.captainEmail,
+        members: teamMock.members,
+      });
+
+      expect(result).toEqual(teamMock);
+      expect(mockPrisma.team.findFirst).toHaveBeenCalledWith({
+        where: { teamName: teamMock.teamName },
+      });
+    });
+
+    it('throws when team with same name exists', async () => {
+      mockPrisma.team.findFirst.mockResolvedValue(teamMock);
+
+      await expect(
+        service.create({
+          teamName: teamMock.teamName,
+          captainName: teamMock.captainName,
+          captainEmail: teamMock.captainEmail,
+          members: teamMock.members,
+        }),
+      ).rejects.toThrow(new BadRequestException('Team already exists'));
+    });
+  });
+
+  describe('findAll', () => {
+    it('returns paginated data', async () => {
+      mockPrisma.team.count.mockResolvedValue(11);
+      mockPrisma.team.findMany.mockResolvedValue([teamMock]);
+
+      const result = await service.findAll({ page: 1, limit: 10 });
+
+      expect(result).toEqual({
+        data: [teamMock],
+        currentPage: 1,
+        nextPage: 2,
+        previousPage: null,
+        totalPages: 2,
+        itemsPerPage: 10,
+      });
+      expect(mockPrisma.team.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 10,
+      });
+    });
+
+    it('throws when page number is out of range', async () => {
+      mockPrisma.team.count.mockResolvedValue(5);
+
+      await expect(service.findAll({ page: 4, limit: 2 })).rejects.toThrow(
+        new BadRequestException('Page number is out of range'),
+      );
+    });
+  });
+
+  describe('findOne', () => {
+    it('returns a team by id', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+
+      const result = await service.findOne('team-1');
+      expect(result).toEqual(teamMock);
+    });
+
+    it('throws when team is not found', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(null);
+
+      await expect(service.findOne('missing-id')).rejects.toThrow(
+        new NotFoundException('Team not found'),
+      );
+    });
+  });
+
+  describe('update', () => {
+    it('updates team when name differs from existing', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+      mockPrisma.team.update.mockResolvedValue({
+        ...teamMock,
+        teamName: 'New Team Name',
+      });
+
+      const result = await service.update('team-1', {
+        teamName: 'New Team Name',
+      });
+
+      expect(result.teamName).toBe('New Team Name');
+      expect(mockPrisma.team.update).toHaveBeenCalled();
+    });
+
+    it('throws when new name matches current name', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+
+      await expect(
+        service.update('team-1', { teamName: teamMock.teamName }),
+      ).rejects.toThrow(
+        new BadRequestException('Team with this name already exists'),
+      );
+    });
+  });
+
+  describe('remove', () => {
+    it('deletes team when found', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+      mockPrisma.team.delete.mockResolvedValue(teamMock);
+
+      const result = await service.remove('team-1');
+      expect(result).toEqual(teamMock);
+      expect(mockPrisma.team.delete).toHaveBeenCalledWith({
+        where: { id: 'team-1' },
+      });
+    });
+  });
+});

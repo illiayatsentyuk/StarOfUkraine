@@ -6,13 +6,15 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { tournamentExamples } from '../examples/tournament/tournament.examples';
 import { Public } from '../common/decorators/public.decorator';
+import { FindQueryDto } from 'src/common/dto/find-query.dto';
 
 @Public()
 @ApiTags('Tournaments')
@@ -33,6 +35,7 @@ export class TournamentController {
     description: 'Tournament successfully created',
     schema: { example: tournamentExamples.response },
   })
+  @ApiResponse({ status: 400, description: 'Tournament already exists' })
   create(@Body() data: CreateTournamentDto) {
     return this.tournamentService.create(data);
   }
@@ -40,29 +43,58 @@ export class TournamentController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'List all tournaments' })
-  @ApiResponse({ status: 200, description: 'List of tournaments returned' })
-  findAll() {
-    return this.tournamentService.findAll();
+  @ApiResponse({
+    status: 200,
+    description: 'List of tournaments returned',
+    schema: { example: [tournamentExamples.response] },
+  })
+  findAll(@Query() query: FindQueryDto) {
+    return this.tournamentService.findAll(query);
   }
 
   @Public()
   @Get(':id')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Get a tournament by id' })
-  @ApiResponse({ status: 200, description: 'Tournament returned' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tournament returned',
+    schema: { example: tournamentExamples.response },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
   findOne(@Param('id') id: string) {
     return this.tournamentService.findOne(id);
   }
 
   @Patch(':id')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Update a tournament by id' })
-  @ApiResponse({ status: 200, description: 'Tournament successfully updated' })
+  @ApiBody({
+    type: UpdateTournamentDto,
+    examples: {
+      update: { value: tournamentExamples.createRequest },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tournament successfully updated',
+    schema: { example: tournamentExamples.response },
+  })
+  @ApiResponse({ status: 400, description: 'Tournament with this name already exists' })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
     return this.tournamentService.update(id, data);
   }
 
   @Delete(':id')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Delete a tournament by id' })
-  @ApiResponse({ status: 200, description: 'Tournament successfully deleted' })
+  @ApiResponse({
+    status: 200,
+    description: 'Tournament successfully deleted',
+    schema: { example: tournamentExamples.response },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
   remove(@Param('id') id: string) {
     return this.tournamentService.remove(id);
   }

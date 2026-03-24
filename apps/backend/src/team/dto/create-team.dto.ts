@@ -1,27 +1,27 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTeamDto {
-  @ApiProperty()
+  @ApiProperty({ example: 'Star of Ukraine' })
   teamName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'Olena Kovalenko' })
   captainName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'olena@example.com' })
   captainEmail: string;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({ type: [String], example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'] })
   members: string[];
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'Kyiv' })
   city?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'UA Esports' })
   organization?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: '@starofukraine' })
   telegram?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'starofukraine#1234' })
   discord?: string;
 }
