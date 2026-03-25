@@ -1,70 +1,138 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { SignupDto, SigninDto } from './dto';
+import { Tokens } from './types';
 import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
+import { Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { signupDto } from './dto/signup.dto';
-import { signinDto } from './dto/signin.dto';
-import { JwtPayload } from '../common/types';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
+    private prisma: PrismaService,
+    private jwtService: JwtService,
   ) {}
 
-  async register(dto: signupDto) {
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+  async getMe(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('No user found');
+    if (user.role === Role.ADMIN) {
+      return { user, message: 'Authenticated', role: 'admin' };
+    }
+    return { user, message: 'Authenticated', role: user.role };
+  }
 
-    const user = await this.prisma.user.create({
+  async signupLocal(dto: SignupDto): Promise<Tokens> {
+    const hash = await this.hashData(dto.password);
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email.toLowerCase() },
+    });
+    if (existingUser) {
+      throw new BadRequestException('Email already in use');
+    }
+
+    const savedUser = await this.prisma.user.create({
       data: {
-        email: dto.email,
-        password: hashedPassword,
+        email: dto.email.toLowerCase(),
+        hash,
         name: dto.name,
-        role: dto.role,
       },
     });
 
-    const token = this.createToken(user.id, user.email, user.role);
-
-    return {
-      accessToken: token,
-    };
+    const tokens = await this.getTokens(
+      savedUser.id,
+      savedUser.email,
+      savedUser.role,
+    );
+    await this.updateRtHash(savedUser.id, tokens.refresh_token);
+    return tokens;
   }
 
-  async validateUser(email: string, password: string) {
+  async signinLocal(dto: SigninDto): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({
-      where: { email },
+      where: { email: dto.email.toLowerCase() },
+    });
+    if (!user) throw new NotFoundException('No user found');
+
+    const passwordMatches = await bcrypt.compare(dto.password, user.hash);
+    if (!passwordMatches) throw new ForbiddenException('Access Denied');
+
+    const tokens = await this.getTokens(String(user.id), user.email, user.role);
+    await this.updateRtHash(String(user.id), tokens.refresh_token);
+    return tokens;
+  }
+
+  async logout(userId: string) {
+    await this.prisma.user.update({
+      where: { id: String(userId) },
+      data: { hashedRt: null },
+    });
+  }
+
+  async refreshTokens(userId: string, rt: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: String(userId) },
     });
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
+    if (!user || !user.hashedRt) throw new ForbiddenException('Access Denied');
 
-    const isValid = await bcrypt.compare(password, user.password);
+    const rtMatches = await bcrypt.compare(rt, user.hashedRt);
+    if (!rtMatches) throw new ForbiddenException('Access Denied');
 
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    return user;
+    const tokens = await this.getTokens(String(user.id), user.email, user.role);
+    await this.updateRtHash(String(user.id), tokens.refresh_token);
+    return tokens;
   }
 
-  async login(dto: signinDto) {
-    const user = await this.validateUser(dto.email, dto.password);
-    const token = this.createToken(user.id, user.email, user.role);
+  hashData(data: string) {
+    return bcrypt.hash(data, 10);
+  }
+
+  async getTokens(
+    userId: string,
+    email: string,
+    role: Role,
+  ): Promise<Tokens> {
+    const [at, rt] = await Promise.all([
+      this.jwtService.signAsync(
+        {
+          sub: userId,
+          email,
+          role,
+        },
+        {
+          secret: 'at-secret',
+          expiresIn: 60 * 15,
+        },
+      ),
+      this.jwtService.signAsync(
+        {
+          sub: userId,
+          email,
+          role,
+        },
+        {
+          secret: 'rt-secret',
+          expiresIn: 60 * 60 * 24 * 7,
+        },
+      ),
+    ]);
     return {
-      accessToken: token,
+      access_token: at,
+      refresh_token: rt,
     };
   }
 
-  private createToken(sub: string, email: string, role: string) {
-    const payload: JwtPayload = {
-      sub,
-      email,
-      role: role as JwtPayload['role'],
-    };
-
-    return this.jwtService.sign(payload);
+  async updateRtHash(userId: string, rt: string) {
+    const hash = await this.hashData(rt);
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { hashedRt: hash },
+    });
   }
 }

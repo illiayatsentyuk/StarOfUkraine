@@ -1,7 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { signupDto } from './dto/signup.dto';
-import { signinDto } from './dto/signin.dto';
+import { SigninDto, SignupDto } from './dto';
 
 import {
   ApiBearerAuth,
@@ -22,7 +21,7 @@ export class AuthController {
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiBody({
-    type: signupDto,
+    type: SignupDto,
     examples: {
       signup: { value: authExamples.signupRequest },
     },
@@ -33,15 +32,19 @@ export class AuthController {
     schema: { example: authExamples.tokenResponse },
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
-  register(@Body() dto: signupDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: SignupDto) {
+    const tokens = await this.authService.signupLocal(dto);
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    };
   }
 
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login and receive access token' })
   @ApiBody({
-    type: signinDto,
+    type: SigninDto,
     examples: {
       signin: { value: authExamples.signinRequest },
     },
@@ -57,8 +60,12 @@ export class AuthController {
     description: 'Invalid credentials',
     schema: { example: authExamples.unauthorized },
   })
-  login(@Body() dto: signinDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: SigninDto) {
+    const tokens = await this.authService.signinLocal(dto);
+    return {
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token,
+    };
   }
 
   @Post('me')

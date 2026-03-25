@@ -1,4 +1,8 @@
-import { UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
@@ -18,19 +22,21 @@ describe('AuthService', () => {
     user: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
   };
 
   const mockJwtService = {
-    sign: jest.fn(),
+    signAsync: jest.fn(),
   };
 
   const mockUser = {
     id: 'user-1',
     email: 'user@example.com',
-    password: 'hashed-password',
+    hash: 'hashed-password',
     name: 'Ivan Petrenko',
     role: Role.USER,
+    hashedRt: 'hashed-rt',
   };
 
   beforeEach(async () => {
@@ -59,103 +65,112 @@ describe('AuthService', () => {
     expect(service).toBeDefined();
   });
 
-  describe('register', () => {
-    it('hashes password, creates user and returns access token', async () => {
-      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
-      mockPrisma.user.create.mockResolvedValue(mockUser);
-      mockJwtService.sign.mockReturnValue('jwt-token');
+  describe('signupLocal', () => {
+    it('creates user, returns tokens, and stores refresh token hash', async () => {
+      // 1st bcrypt.hash -> password, 2nd bcrypt.hash -> refresh token hash
+      (bcrypt.hash as jest.Mock)
+        .mockResolvedValueOnce('hashed-password')
+        .mockResolvedValueOnce('hashed-rt');
 
-      const result = await service.register({
-        email: 'user@example.com',
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.create.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, hashedRt: 'hashed-rt' });
+
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-token')
+        .mockResolvedValueOnce('rt-token');
+
+      const result = await service.signupLocal({
+        email: 'USER@EXAMPLE.COM',
         password: 'plain-password',
         name: 'Ivan Petrenko',
-        role: Role.USER,
       });
-
-      expect(bcrypt.hash).toHaveBeenCalledWith('plain-password', 10);
-      expect(mockPrisma.user.create).toHaveBeenCalledWith({
-        data: {
-          email: 'user@example.com',
-          password: 'hashed-password',
-          name: 'Ivan Petrenko',
-          role: Role.USER,
-        },
-      });
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
-        email: 'user@example.com',
-        role: Role.USER,
-      });
-      expect(result).toEqual({ accessToken: 'jwt-token' });
-    });
-  });
-
-  describe('validateUser', () => {
-    it('returns user when credentials are valid', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-
-      const result = await service.validateUser(
-        'user@example.com',
-        'plain-password',
-      );
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'user@example.com' },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        'plain-password',
-        'hashed-password',
-      );
-      expect(result).toEqual(mockUser);
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: {
+          email: 'user@example.com',
+          hash: 'hashed-password',
+          name: 'Ivan Petrenko',
+        },
+      });
+
+      expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { hashedRt: 'hashed-rt' },
+      });
+
+      expect(result).toEqual({
+        access_token: 'at-token',
+        refresh_token: 'rt-token',
+      });
     });
 
-    it('throws UnauthorizedException when user does not exist', async () => {
+    it('throws BadRequestException when email already in use', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+
+      await expect(
+        service.signupLocal({
+          email: 'user@example.com',
+          password: 'plain-password',
+          name: 'Ivan Petrenko',
+        }),
+      ).rejects.toThrow(new BadRequestException('Email already in use'));
+    });
+  });
+
+  describe('signinLocal', () => {
+    it('returns tokens when credentials are valid and stores refresh token hash', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
+
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({ ...mockUser, hashedRt: 'hashed-rt' });
+
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('at-token')
+        .mockResolvedValueOnce('rt-token');
+
+      const result = await service.signinLocal({
+        email: 'USER@EXAMPLE.COM',
+        password: 'plain-password',
+      });
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'user@example.com' },
+      });
+      expect(bcrypt.compare).toHaveBeenCalledWith('plain-password', 'hashed-password');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { hashedRt: 'hashed-rt' },
+      });
+
+      expect(result).toEqual({
+        access_token: 'at-token',
+        refresh_token: 'rt-token',
+      });
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.validateUser('missing@example.com', 'plain-password'),
-      ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
+        service.signinLocal({ email: 'missing@example.com', password: 'plain-password' }),
+      ).rejects.toThrow(new NotFoundException('No user found'));
     });
 
-    it('throws UnauthorizedException when password is invalid', async () => {
+    it('throws ForbiddenException when password is invalid', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        service.validateUser('user@example.com', 'wrong-password'),
-      ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
-    });
-  });
-
-  describe('login', () => {
-    it('returns access token for valid credentials', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
-      mockJwtService.sign.mockReturnValue('jwt-token');
-
-      const result = await service.login({
-        email: 'user@example.com',
-        password: 'plain-password',
-      });
-
-      expect(result).toEqual({ accessToken: 'jwt-token' });
-      expect(mockJwtService.sign).toHaveBeenCalledWith({
-        sub: 'user-1',
-        email: 'user@example.com',
-        role: Role.USER,
-      });
-    });
-
-    it('rethrows UnauthorizedException when credentials are invalid', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-
-      await expect(
-        service.login({
-          email: 'missing@example.com',
-          password: 'plain-password',
-        }),
-      ).rejects.toThrow(new UnauthorizedException('Invalid credentials'));
+        service.signinLocal({ email: 'user@example.com', password: 'wrong-password' }),
+      ).rejects.toThrow(new ForbiddenException('Access Denied'));
     });
   });
 });

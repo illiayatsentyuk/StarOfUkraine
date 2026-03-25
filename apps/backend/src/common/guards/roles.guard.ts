@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators';
 import { Role } from '../../enum';
 import { JwtPayload } from '../types';
+import { Request } from 'express';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

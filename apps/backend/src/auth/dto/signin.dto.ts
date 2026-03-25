@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class signinDto {
+export class SigninDto {
   @ApiProperty({ example: 'user@example.com' })
   email: string;
 
