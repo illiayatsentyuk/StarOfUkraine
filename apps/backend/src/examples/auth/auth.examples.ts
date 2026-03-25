@@ -15,7 +15,17 @@ export const authExamples = {
     ok: true,
   },
   meResponse: {
-    ok: true,
+    message: 'Authenticated',
+    role: Role.USER,
+    user: {
+      id: 'clxxxxxxxxxxxxxxxxxxxxxxxx',
+      email: 'user@example.com',
+      name: 'Ivan Petrenko',
+      image: null,
+      role: Role.USER,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      updatedAt: '2025-01-01T00:00:00.000Z',
+    },
   },
   unauthorized: {
     statusCode: 401,

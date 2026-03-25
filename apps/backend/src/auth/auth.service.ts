@@ -26,12 +26,27 @@ export class AuthService {
   ) {}
 
   async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
     if (!user) throw new NotFoundException('No user found');
     if (user.role === Role.ADMIN) {
-      return { user, message: 'Authenticated', role: 'admin' };
+      return { user, message: 'Authenticated' as const, role: 'admin' as const };
     }
-    return { user, message: 'Authenticated', role: user.role };
+    return {
+      user,
+      message: 'Authenticated' as const,
+      role: user.role,
+    };
   }
 
   async signupLocal(dto: SignupDto): Promise<Tokens> {

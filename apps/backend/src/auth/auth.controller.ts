@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto, SignupDto } from './dto';
 import type { Response } from 'express';
@@ -157,14 +166,17 @@ export class AuthController {
   }
 
   @Post('me')
+  @HttpCode(HttpStatus.OK)
   @ApiCookieAuth('access_token')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Get current authenticated user info (test endpoint)',
+    summary: 'Current user profile',
+    description:
+      'Returns the authenticated user (no password hashes). Requires `access_token` cookie or Bearer access JWT.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Authenticated request successful',
+    description: 'Current user',
     schema: { example: authExamples.meResponse },
   })
   @ApiResponse({
@@ -172,10 +184,13 @@ export class AuthController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  me() {
-    // This endpoint is just to test JWT guard;
-    // real implementation could return user profile from request.
-    return { ok: true };
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    schema: { example: authExamples.userNotFound },
+  })
+  async me(@GetCurrentUserId() userId: string) {
+    return this.authService.getMe(userId);
   }
 
   @Public()

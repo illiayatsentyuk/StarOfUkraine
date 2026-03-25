@@ -150,8 +150,24 @@ describe('Auth (e2e)', () => {
     await request(app.getHttpServer()).post('/auth/me').expect(401);
   });
 
-  it('POST /auth/me returns 200 with access_token cookie', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(userMock);
+  it('POST /auth/me returns 200 with profile when access_token cookie is set', async () => {
+    mockPrisma.user.findUnique.mockImplementation((args: {
+      where?: { id?: string };
+      select?: Record<string, boolean>;
+    }) => {
+      if (args?.select) {
+        return Promise.resolve({
+          id: userMock.id,
+          email: userMock.email,
+          name: userMock.name,
+          image: null,
+          role: userMock.role,
+          createdAt: new Date('2025-01-01'),
+          updatedAt: new Date('2025-01-01'),
+        });
+      }
+      return Promise.resolve(userMock);
+    });
     mockPrisma.user.update.mockResolvedValue({
       ...userMock,
       hashedRt: 'hashed-rt',
@@ -164,7 +180,18 @@ describe('Auth (e2e)', () => {
       .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
       .expect(201);
 
-    await agent.post('/auth/me').expect(201).expect({ ok: true });
+    const me = await agent.post('/auth/me').expect(200);
+    expect(me.body).toMatchObject({
+      message: 'Authenticated',
+      role: userMock.role,
+    });
+    expect(me.body.user).toMatchObject({
+      id: userMock.id,
+      email: userMock.email,
+      name: userMock.name,
+    });
+    expect(me.body.user).not.toHaveProperty('hash');
+    expect(me.body.user).not.toHaveProperty('hashedRt');
   });
 
   it('POST /auth/refresh returns 403 when stored refresh hash is missing', async () => {

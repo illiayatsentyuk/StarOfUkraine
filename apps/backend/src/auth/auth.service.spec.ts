@@ -51,6 +51,29 @@ describe('AuthService', () => {
     hashedRt: 'hashed-rt',
   };
 
+  const publicUserFields = {
+    id: 'user-1',
+    email: 'user@example.com',
+    name: 'Ivan Petrenko',
+    image: null as string | null,
+    role: Role.USER,
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
+  const userSelectArgs = {
+    where: { id: 'user-1' },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      image: true,
+      role: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -207,28 +230,26 @@ describe('AuthService', () => {
 
   describe('getMe', () => {
     it('returns user and role for a regular user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.findUnique.mockResolvedValue(publicUserFields);
 
       const result = await service.getMe('user-1');
 
-      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 'user-1' },
-      });
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(userSelectArgs);
       expect(result).toEqual({
-        user: mockUser,
+        user: publicUserFields,
         message: 'Authenticated',
         role: Role.USER,
       });
     });
 
     it('returns role "admin" for an admin user', async () => {
-      const adminUser = { ...mockUser, role: Role.ADMIN };
-      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+      const adminPublic = { ...publicUserFields, role: Role.ADMIN };
+      mockPrisma.user.findUnique.mockResolvedValue(adminPublic);
 
       const result = await service.getMe('user-1');
 
       expect(result).toEqual({
-        user: adminUser,
+        user: adminPublic,
         message: 'Authenticated',
         role: 'admin',
       });
