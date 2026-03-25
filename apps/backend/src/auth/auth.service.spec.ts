@@ -7,7 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import jwtTokensConfig from '../config/jwt.config';
-import { Role } from '../enum';
+import { AuthProvider, Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
@@ -24,6 +24,10 @@ describe('AuthService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
+    },
+    account: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
     },
   };
 
@@ -198,6 +202,189 @@ describe('AuthService', () => {
           password: 'wrong-password',
         }),
       ).rejects.toThrow(new ForbiddenException('Access Denied'));
+    });
+  });
+
+  describe('getMe', () => {
+    it('returns user and role for a regular user', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+
+      const result = await service.getMe('user-1');
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      });
+      expect(result).toEqual({
+        user: mockUser,
+        message: 'Authenticated',
+        role: Role.USER,
+      });
+    });
+
+    it('returns role "admin" for an admin user', async () => {
+      const adminUser = { ...mockUser, role: Role.ADMIN };
+      mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+
+      const result = await service.getMe('user-1');
+
+      expect(result).toEqual({
+        user: adminUser,
+        message: 'Authenticated',
+        role: 'admin',
+      });
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.getMe('missing-id')).rejects.toThrow(
+        new NotFoundException('No user found'),
+      );
+    });
+  });
+
+  describe('logout', () => {
+    it('clears stored refresh token hash', async () => {
+      mockPrisma.user.update.mockResolvedValue(mockUser);
+
+      await service.logout('user-1');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: { hashedRt: null },
+      });
+    });
+  });
+
+  describe('refreshTokens', () => {
+    it('returns new tokens when refresh token matches stored hash', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-rt');
+
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        hashedRt: 'new-hashed-rt',
+      });
+
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('new-at')
+        .mockResolvedValueOnce('new-rt');
+
+      const result = await service.refreshTokens('user-1', 'raw-refresh-jwt');
+
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'raw-refresh-jwt',
+        mockUser.hashedRt,
+      );
+      expect(result).toEqual({
+        access_token: 'new-at',
+        refresh_token: 'new-rt',
+      });
+    });
+
+    it('throws ForbiddenException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.refreshTokens('missing', 'raw-refresh-jwt'),
+      ).rejects.toThrow(new ForbiddenException('Access Denied'));
+    });
+
+    it('throws ForbiddenException when user has no stored refresh hash', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...mockUser,
+        hashedRt: null,
+      });
+
+      await expect(
+        service.refreshTokens('user-1', 'raw-refresh-jwt'),
+      ).rejects.toThrow(new ForbiddenException('Access Denied'));
+    });
+
+    it('throws ForbiddenException when refresh token does not match', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        service.refreshTokens('user-1', 'wrong-refresh-jwt'),
+      ).rejects.toThrow(new ForbiddenException('Access Denied'));
+    });
+  });
+
+  describe('findOrCreateFromGoogle', () => {
+    const googleProfile = {
+      sub: 'google-sub-1',
+      email: 'oauth@example.com',
+      name: 'OAuth User',
+    };
+
+    it('returns existing user when Google account is already linked', async () => {
+      mockPrisma.account.findUnique.mockResolvedValue({
+        user: mockUser,
+      });
+
+      const result = await service.findOrCreateFromGoogle(googleProfile);
+
+      expect(result).toEqual(mockUser);
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.account.create).not.toHaveBeenCalled();
+    });
+
+    it('creates user and account for a new Google identity', async () => {
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const newUser = {
+        ...mockUser,
+        id: 'new-user-id',
+        email: 'oauth@example.com',
+        name: 'OAuth User',
+        hash: null,
+      };
+      mockPrisma.user.create.mockResolvedValue(newUser);
+      mockPrisma.account.create.mockResolvedValue({});
+
+      const result = await service.findOrCreateFromGoogle(googleProfile);
+
+      expect(mockPrisma.user.create).toHaveBeenCalledWith({
+        data: {
+          email: 'oauth@example.com',
+          name: 'OAuth User',
+        },
+      });
+      expect(mockPrisma.account.create).toHaveBeenCalledWith({
+        data: {
+          userId: 'new-user-id',
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: 'google-sub-1',
+        },
+      });
+      expect(result).toEqual(newUser);
+    });
+
+    it('links Google account to an existing user with the same email', async () => {
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      mockPrisma.account.create.mockResolvedValue({});
+
+      const profileSameEmail = {
+        sub: 'google-sub-new',
+        email: 'user@example.com',
+        name: 'Linked',
+      };
+
+      const result = await service.findOrCreateFromGoogle(profileSameEmail);
+
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockPrisma.account.create).toHaveBeenCalledWith({
+        data: {
+          userId: mockUser.id,
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: 'google-sub-new',
+        },
+      });
+      expect(result).toEqual(mockUser);
     });
   });
 });

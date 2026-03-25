@@ -134,6 +134,18 @@ describe('Auth (e2e)', () => {
       .expect(404);
   });
 
+  it('POST /auth/login returns 403 with wrong password', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(userMock);
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'user@example.com',
+        password: 'WrongPassword!',
+      })
+      .expect(403);
+  });
+
   it('POST /auth/me returns 401 without token', async () => {
     await request(app.getHttpServer()).post('/auth/me').expect(401);
   });
@@ -153,6 +165,28 @@ describe('Auth (e2e)', () => {
       .expect(201);
 
     await agent.post('/auth/me').expect(201).expect({ ok: true });
+  });
+
+  it('POST /auth/refresh returns 403 when stored refresh hash is missing', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(userMock);
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
+
+    const agent = request.agent(app.getHttpServer());
+
+    await agent
+      .post('/auth/login')
+      .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
+      .expect(201);
+
+    mockPrisma.user.findUnique.mockResolvedValue({
+      ...userMock,
+      hashedRt: null,
+    });
+
+    await agent.post('/auth/refresh').expect(403);
   });
 
   it('POST /auth/refresh refreshes tokens using refresh_token cookie', async () => {

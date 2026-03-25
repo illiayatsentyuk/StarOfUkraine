@@ -28,11 +28,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ) {
+    console.log(profile);
     const user = await this.authService.findOrCreateFromGoogle({
       sub: profile.id,
-      email: profile?.emails?.[0]?.value ?? '',
-      name: profile.displayName,
-      picture: profile?.photos?.[0]?.value,
+      email: profile._json.email ?? '',
+      name: profile._json.name,
+      picture: profile._json.picture,
     });
     done(null, user);
   }
