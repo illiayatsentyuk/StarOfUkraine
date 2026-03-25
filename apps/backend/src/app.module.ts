@@ -8,11 +8,13 @@ import { APP_GUARD } from '@nestjs/core';
 import { AtGuard } from './common/guards/at.guard';
 import { ConfigModule } from '@nestjs/config';
 import jwtConfig from './config/jwt.config';
+import paginationConfig from './config/pagination.config';
+import databaseConfig from './config/database.config';
 
 @Module({
   imports: [AuthModule, TeamModule, TournamentModule, ConfigModule.forRoot({
     isGlobal: true,
-    load: [jwtConfig],
+    load: [jwtConfig, paginationConfig, databaseConfig],
   })],
   controllers: [AppController],
   providers: [

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,11 +9,12 @@ import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 import { SortBy, SortOrder } from '../enum';
+import paginationConfig from '../config/pagination.config';
+import type { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class TournamentService {
-  constructor(private readonly prisma: PrismaService) {}
-  private readonly defaultPageSize = Number(process.env.PAGE_SIZE) || 10;
+  constructor(private readonly prisma: PrismaService, @Inject(paginationConfig.KEY) private paginationsConfig: ConfigType<typeof paginationConfig>) {}
 
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({
@@ -44,7 +46,7 @@ export class TournamentService {
 
   async findAll(query: FindQueryDto) {
     const page = Number(query.page ?? 1);
-    const limit = Number(query.limit ?? this.defaultPageSize);
+    const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
     const totalCount = await this.prisma.tournament.count();
     const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 

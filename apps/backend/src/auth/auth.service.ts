@@ -10,15 +10,17 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { ConfigService } from '@nestjs/config';
+import type { ConfigType } from '@nestjs/config';
 import type { SignOptions } from 'jsonwebtoken';
+import jwtTokensConfig from '../config/jwt.config';
+import { Inject } from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    private configService: ConfigService,
+    @Inject(jwtTokensConfig.KEY) private jwtConfig: ConfigType<typeof jwtTokensConfig>,
   ) {}
 
   async getMe(userId: string) {
@@ -101,14 +103,10 @@ export class AuthService {
     email: string,
     role: Role,
   ): Promise<Tokens> {
-    const atSecret = this.configService.get<string>('jwt.at.secret');
-    const rtSecret = this.configService.get<string>('jwt.rt.secret');
-    const atExpiresIn = this.configService.get<string | undefined>(
-      'jwt.at.expiresIn',
-    );
-    const rtExpiresIn = this.configService.get<string | undefined>(
-      'jwt.rt.expiresIn',
-    );
+    const atSecret = this.jwtConfig.at.secret;
+    const rtSecret = this.jwtConfig.rt.secret;
+    const atExpiresIn = this.jwtConfig.at.expiresIn;
+    const rtExpiresIn = this.jwtConfig.rt.expiresIn;
 
     const atExpires = (atExpiresIn ?? '15m') as SignOptions['expiresIn'];
     const rtExpires = (rtExpiresIn ?? '7d') as SignOptions['expiresIn'];

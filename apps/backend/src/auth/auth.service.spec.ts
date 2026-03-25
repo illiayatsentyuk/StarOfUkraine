@@ -3,10 +3,10 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import jwtTokensConfig from '../config/jwt.config';
 import { Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
@@ -31,16 +31,11 @@ describe('AuthService', () => {
     signAsync: jest.fn(),
   };
 
-  const mockConfigService = {
-    get: jest.fn((key: string) => {
-      const map: Record<string, string> = {
-        'jwt.at.secret': 'at-secret-test',
-        'jwt.rt.secret': 'rt-secret-test',
-        'jwt.at.expiresIn': '15m',
-        'jwt.rt.expiresIn': '7d',
-      };
-      return map[key];
-    }),
+  const mockJwtConfig = {
+    secret: 'jwt-secret-test',
+    at: { secret: 'at-secret-test', expiresIn: '15m' },
+    rt: { secret: 'rt-secret-test', expiresIn: '7d' },
+    signOptions: { expiresIn: '1d' },
   };
 
   const mockUser = {
@@ -65,8 +60,8 @@ describe('AuthService', () => {
           useValue: mockJwtService,
         },
         {
-          provide: ConfigService,
-          useValue: mockConfigService,
+          provide: jwtTokensConfig.KEY,
+          useValue: mockJwtConfig,
         },
       ],
     }).compile();

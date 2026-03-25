@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,11 +9,12 @@ import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 import { SortBy, SortOrder } from '../enum';
+import paginationConfig from '../config/pagination.config';
+import type { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class TeamService {
-  constructor(private readonly prisma: PrismaService) {}
-  private readonly defaultPageSize = Number(process.env.PAGE_SIZE) || 10;
+  constructor(private readonly prisma: PrismaService, @Inject(paginationConfig.KEY) private paginationsConfig: ConfigType<typeof paginationConfig>) {}
 
   async create(data: CreateTeamDto) {
     const existingTeam = await this.prisma.team.findFirst({
@@ -40,7 +42,7 @@ export class TeamService {
 
   async findAll(query: FindQueryDto) {
     const page = Number(query.page ?? 1);
-    const limit = Number(query.limit ?? this.defaultPageSize);
+    const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
     const totalCount = await this.prisma.team.count();
     const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 

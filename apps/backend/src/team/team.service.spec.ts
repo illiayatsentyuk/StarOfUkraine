@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
+import paginationConfig from '../config/pagination.config';
 import { SortBy, SortOrder } from '../enum';
 import { TeamService } from './team.service';
 
@@ -38,6 +39,10 @@ describe('TeamService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: paginationConfig.KEY,
+          useValue: { pageSize: '10' },
         },
       ],
     }).compile();
