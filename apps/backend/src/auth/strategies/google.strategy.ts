@@ -1,11 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { ConfigType } from '@nestjs/config';
-import { PassportStrategy } from '@nestjs/passport';
-import { Strategy } from 'passport-google-oauth20';
-import googleConfig from 'src/config/google.config';
-import type { Profile, VerifyCallback } from 'passport-google-oauth20';
-import { AuthService } from '../auth.service';
-import { OAuthUserPayload } from 'src/common/types';
+import { Inject, Injectable } from '@nestjs/common'
+import type { ConfigType } from '@nestjs/config'
+import { PassportStrategy } from '@nestjs/passport'
+import type { Profile, VerifyCallback } from 'passport-google-oauth20'
+import { Strategy } from 'passport-google-oauth20'
+import { OAuthUserPayload } from 'src/common/types'
+import googleConfig from 'src/config/google.config'
+import { AuthService } from '../auth.service'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -19,7 +19,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret: googleKeysConfig.clientSecret,
       callbackURL: googleKeysConfig.callbackURL,
       scope: ['email', 'profile'],
-    });
+    })
   }
 
   async validate(
@@ -28,13 +28,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ) {
-    console.log(profile);
+    console.log(profile)
     const user = await this.authService.findOrCreateFromGoogle({
       sub: profile.id,
       email: profile._json.email ?? '',
       name: profile._json.name,
       picture: profile._json.picture,
-    });
-    done(null, user);
+    })
+    done(null, user)
   }
 }

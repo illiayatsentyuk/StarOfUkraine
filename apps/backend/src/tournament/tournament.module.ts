@@ -1,8 +1,8 @@
-import { Module } from '@nestjs/common';
-import { TournamentService } from './tournament.service';
-import { TournamentController } from './tournament.controller';
-import { PrismaService } from '../prisma/prisma.service';
-import { ConfigModule } from '@nestjs/config';
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { PrismaService } from '../prisma/prisma.service'
+import { TournamentController } from './tournament.controller'
+import { TournamentService } from './tournament.service'
 
 @Module({
   controllers: [TournamentController],

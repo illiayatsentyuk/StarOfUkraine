@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import {
   ArrayMinSize,
   IsArray,
@@ -6,22 +6,22 @@ import {
   IsOptional,
   IsString,
   MinLength,
-} from 'class-validator';
+} from 'class-validator'
 
 export class CreateTeamDto {
   @ApiProperty({ example: 'Star of Ukraine' })
   @IsString()
   @MinLength(1)
-  teamName: string;
+  teamName: string
 
   @ApiProperty({ example: 'Olena Kovalenko' })
   @IsString()
   @MinLength(1)
-  captainName: string;
+  captainName: string
 
   @ApiProperty({ example: 'olena@example.com' })
   @IsEmail()
-  captainEmail: string;
+  captainEmail: string
 
   @ApiProperty({
     type: [String],
@@ -30,25 +30,25 @@ export class CreateTeamDto {
   @IsArray()
   @ArrayMinSize(1)
   @IsString({ each: true })
-  members: string[];
+  members: string[]
 
   @ApiPropertyOptional({ example: 'Kyiv' })
   @IsOptional()
   @IsString()
-  city?: string;
+  city?: string
 
   @ApiPropertyOptional({ example: 'UA Esports' })
   @IsOptional()
   @IsString()
-  organization?: string;
+  organization?: string
 
   @ApiPropertyOptional({ example: '@starofukraine' })
   @IsOptional()
   @IsString()
-  telegram?: string;
+  telegram?: string
 
   @ApiPropertyOptional({ example: 'starofukraine#1234' })
   @IsOptional()
   @IsString()
-  discord?: string;
+  discord?: string
 }

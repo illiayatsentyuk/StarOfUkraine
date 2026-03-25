@@ -42,4 +42,4 @@ export const teamExamples = {
     totalPages: 3,
     itemsPerPage: 10,
   },
-} as const;
+} as const

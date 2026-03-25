@@ -3,11 +3,11 @@ import {
   Injectable,
   OnModuleDestroy,
   OnModuleInit,
-} from '@nestjs/common';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '@prisma/client';
-import databaseConfig from '../config/database.config';
-import type { ConfigType } from '@nestjs/config';
+} from '@nestjs/common'
+import type { ConfigType } from '@nestjs/config'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { PrismaClient } from '@prisma/client'
+import databaseConfig from '../config/database.config'
 
 @Injectable()
 export class PrismaService
@@ -18,18 +18,18 @@ export class PrismaService
     @Inject(databaseConfig.KEY)
     private dbConfig: ConfigType<typeof databaseConfig>,
   ) {
-    const connectionString = dbConfig.url;
+    const connectionString = dbConfig.url
     if (!connectionString) {
-      throw new Error('DATABASE_URL is not set');
+      throw new Error('DATABASE_URL is not set')
     }
-    super({ adapter: new PrismaPg({ connectionString }) });
+    super({ adapter: new PrismaPg({ connectionString }) })
   }
 
   async onModuleInit() {
-    await this.$connect();
+    await this.$connect()
   }
 
   async onModuleDestroy() {
-    await this.$disconnect();
+    await this.$disconnect()
   }
 }

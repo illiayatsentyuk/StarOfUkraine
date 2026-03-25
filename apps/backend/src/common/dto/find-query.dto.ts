@@ -1,7 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
-import { SortBy, SortOrder } from '../../enum';
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator'
+import { SortBy, SortOrder } from '../../enum'
 
 export class FindQueryDto {
   @ApiPropertyOptional({ example: 1, description: 'Page number (1-based)' })
@@ -9,7 +9,7 @@ export class FindQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  page?: number;
+  page?: number
 
   @ApiPropertyOptional({
     example: 10,
@@ -19,15 +19,15 @@ export class FindQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  limit?: number;
+  limit?: number
 
   @ApiPropertyOptional({ enum: SortOrder, description: 'Sort order' })
   @IsOptional()
   @IsEnum(SortOrder)
-  sortOrder?: SortOrder;
+  sortOrder?: SortOrder
 
   @ApiPropertyOptional({ enum: SortBy, description: 'Sort by' })
   @IsOptional()
   @IsEnum(SortBy)
-  sortBy?: SortBy;
+  sortBy?: SortBy
 }

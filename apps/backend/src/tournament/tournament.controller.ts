@@ -7,10 +7,7 @@ import {
   Patch,
   Post,
   Query,
-} from '@nestjs/common';
-import { TournamentService } from './tournament.service';
-import { CreateTournamentDto } from './dto/create-tournament.dto';
-import { UpdateTournamentDto } from './dto/update-tournament.dto';
+} from '@nestjs/common'
 import {
   ApiBearerAuth,
   ApiBody,
@@ -20,12 +17,15 @@ import {
   ApiQuery,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger';
-import { authExamples, tournamentExamples } from '../examples';
-import { Public } from '../common/decorators';
-import { FindQueryDto } from '../common/dto/find-query.dto';
-import { Role } from 'src/enum';
-import { Roles } from 'src/common/decorators';
+} from '@nestjs/swagger'
+import { Roles } from 'src/common/decorators'
+import { Role } from 'src/enum'
+import { Public } from '../common/decorators'
+import { FindQueryDto } from '../common/dto/find-query.dto'
+import { authExamples, tournamentExamples } from '../examples'
+import { CreateTournamentDto } from './dto/create-tournament.dto'
+import { UpdateTournamentDto } from './dto/update-tournament.dto'
+import { TournamentService } from './tournament.service'
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -56,7 +56,7 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   create(@Body() data: CreateTournamentDto) {
-    return this.tournamentService.create(data);
+    return this.tournamentService.create(data)
   }
 
   @Public()
@@ -81,7 +81,7 @@ export class TournamentController {
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
   findAll(@Query() query: FindQueryDto) {
-    return this.tournamentService.findAll(query);
+    return this.tournamentService.findAll(query)
   }
 
   @Public()
@@ -95,7 +95,7 @@ export class TournamentController {
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   findOne(@Param('id') id: string) {
-    return this.tournamentService.findOne(id);
+    return this.tournamentService.findOne(id)
   }
 
   @Patch(':id')
@@ -127,7 +127,7 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
-    return this.tournamentService.update(id, data);
+    return this.tournamentService.update(id, data)
   }
 
   @Delete(':id')
@@ -149,6 +149,6 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   remove(@Param('id') id: string) {
-    return this.tournamentService.remove(id);
+    return this.tournamentService.remove(id)
   }
 }

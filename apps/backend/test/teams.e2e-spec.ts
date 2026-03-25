@@ -1,13 +1,13 @@
-import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
-import request from 'supertest';
-import { AppModule } from '../src/app.module';
-import { Role } from '../src/enum';
-import { PrismaService } from '../src/prisma/prisma.service';
-import { signE2eAccessToken } from './helpers/sign-e2e-access-token';
+import { INestApplication } from '@nestjs/common'
+import { Test, TestingModule } from '@nestjs/testing'
+import request from 'supertest'
+import { AppModule } from '../src/app.module'
+import { Role } from '../src/enum'
+import { PrismaService } from '../src/prisma/prisma.service'
+import { signE2eAccessToken } from './helpers/sign-e2e-access-token'
 
 describe('Teams (e2e)', () => {
-  let app: INestApplication;
+  let app: INestApplication
 
   const teamMock = {
     id: 'team-1',
@@ -19,7 +19,7 @@ describe('Teams (e2e)', () => {
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
-  };
+  }
 
   const mockPrisma = {
     team: {
@@ -44,7 +44,7 @@ describe('Teams (e2e)', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
     },
-  };
+  }
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -52,27 +52,27 @@ describe('Teams (e2e)', () => {
     })
       .overrideProvider(PrismaService)
       .useValue(mockPrisma)
-      .compile();
+      .compile()
 
-    app = moduleFixture.createNestApplication();
-    await app.init();
-  });
+    app = moduleFixture.createNestApplication()
+    await app.init()
+  })
 
   afterAll(async () => {
-    await app.close();
-  });
+    await app.close()
+  })
 
   afterEach(() => {
-    jest.clearAllMocks();
-  });
+    jest.clearAllMocks()
+  })
 
   it('GET /teams returns paginated response', async () => {
-    mockPrisma.team.count.mockResolvedValue(1);
-    mockPrisma.team.findMany.mockResolvedValue([teamMock]);
+    mockPrisma.team.count.mockResolvedValue(1)
+    mockPrisma.team.findMany.mockResolvedValue([teamMock])
 
     const response = await request(app.getHttpServer())
       .get('/teams')
-      .expect(200);
+      .expect(200)
 
     expect(response.body).toEqual({
       data: [teamMock],
@@ -81,22 +81,22 @@ describe('Teams (e2e)', () => {
       previousPage: null,
       totalPages: 1,
       itemsPerPage: 10,
-    });
-  });
+    })
+  })
 
   it('GET /teams/:id returns team', async () => {
-    mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+    mockPrisma.team.findUnique.mockResolvedValue(teamMock)
 
     const response = await request(app.getHttpServer())
       .get('/teams/team-1')
-      .expect(200);
+      .expect(200)
 
-    expect(response.body).toEqual(teamMock);
-  });
+    expect(response.body).toEqual(teamMock)
+  })
 
   it('POST /teams creates team', async () => {
-    mockPrisma.team.findFirst.mockResolvedValue(null);
-    mockPrisma.team.create.mockResolvedValue(teamMock);
+    mockPrisma.team.findFirst.mockResolvedValue(null)
+    mockPrisma.team.create.mockResolvedValue(teamMock)
 
     const response = await request(app.getHttpServer())
       .post('/teams')
@@ -107,8 +107,8 @@ describe('Teams (e2e)', () => {
         captainEmail: teamMock.captainEmail,
         members: teamMock.members,
       })
-      .expect(201);
+      .expect(201)
 
-    expect(response.body).toEqual(teamMock);
-  });
-});
+    expect(response.body).toEqual(teamMock)
+  })
+})

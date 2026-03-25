@@ -1,4 +1,4 @@
-import { TournamentStatus } from '@prisma/client';
+import { TournamentStatus } from '@prisma/client'
 
 export const tournamentExamples = {
   createRequest: {
@@ -53,4 +53,4 @@ export const tournamentExamples = {
     totalPages: 3,
     itemsPerPage: 10,
   },
-} as const;
+} as const

@@ -1,17 +1,17 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { AuthModule } from './auth/auth.module';
-import { TeamModule } from './team/team.module';
-import { TournamentModule } from './tournament/tournament.module';
-import { APP_GUARD } from '@nestjs/core';
-import { AtGuard } from './common/guards/at.guard';
-import { RolesGuard } from './common/guards/roles.guard';
-import { ConfigModule } from '@nestjs/config';
-import jwtConfig from './config/jwt.config';
-import paginationConfig from './config/pagination.config';
-import databaseConfig from './config/database.config';
-import googleConfig from './config/google.config';
+import { Module } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { AuthModule } from './auth/auth.module'
+import { AtGuard } from './common/guards/at.guard'
+import { RolesGuard } from './common/guards/roles.guard'
+import databaseConfig from './config/database.config'
+import googleConfig from './config/google.config'
+import jwtConfig from './config/jwt.config'
+import paginationConfig from './config/pagination.config'
+import { TeamModule } from './team/team.module'
+import { TournamentModule } from './tournament/tournament.module'
 
 @Module({
   imports: [
