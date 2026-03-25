@@ -15,6 +15,7 @@ import {
   ApiBody,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -49,11 +50,24 @@ export class TournamentController {
   @Public()
   @Get()
   @ApiOperation({ summary: 'List all tournaments' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (1-based)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page (defaults to PAGE_SIZE env var)',
+    example: 10,
+  })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
     schema: { example: tournamentExamples.paginatedResponse },
   })
+  @ApiResponse({ status: 400, description: 'Page number is out of range' })
   findAll(@Query() query: FindQueryDto) {
     return this.tournamentService.findAll(query);
   }

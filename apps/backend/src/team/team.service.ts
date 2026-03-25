@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { FindQueryDto } from '../common/dto/find-query.dto';
+import { SortBy, SortOrder } from '../enum';
 
 @Injectable()
 export class TeamService {
@@ -47,9 +48,15 @@ export class TeamService {
       throw new BadRequestException('Page number is out of range');
     }
 
+    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortOrder = query.sortOrder ?? SortOrder.DESC;
+
     const teams = await this.prisma.team.findMany({
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
+      orderBy: {
+        [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
+      },
     });
 
     return {
