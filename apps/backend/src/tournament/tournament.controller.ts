@@ -12,20 +12,21 @@ import { TournamentService } from './tournament.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import {
+  ApiBearerAuth,
   ApiBody,
+  ApiCookieAuth,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { tournamentExamples } from '../examples';
+import { authExamples, tournamentExamples } from '../examples';
 import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 import { Role } from 'src/enum';
 import { Roles } from 'src/common/decorators';
 
-@Public()
 @ApiTags('Tournaments')
 @Controller('tournaments')
 export class TournamentController {
@@ -33,6 +34,8 @@ export class TournamentController {
 
   @Post()
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new tournament' })
   @ApiBody({
     type: CreateTournamentDto,
@@ -46,6 +49,12 @@ export class TournamentController {
     schema: { example: tournamentExamples.response },
   })
   @ApiResponse({ status: 400, description: 'Tournament already exists' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   create(@Body() data: CreateTournamentDto) {
     return this.tournamentService.create(data);
   }
@@ -91,6 +100,8 @@ export class TournamentController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Update a tournament by id' })
   @ApiBody({
@@ -109,12 +120,20 @@ export class TournamentController {
     description: 'Tournament with this name already exists',
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
     return this.tournamentService.update(id, data);
   }
 
   @Delete(':id')
   @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Delete a tournament by id' })
   @ApiResponse({
@@ -123,6 +142,12 @@ export class TournamentController {
     schema: { example: tournamentExamples.response },
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
   remove(@Param('id') id: string) {
     return this.tournamentService.remove(id);
   }

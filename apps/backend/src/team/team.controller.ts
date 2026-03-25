@@ -12,20 +12,21 @@ import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import {
+  ApiBearerAuth,
   ApiBody,
+  ApiCookieAuth,
   ApiOperation,
+  ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
-  ApiParam,
 } from '@nestjs/swagger';
-import { teamExamples } from '../examples';
+import { authExamples, teamExamples } from '../examples';
 import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 import { Role } from 'src/enum';
 import { Roles } from 'src/common/decorators';
 
-@Public()
 @ApiTags('Teams')
 @Controller('teams')
 export class TeamController {
@@ -33,6 +34,8 @@ export class TeamController {
 
   @Post()
   @Roles(Role.USER)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new team' })
   @ApiBody({
     type: CreateTeamDto,
@@ -46,10 +49,17 @@ export class TeamController {
     schema: { example: teamExamples.response },
   })
   @ApiResponse({ status: 400, description: 'Team already exists' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   create(@Body() data: CreateTeamDto) {
     return this.teamService.create(data);
   }
 
+  @Public()
   @Get()
   @ApiOperation({ summary: 'List all teams' })
   @ApiQuery({
@@ -74,6 +84,7 @@ export class TeamController {
     return this.teamService.findAll(query);
   }
 
+  @Public()
   @Get(':id')
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiOperation({ summary: 'Get a team by id' })
@@ -89,6 +100,8 @@ export class TeamController {
 
   @Patch(':id')
   @Roles(Role.USER)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiOperation({ summary: 'Update a team by id' })
   @ApiBody({
@@ -107,12 +120,20 @@ export class TeamController {
     description: 'Team with this name already exists',
   })
   @ApiResponse({ status: 404, description: 'Team not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
     return this.teamService.update(id, data);
   }
 
   @Delete(':id')
   @Roles(Role.USER)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiOperation({ summary: 'Delete a team by id' })
   @ApiResponse({
@@ -121,6 +142,12 @@ export class TeamController {
     schema: { example: teamExamples.response },
   })
   @ApiResponse({ status: 404, description: 'Team not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   remove(@Param('id') id: string) {
     return this.teamService.remove(id);
   }

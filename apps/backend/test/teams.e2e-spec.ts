@@ -2,7 +2,9 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { Role } from '../src/enum';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { signE2eAccessToken } from './helpers/sign-e2e-access-token';
 
 describe('Teams (e2e)', () => {
   let app: INestApplication;
@@ -98,6 +100,7 @@ describe('Teams (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .post('/teams')
+      .set('Authorization', `Bearer ${signE2eAccessToken(Role.USER)}`)
       .send({
         teamName: teamMock.teamName,
         captainName: teamMock.captainName,
