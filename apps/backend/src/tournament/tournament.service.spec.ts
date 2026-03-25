@@ -2,6 +2,7 @@ import { TournamentStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
+import paginationConfig from '../config/pagination.config';
 import { SortBy, SortOrder } from '../enum';
 import { TournamentService } from './tournament.service';
 
@@ -42,6 +43,10 @@ describe('TournamentService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: paginationConfig.KEY,
+          useValue: { pageSize: '10' },
         },
       ],
     }).compile();
