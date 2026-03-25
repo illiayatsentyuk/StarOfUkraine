@@ -13,7 +13,7 @@ import { PrismaService } from '../prisma/prisma.service';
     ConfigModule.forRoot({ isGlobal: true }),
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET ?? 'changeme',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1d' },
     }),
   ],
