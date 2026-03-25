@@ -10,12 +10,14 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private configService: ConfigService,
   ) {}
 
   async getMe(userId: string) {
@@ -98,8 +100,10 @@ export class AuthService {
     email: string,
     role: Role,
   ): Promise<Tokens> {
-    const atSecret = process.env.AT_SECRET;
-    const rtSecret = process.env.RT_SECRET;
+    const atSecret = this.configService.get<string>('jwt.at.secret');
+    const rtSecret = this.configService.get<string>('jwt.rt.secret');
+    const atExpiresIn = this.configService.get<string>('jwt.at.expiresIn');
+    const rtExpiresIn = this.configService.get<string>('jwt.rt.expiresIn');
 
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
@@ -110,7 +114,7 @@ export class AuthService {
         },
         {
           secret: atSecret,
-          expiresIn: 60 * 15,
+          expiresIn: atExpiresIn,
         },
       ),
       this.jwtService.signAsync(
@@ -121,7 +125,7 @@ export class AuthService {
         },
         {
           secret: rtSecret,
-          expiresIn: 60 * 60 * 24 * 7,
+          expiresIn: rtExpiresIn,
         },
       ),
     ]);
