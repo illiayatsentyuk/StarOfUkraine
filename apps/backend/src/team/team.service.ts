@@ -14,7 +14,11 @@ import type { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class TeamService {
-  constructor(private readonly prisma: PrismaService, @Inject(paginationConfig.KEY) private paginationsConfig: ConfigType<typeof paginationConfig>) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(paginationConfig.KEY)
+    private paginationsConfig: ConfigType<typeof paginationConfig>,
+  ) {}
 
   async create(data: CreateTeamDto) {
     const existingTeam = await this.prisma.team.findFirst({

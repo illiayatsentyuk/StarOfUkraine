@@ -8,19 +8,21 @@ import { SignupDto, SigninDto } from './dto';
 import { Tokens } from './types';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '../enum';
+import { Role, AuthProvider } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import type { ConfigType } from '@nestjs/config';
 import type { SignOptions } from 'jsonwebtoken';
 import jwtTokensConfig from '../config/jwt.config';
 import { Inject } from '@nestjs/common';
+import { OAuthUserPayload } from '../common/types';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
-    @Inject(jwtTokensConfig.KEY) private jwtConfig: ConfigType<typeof jwtTokensConfig>,
+    @Inject(jwtTokensConfig.KEY)
+    private jwtConfig: ConfigType<typeof jwtTokensConfig>,
   ) {}
 
   async getMe(userId: string) {
@@ -64,7 +66,7 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('No user found');
 
-    const passwordMatches = await bcrypt.compare(dto.password, user.hash);
+    const passwordMatches = await bcrypt.compare(dto.password, user.hash ?? '');
     if (!passwordMatches) throw new ForbiddenException('Access Denied');
 
     const tokens = await this.getTokens(String(user.id), user.email, user.role);
@@ -98,11 +100,7 @@ export class AuthService {
     return bcrypt.hash(data, 10);
   }
 
-  async getTokens(
-    userId: string,
-    email: string,
-    role: Role,
-  ): Promise<Tokens> {
+  async getTokens(userId: string, email: string, role: Role): Promise<Tokens> {
     const atSecret = this.jwtConfig.at.secret;
     const rtSecret = this.jwtConfig.rt.secret;
     const atExpiresIn = this.jwtConfig.at.expiresIn;
@@ -149,13 +147,46 @@ export class AuthService {
     });
   }
 
-  async validateGoogleUser(googleUser: any) {
-    const user = await this.prisma.user.findUnique({
-      where: { email: googleUser.email },
+  async findOrCreateFromGoogle(profile: OAuthUserPayload) {
+    const existingAccount = await this.prisma.account.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: AuthProvider.GOOGLE,
+          providerAccountId: profile.sub,
+        },
+      },
+      include: { user: true },
     });
-    if (!user) {
-      throw new NotFoundException('User not found');
+
+    if (existingAccount) {
+      return existingAccount.user; // already linked, just return the user
     }
+
+    // 2. Check if a user with this email already exists (password account)
+    let user = await this.prisma.user.findUnique({
+      where: { email: profile.email },
+    });
+
+    // 3. Create user if they don't exist at all
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: profile.email,
+          name: profile.name,
+          // no password — OAuth user
+        },
+      });
+    }
+
+    // 4. Link the Google account to the user
+    await this.prisma.account.create({
+      data: {
+        userId: user.id,
+        provider: AuthProvider.GOOGLE,
+        providerAccountId: profile.sub,
+      },
+    });
+
     return user;
   }
 }

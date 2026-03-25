@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto, SignupDto } from './dto';
 import type { Response } from 'express';
@@ -11,11 +11,15 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { GetCurrentUser, GetCurrentUserId, Public } from '../common/decorators';
+import {
+  GetCurrentOAuthUser,
+  GetCurrentUser,
+  GetCurrentUserId,
+  Public,
+} from '../common/decorators';
 import { authExamples } from '../examples';
 import { RtGuard } from '../common/guards/rt.guard';
 import { GoogleAuthGuard } from '../common/guards';
-
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -103,7 +107,11 @@ export class AuthController {
   @ApiCookieAuth('access_token')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout (clears HttpOnly cookies)' })
-  @ApiResponse({ status: 201, description: 'Logged out', schema: { example: { ok: true } } })
+  @ApiResponse({
+    status: 201,
+    description: 'Logged out',
+    schema: { example: { ok: true } },
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(
     @GetCurrentUserId() userId: string,
@@ -135,15 +143,19 @@ export class AuthController {
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google/login')
-  googleLogin() {
-
-  }
+  googleLogin() {}
 
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
-  googleCallback() {
+  async googleCallback(@GetCurrentOAuthUser() user: any, @Res({ passthrough: true }) res: Response) {
+    const tokens = await this.authService.getTokens(user.sub, user.email, user.role);
 
+
+    this.setAuthCookies(res, tokens.access_token, tokens.refresh_token);
+    return {
+      ok: true,
+    };
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {

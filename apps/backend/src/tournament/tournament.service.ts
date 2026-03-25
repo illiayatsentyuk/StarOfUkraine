@@ -14,7 +14,11 @@ import type { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class TournamentService {
-  constructor(private readonly prisma: PrismaService, @Inject(paginationConfig.KEY) private paginationsConfig: ConfigType<typeof paginationConfig>) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(paginationConfig.KEY)
+    private paginationsConfig: ConfigType<typeof paginationConfig>,
+  ) {}
 
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({

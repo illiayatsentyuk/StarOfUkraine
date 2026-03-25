@@ -10,7 +10,10 @@ describe('Auth (e2e)', () => {
   let app: INestApplication;
 
   const getSetCookieHeader = (response: request.Response): string[] => {
-    const header = response.headers['set-cookie'] as string[] | string | undefined;
+    const header = response.headers['set-cookie'] as
+      | string[]
+      | string
+      | undefined;
     if (!header) return [];
     return Array.isArray(header) ? header : [header];
   };
@@ -74,7 +77,10 @@ describe('Auth (e2e)', () => {
   it('POST /auth/register sets HttpOnly cookies', async () => {
     mockPrisma.user.create.mockResolvedValue(userMock);
     mockPrisma.user.findUnique.mockResolvedValue(null);
-    mockPrisma.user.update.mockResolvedValue({ ...userMock, hashedRt: 'hashed-rt' });
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
 
     const response = await request(app.getHttpServer())
       .post('/auth/register')
@@ -95,7 +101,10 @@ describe('Auth (e2e)', () => {
 
   it('POST /auth/login sets HttpOnly cookies with valid credentials', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock);
-    mockPrisma.user.update.mockResolvedValue({ ...userMock, hashedRt: 'hashed-rt' });
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
 
     const response = await request(app.getHttpServer())
       .post('/auth/login')
@@ -131,7 +140,10 @@ describe('Auth (e2e)', () => {
 
   it('POST /auth/me returns 200 with access_token cookie', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock);
-    mockPrisma.user.update.mockResolvedValue({ ...userMock, hashedRt: 'hashed-rt' });
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
 
     const agent = request.agent(app.getHttpServer());
 
@@ -145,7 +157,10 @@ describe('Auth (e2e)', () => {
 
   it('POST /auth/refresh refreshes tokens using refresh_token cookie', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock);
-    mockPrisma.user.update.mockResolvedValue({ ...userMock, hashedRt: 'hashed-rt' });
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
 
     const agent = request.agent(app.getHttpServer());
 
@@ -155,7 +170,9 @@ describe('Auth (e2e)', () => {
       .expect(201);
 
     const setCookie = getSetCookieHeader(loginResponse);
-    const refreshCookie = setCookie?.find((c) => c.startsWith('refresh_token='));
+    const refreshCookie = setCookie?.find((c) =>
+      c.startsWith('refresh_token='),
+    );
     expect(refreshCookie).toBeDefined();
     const refreshToken = (refreshCookie as string)
       .split(';')[0]
@@ -178,7 +195,10 @@ describe('Auth (e2e)', () => {
 
   it('POST /auth/logout clears cookies', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock);
-    mockPrisma.user.update.mockResolvedValue({ ...userMock, hashedRt: 'hashed-rt' });
+    mockPrisma.user.update.mockResolvedValue({
+      ...userMock,
+      hashedRt: 'hashed-rt',
+    });
 
     const agent = request.agent(app.getHttpServer());
 

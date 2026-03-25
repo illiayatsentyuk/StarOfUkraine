@@ -19,13 +19,19 @@ import { PrismaService } from '../prisma/prisma.service';
         secret: config.get<string>('jwt.secret'),
         signOptions: {
           expiresIn: (config.get<string>('jwt.signOptions.expiresIn'),
-            '1d') as SignOptions['expiresIn'],
+          '1d') as SignOptions['expiresIn'],
         },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AtStrategy, RtStrategy, PrismaService, GoogleStrategy],
+  providers: [
+    AuthService,
+    AtStrategy,
+    RtStrategy,
+    PrismaService,
+    GoogleStrategy,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -86,7 +86,10 @@ describe('AuthService', () => {
 
       mockPrisma.user.findUnique.mockResolvedValue(null);
       mockPrisma.user.create.mockResolvedValue(mockUser);
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, hashedRt: 'hashed-rt' });
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        hashedRt: 'hashed-rt',
+      });
 
       mockJwtService.signAsync
         .mockResolvedValueOnce('at-token')
@@ -141,7 +144,10 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-rt');
 
       mockPrisma.user.findUnique.mockResolvedValue(mockUser);
-      mockPrisma.user.update.mockResolvedValue({ ...mockUser, hashedRt: 'hashed-rt' });
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        hashedRt: 'hashed-rt',
+      });
 
       mockJwtService.signAsync
         .mockResolvedValueOnce('at-token')
@@ -155,7 +161,10 @@ describe('AuthService', () => {
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'user@example.com' },
       });
-      expect(bcrypt.compare).toHaveBeenCalledWith('plain-password', 'hashed-password');
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        'plain-password',
+        'hashed-password',
+      );
 
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: 'user-1' },
@@ -172,7 +181,10 @@ describe('AuthService', () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.signinLocal({ email: 'missing@example.com', password: 'plain-password' }),
+        service.signinLocal({
+          email: 'missing@example.com',
+          password: 'plain-password',
+        }),
       ).rejects.toThrow(new NotFoundException('No user found'));
     });
 
@@ -181,7 +193,10 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(
-        service.signinLocal({ email: 'user@example.com', password: 'wrong-password' }),
+        service.signinLocal({
+          email: 'user@example.com',
+          password: 'wrong-password',
+        }),
       ).rejects.toThrow(new ForbiddenException('Access Denied'));
     });
   });
