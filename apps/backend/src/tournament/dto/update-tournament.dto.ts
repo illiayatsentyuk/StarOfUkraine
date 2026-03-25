@@ -1,11 +1,28 @@
 import { TournamentStatus } from '@prisma/client';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateTournamentDto {
   @ApiPropertyOptional({ example: 'Star of Ukraine Cup 2026' })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
   name?: string;
 
   @ApiPropertyOptional({ example: 'Open tournament for teams across Ukraine.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10_000)
   description?: string;
 
   @ApiPropertyOptional({
@@ -13,6 +30,8 @@ export class UpdateTournamentDto {
     format: 'date-time',
     example: '2026-04-01T12:00:00.000Z',
   })
+  @IsOptional()
+  @IsDate()
   startDate?: Date;
 
   @ApiPropertyOptional({
@@ -20,6 +39,8 @@ export class UpdateTournamentDto {
     format: 'date-time',
     example: '2026-03-20T00:00:00.000Z',
   })
+  @IsOptional()
+  @IsDate()
   registrationStart?: Date;
 
   @ApiPropertyOptional({
@@ -27,26 +48,44 @@ export class UpdateTournamentDto {
     format: 'date-time',
     example: '2026-03-30T23:59:59.000Z',
   })
+  @IsOptional()
+  @IsDate()
   registrationEnd?: Date;
 
   @ApiPropertyOptional({ example: 64 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   maxTeams?: number;
 
   @ApiPropertyOptional({ example: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   rounds?: number;
 
   @ApiPropertyOptional({ example: 5 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   teamSizeMin?: number;
 
   @ApiPropertyOptional({ example: 7 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   teamSizeMax?: number;
 
   @ApiPropertyOptional({
     enum: TournamentStatus,
     example: TournamentStatus.DRAFT,
   })
+  @IsOptional()
+  @IsEnum(TournamentStatus)
   status?: TournamentStatus;
 
   @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
   hideTeamsUntilRegistrationEnds?: boolean;
 }

@@ -22,6 +22,8 @@ import {
 import { teamExamples } from '../examples';
 import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
+import { Role } from 'src/enum';
+import { Roles } from 'src/common/decorators';
 
 @Public()
 @ApiTags('Teams')
@@ -30,6 +32,7 @@ export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
   @Post()
+  @Roles(Role.USER)
   @ApiOperation({ summary: 'Create a new team' })
   @ApiBody({
     type: CreateTeamDto,
@@ -85,6 +88,7 @@ export class TeamController {
   }
 
   @Patch(':id')
+  @Roles(Role.USER)
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiOperation({ summary: 'Update a team by id' })
   @ApiBody({
@@ -108,6 +112,7 @@ export class TeamController {
   }
 
   @Delete(':id')
+  @Roles(Role.USER)
   @ApiParam({ name: 'id', description: 'Team ID' })
   @ApiOperation({ summary: 'Delete a team by id' })
   @ApiResponse({

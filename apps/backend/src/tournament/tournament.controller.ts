@@ -22,6 +22,8 @@ import {
 import { tournamentExamples } from '../examples';
 import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
+import { Role } from 'src/enum';
+import { Roles } from 'src/common/decorators';
 
 @Public()
 @ApiTags('Tournaments')
@@ -30,6 +32,7 @@ export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
 
   @Post()
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Create a new tournament' })
   @ApiBody({
     type: CreateTournamentDto,
@@ -87,6 +90,7 @@ export class TournamentController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN)
   @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Update a tournament by id' })
   @ApiBody({
@@ -110,6 +114,7 @@ export class TournamentController {
   }
 
   @Delete(':id')
+  @Roles(Role.ADMIN)
   @ApiParam({ name: 'id', description: 'Tournament ID' })
   @ApiOperation({ summary: 'Delete a tournament by id' })
   @ApiResponse({
