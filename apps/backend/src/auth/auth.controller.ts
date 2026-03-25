@@ -27,7 +27,11 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  @ApiOperation({ summary: 'Register a new user' })
+  @ApiOperation({
+    summary: 'Register a new user',
+    description:
+      'Creates an account and sets `access_token` and `refresh_token` as HttpOnly cookies.',
+  })
   @ApiBody({
     type: SignupDto,
     examples: {
@@ -39,7 +43,11 @@ export class AuthController {
     description: 'User successfully registered',
     schema: { example: authExamples.okResponse },
   })
-  @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed or email already in use',
+    schema: { example: authExamples.emailAlreadyInUse },
+  })
   async register(
     @Body() dto: SignupDto,
     @Res({ passthrough: true }) res: Response,
@@ -53,7 +61,11 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login and receive access token' })
+  @ApiOperation({
+    summary: 'Login',
+    description:
+      'Validates credentials and sets `access_token` and `refresh_token` as HttpOnly cookies.',
+  })
   @ApiBody({
     type: SigninDto,
     examples: {
@@ -67,9 +79,14 @@ export class AuthController {
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
   @ApiResponse({
-    status: 401,
-    description: 'Invalid credentials',
-    schema: { example: authExamples.unauthorized },
+    status: 404,
+    description: 'No user with this email',
+    schema: { example: authExamples.userNotFound },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Invalid password',
+    schema: { example: authExamples.accessDenied },
   })
   async login(
     @Body() dto: SigninDto,
@@ -85,14 +102,27 @@ export class AuthController {
   @Public()
   @UseGuards(RtGuard)
   @Post('refresh')
-  @ApiOperation({ summary: 'Refresh tokens (HttpOnly cookie)' })
+  @ApiCookieAuth('refresh_token')
+  @ApiOperation({
+    summary: 'Refresh tokens',
+    description:
+      'Requires a valid refresh token in the HttpOnly `refresh_token` cookie (or Bearer refresh JWT if configured).',
+  })
   @ApiResponse({
     status: 201,
     description: 'Tokens successfully refreshed',
     schema: { example: authExamples.okResponse },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Access Denied' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Invalid or revoked refresh token',
+    schema: { example: authExamples.accessDenied },
+  })
   async refreshTokens(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
@@ -110,9 +140,13 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Logged out',
-    schema: { example: { ok: true } },
+    schema: { example: authExamples.okResponse },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
   async logout(
     @GetCurrentUserId() userId: string,
     @Res({ passthrough: true }) res: Response,
@@ -133,7 +167,11 @@ export class AuthController {
     description: 'Authenticated request successful',
     schema: { example: authExamples.meResponse },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
   me() {
     // This endpoint is just to test JWT guard;
     // real implementation could return user profile from request.
@@ -143,11 +181,35 @@ export class AuthController {
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google/login')
+  @ApiOperation({
+    summary: 'Start Google OAuth',
+    description:
+      'Redirects the browser to Google’s consent screen. After approval, Google redirects to `GET /auth/google/callback`.',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to Google authorization',
+  })
   googleLogin() {}
 
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get('google/callback')
+  @ApiOperation({
+    summary: 'Google OAuth callback',
+    description:
+      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies and returns `{ ok: true }`.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Signed in; cookies set',
+    schema: { example: authExamples.okResponse },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'OAuth failed or was denied',
+    schema: { example: authExamples.unauthorized },
+  })
   async googleCallback(@GetCurrentOAuthUser() user: any, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.getTokens(user.sub, user.email, user.role);
 

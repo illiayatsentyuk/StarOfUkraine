@@ -22,4 +22,22 @@ export const authExamples = {
     message: 'Invalid credentials',
     error: 'Unauthorized',
   },
+  /** Register: duplicate email (BadRequestException) */
+  emailAlreadyInUse: {
+    statusCode: 400,
+    message: 'Email already in use',
+    error: 'Bad Request',
+  },
+  /** Sign in: no user for email */
+  userNotFound: {
+    statusCode: 404,
+    message: 'No user found',
+    error: 'Not Found',
+  },
+  /** Sign in: wrong password */
+  accessDenied: {
+    statusCode: 403,
+    message: 'Access Denied',
+    error: 'Forbidden',
+  },
 } as const;
