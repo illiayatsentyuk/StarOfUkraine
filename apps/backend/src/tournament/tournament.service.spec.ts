@@ -136,7 +136,7 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
       const result = await service.findOne('tournament-1');
-      expect(result).toEqual(1);
+      expect(result).toEqual(tournamentMock);
     });
 
     it('throws when tournament is not found', async () => {
