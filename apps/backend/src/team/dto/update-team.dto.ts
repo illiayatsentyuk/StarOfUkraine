@@ -10,7 +10,10 @@ export class UpdateTeamDto {
   @ApiPropertyOptional({ example: 'olena@example.com' })
   captainEmail?: string;
 
-  @ApiPropertyOptional({ type: [String], example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'] })
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+  })
   members?: string[];
 
   @ApiPropertyOptional({ example: 'Kyiv' })

@@ -11,9 +11,15 @@ import {
 import { TeamService } from './team.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
-import { teamExamples } from '../examples/team/team.examples';
-import { Public } from '../common/decorators/public.decorator';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiParam,
+} from '@nestjs/swagger';
+import { teamExamples } from '../examples';
+import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Public()
@@ -78,7 +84,10 @@ export class TeamController {
     description: 'Team successfully updated',
     schema: { example: teamExamples.response },
   })
-  @ApiResponse({ status: 400, description: 'Team with this name already exists' })
+  @ApiResponse({
+    status: 400,
+    description: 'Team with this name already exists',
+  })
   @ApiResponse({ status: 404, description: 'Team not found' })
   update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
     return this.teamService.update(id, data);

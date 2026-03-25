@@ -10,8 +10,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { Public } from '../common/decorators/public.decorator';
-import { authExamples } from '../examples/auth/auth.examples';
+import { Public } from '../common/decorators';
+import { authExamples } from '../examples';
 
 @ApiTags('Auth')
 @Controller('auth')

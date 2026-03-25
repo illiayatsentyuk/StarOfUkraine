@@ -10,7 +10,10 @@ export class CreateTeamDto {
   @ApiProperty({ example: 'olena@example.com' })
   captainEmail: string;
 
-  @ApiProperty({ type: [String], example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'] })
+  @ApiProperty({
+    type: [String],
+    example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+  })
   members: string[];
 
   @ApiPropertyOptional({ example: 'Kyiv' })

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
@@ -53,13 +57,13 @@ export class TournamentService {
     });
 
     return {
-      data: tournaments, 
+      data: tournaments,
       currentPage: Number(page),
       nextPage: page < maximumPage ? Number(page) + 1 : null,
       previousPage: page > 1 ? Number(page) - 1 : null,
       totalPages: Number(maximumPage),
       itemsPerPage: Number(limit),
-    }
+    };
   }
 
   async findOne(id: string) {

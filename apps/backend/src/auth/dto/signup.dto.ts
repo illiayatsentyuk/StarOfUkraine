@@ -1,4 +1,4 @@
-import { Role } from '../../enum/role.enum';
+import { Role } from '../../enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class signupDto {

@@ -68,7 +68,9 @@ describe('Teams (e2e)', () => {
     mockPrisma.team.count.mockResolvedValue(1);
     mockPrisma.team.findMany.mockResolvedValue([teamMock]);
 
-    const response = await request(app.getHttpServer()).get('/teams').expect(200);
+    const response = await request(app.getHttpServer())
+      .get('/teams')
+      .expect(200);
 
     expect(response.body).toEqual({
       data: [teamMock],

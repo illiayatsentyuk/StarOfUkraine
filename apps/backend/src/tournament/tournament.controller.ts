@@ -11,9 +11,15 @@ import {
 import { TournamentService } from './tournament.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
-import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { tournamentExamples } from '../examples/tournament/tournament.examples';
-import { Public } from '../common/decorators/public.decorator';
+import {
+  ApiBody,
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { tournamentExamples } from '../examples';
+import { Public } from '../common/decorators';
 import { FindQueryDto } from '../common/dto/find-query.dto';
 
 @Public()
@@ -80,7 +86,10 @@ export class TournamentController {
     description: 'Tournament successfully updated',
     schema: { example: tournamentExamples.response },
   })
-  @ApiResponse({ status: 400, description: 'Tournament with this name already exists' })
+  @ApiResponse({
+    status: 400,
+    description: 'Tournament with this name already exists',
+  })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
     return this.tournamentService.update(id, data);
