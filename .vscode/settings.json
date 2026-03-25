@@ -3,5 +3,6 @@
     {
       "mode": "auto"
     }
-  ]
+  ],
+  "biome.configurationPath": "${workspaceFolder}/apps/backend/biome.json"
 }
