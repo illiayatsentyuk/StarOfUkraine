@@ -98,6 +98,9 @@ export class AuthService {
     email: string,
     role: Role,
   ): Promise<Tokens> {
+    const atSecret = process.env.AT_SECRET;
+    const rtSecret = process.env.RT_SECRET;
+
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
         {
@@ -106,7 +109,7 @@ export class AuthService {
           role,
         },
         {
-          secret: 'at-secret',
+          secret: atSecret,
           expiresIn: 60 * 15,
         },
       ),
@@ -117,7 +120,7 @@ export class AuthService {
           role,
         },
         {
-          secret: 'rt-secret',
+          secret: rtSecret,
           expiresIn: 60 * 60 * 24 * 7,
         },
       ),

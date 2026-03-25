@@ -11,8 +11,8 @@ export const authExamples = {
     email: 'user@example.com',
     password: 'P@ssw0rd123',
   },
-  tokenResponse: {
-    accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  okResponse: {
+    ok: true,
   },
   meResponse: {
     ok: true,

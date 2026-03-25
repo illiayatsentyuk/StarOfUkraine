@@ -6,6 +6,7 @@ import type { Response } from 'express';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiCookieAuth,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -31,7 +32,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'User successfully registered',
-    schema: { example: authExamples.tokenResponse },
+    schema: { example: authExamples.okResponse },
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
   async register(
@@ -57,7 +58,7 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'User successfully logged in',
-    schema: { example: authExamples.tokenResponse },
+    schema: { example: authExamples.okResponse },
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
   @ApiResponse({
@@ -83,8 +84,10 @@ export class AuthController {
   @ApiResponse({
     status: 201,
     description: 'Tokens successfully refreshed',
-    schema: { example: { ok: true } },
+    schema: { example: authExamples.okResponse },
   })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Access Denied' })
   async refreshTokens(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') refreshToken: string,
@@ -96,9 +99,11 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiCookieAuth('access_token')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Logout (clears HttpOnly cookies)' })
   @ApiResponse({ status: 201, description: 'Logged out', schema: { example: { ok: true } } })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(
     @GetCurrentUserId() userId: string,
     @Res({ passthrough: true }) res: Response,
@@ -109,6 +114,7 @@ export class AuthController {
   }
 
   @Post('me')
+  @ApiCookieAuth('access_token')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get current authenticated user info (test endpoint)',

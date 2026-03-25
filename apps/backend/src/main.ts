@@ -15,6 +15,9 @@ async function bootstrap() {
     .setTitle('StarOfUkraine API')
     .setDescription('API documentation for auth, teams, and tournaments')
     .setVersion('1.0')
+    // We authenticate via HttpOnly cookies, but keep Bearer as fallback.
+    .addCookieAuth('access_token')
+    .addCookieAuth('refresh_token')
     .addBearerAuth()
     .build();
 
