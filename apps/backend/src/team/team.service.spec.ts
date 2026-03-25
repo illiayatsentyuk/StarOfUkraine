@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from '../prisma/prisma.service';
+import { SortBy, SortOrder } from '../enum';
 import { TeamService } from './team.service';
 
 describe('TeamService', () => {
@@ -102,6 +103,7 @@ describe('TeamService', () => {
       expect(mockPrisma.team.findMany).toHaveBeenCalledWith({
         skip: 0,
         take: 10,
+        orderBy: { createdAt: 'desc' },
       });
     });
 
@@ -111,6 +113,84 @@ describe('TeamService', () => {
       await expect(service.findAll({ page: 4, limit: 2 })).rejects.toThrow(
         new BadRequestException('Page number is out of range'),
       );
+    });
+
+    describe('sorting', () => {
+      beforeEach(() => {
+        mockPrisma.team.count.mockResolvedValue(1);
+        mockPrisma.team.findMany.mockResolvedValue([teamMock]);
+      });
+
+      it('uses createdAt desc by default', async () => {
+        await service.findAll({ page: 1, limit: 10 });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+        );
+      });
+
+      it('sorts by createdAt asc when sortBy=CREATED_AT, sortOrder=ASC', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: SortBy.CREATED_AT,
+          sortOrder: SortOrder.ASC,
+        });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+        );
+      });
+
+      it('sorts by updatedAt desc when sortBy=UPDATED_AT, sortOrder=DESC', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: SortBy.UPDATED_AT,
+          sortOrder: SortOrder.DESC,
+        });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+        );
+      });
+
+      it('sorts by updatedAt asc when sortBy=UPDATED_AT, sortOrder=ASC', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: SortBy.UPDATED_AT,
+          sortOrder: SortOrder.ASC,
+        });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { updatedAt: 'asc' } }),
+        );
+      });
+
+      it('defaults sortOrder to desc when only sortBy is given', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: SortBy.UPDATED_AT,
+        });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+        );
+      });
+
+      it('defaults sortBy to createdAt when only sortOrder is given', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortOrder: SortOrder.ASC,
+        });
+
+        expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+        );
+      });
     });
   });
 

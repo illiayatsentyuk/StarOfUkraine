@@ -14,6 +14,7 @@ import { UpdateTeamDto } from './dto/update-team.dto';
 import {
   ApiBody,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
   ApiParam,
@@ -48,11 +49,24 @@ export class TeamController {
 
   @Get()
   @ApiOperation({ summary: 'List all teams' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    description: 'Page number (1-based)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: 'Items per page (defaults to PAGE_SIZE env var)',
+    example: 10,
+  })
   @ApiResponse({
     status: 200,
     description: 'List of teams returned',
     schema: { example: teamExamples.paginatedResponse },
   })
+  @ApiResponse({ status: 400, description: 'Page number is out of range' })
   findAll(@Query() query: FindQueryDto) {
     return this.teamService.findAll(query);
   }

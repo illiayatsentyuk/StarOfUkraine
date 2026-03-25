@@ -7,6 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { FindQueryDto } from '../common/dto/find-query.dto';
+import { SortBy, SortOrder } from '../enum';
 
 @Injectable()
 export class TournamentService {
@@ -51,9 +52,15 @@ export class TournamentService {
       throw new BadRequestException('Page number is out of range');
     }
 
+    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortOrder = query.sortOrder ?? SortOrder.DESC;
+
     const tournaments = await this.prisma.tournament.findMany({
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
+      orderBy: {
+        [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
+      },
     });
 
     return {
