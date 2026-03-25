@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto, SignupDto } from './dto';
 import type { Response } from 'express';
@@ -14,6 +14,7 @@ import {
 import { GetCurrentUser, GetCurrentUserId, Public } from '../common/decorators';
 import { authExamples } from '../examples';
 import { RtGuard } from '../common/guards/rt.guard';
+import { GoogleAuthGuard } from '../common/guards';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -129,6 +130,20 @@ export class AuthController {
     // This endpoint is just to test JWT guard;
     // real implementation could return user profile from request.
     return { ok: true };
+  }
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/login')
+  googleLogin() {
+
+  }
+
+  @Public()
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+  googleCallback() {
+
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {

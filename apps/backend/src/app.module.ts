@@ -10,11 +10,12 @@ import { ConfigModule } from '@nestjs/config';
 import jwtConfig from './config/jwt.config';
 import paginationConfig from './config/pagination.config';
 import databaseConfig from './config/database.config';
+import googleConfig from './config/google.config';
 
 @Module({
   imports: [AuthModule, TeamModule, TournamentModule, ConfigModule.forRoot({
     isGlobal: true,
-    load: [jwtConfig, paginationConfig, databaseConfig],
+    load: [jwtConfig, paginationConfig, databaseConfig, googleConfig],
   })],
   controllers: [AppController],
   providers: [

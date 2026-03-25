@@ -5,8 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import type { SignOptions } from 'jsonwebtoken';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { AtStrategy } from './strategies/at.strategy';
-import { RtStrategy } from './strategies/rt.strategy';
+import { AtStrategy, RtStrategy, GoogleStrategy } from './strategies';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Module({
@@ -26,7 +25,7 @@ import { PrismaService } from '../prisma/prisma.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AtStrategy, RtStrategy, PrismaService],
+  providers: [AuthService, AtStrategy, RtStrategy, PrismaService, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

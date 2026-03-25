@@ -148,4 +148,14 @@ export class AuthService {
       data: { hashedRt: hash },
     });
   }
+
+  async validateGoogleUser(googleUser: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
 }
