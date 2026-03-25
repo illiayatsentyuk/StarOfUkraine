@@ -11,6 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import type { SignOptions } from 'jsonwebtoken';
 
 @Injectable()
 export class AuthService {
@@ -102,8 +103,15 @@ export class AuthService {
   ): Promise<Tokens> {
     const atSecret = this.configService.get<string>('jwt.at.secret');
     const rtSecret = this.configService.get<string>('jwt.rt.secret');
-    const atExpiresIn = this.configService.get<string>('jwt.at.expiresIn');
-    const rtExpiresIn = this.configService.get<string>('jwt.rt.expiresIn');
+    const atExpiresIn = this.configService.get<string | undefined>(
+      'jwt.at.expiresIn',
+    );
+    const rtExpiresIn = this.configService.get<string | undefined>(
+      'jwt.rt.expiresIn',
+    );
+
+    const atExpires = (atExpiresIn ?? '15m') as SignOptions['expiresIn'];
+    const rtExpires = (rtExpiresIn ?? '7d') as SignOptions['expiresIn'];
 
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
@@ -114,7 +122,7 @@ export class AuthService {
         },
         {
           secret: atSecret,
-          expiresIn: atExpiresIn,
+          expiresIn: atExpires,
         },
       ),
       this.jwtService.signAsync(
@@ -125,7 +133,7 @@ export class AuthService {
         },
         {
           secret: rtSecret,
-          expiresIn: rtExpiresIn,
+          expiresIn: rtExpires,
         },
       ),
     ]);

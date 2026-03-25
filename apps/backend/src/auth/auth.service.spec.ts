@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
@@ -30,6 +31,18 @@ describe('AuthService', () => {
     signAsync: jest.fn(),
   };
 
+  const mockConfigService = {
+    get: jest.fn((key: string) => {
+      const map: Record<string, string> = {
+        'jwt.at.secret': 'at-secret-test',
+        'jwt.rt.secret': 'rt-secret-test',
+        'jwt.at.expiresIn': '15m',
+        'jwt.rt.expiresIn': '7d',
+      };
+      return map[key];
+    }),
+  };
+
   const mockUser = {
     id: 'user-1',
     email: 'user@example.com',
@@ -50,6 +63,10 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
