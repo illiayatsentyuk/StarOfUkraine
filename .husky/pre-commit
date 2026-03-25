@@ -1,1 +1,1 @@
-cd apps/backend; pnpm test
+cd apps/backend; pnpm run lint; pnpm test; 
