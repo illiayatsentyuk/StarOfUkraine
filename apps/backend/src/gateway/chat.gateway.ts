@@ -4,6 +4,14 @@ import { OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from "@nestjs
 import { Logger } from "@nestjs/common";
 import { RoomInfo } from "../common/types";
 
+type BroadcastPayload = {
+    message?: string;
+}
+
+type MessagePayload = {
+    message?: string;
+}
+
 @WebSocketGateway({
     cors: {
         origin: '*'
@@ -30,7 +38,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     @SubscribeMessage('broadcast')
-    handleBroadcast(@MessageBody() data: any, @ConnectedSocket() client: Socket): void {
+    handleBroadcast(@MessageBody() data: BroadcastPayload, @ConnectedSocket() client: Socket): void {
         this.server.emit("broadcast", {
             message: `Broadcast to all: ${data?.message || 'No message'}`,
             timestamp: new Date().toISOString(),
@@ -39,10 +47,10 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     @SubscribeMessage("message")
-    handleMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket): string {
+    handleMessage(@MessageBody() data: string | MessagePayload, @ConnectedSocket() client: Socket): string {
         this.logger.log(`Received message from ${client.id}: ${JSON.stringify(data)}`);
 
-        let originalMsg;
+        let originalMsg: string | undefined;
         if(data && typeof data === 'string'){
             originalMsg = JSON.parse(data)?.message;
         }
@@ -60,7 +68,7 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
 
     @SubscribeMessage("joinRoom")
     handleJoinRoom(@MessageBody() data: {roomId: string, username?:string} = {roomId: '1'}, @ConnectedSocket() client: Socket) {
-        const { roomId, username } = data;
+        const { roomId } = data;
 
         client.join(roomId);
 
