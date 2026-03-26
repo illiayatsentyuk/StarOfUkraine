@@ -12,6 +12,7 @@ import jwtConfig from './config/jwt.config'
 import paginationConfig from './config/pagination.config'
 import { TeamModule } from './team/team.module'
 import { TournamentModule } from './tournament/tournament.module'
+import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { TournamentModule } from './tournament/tournament.module'
       isGlobal: true,
       load: [jwtConfig, paginationConfig, databaseConfig, googleConfig],
     }),
+    GatewayModule,
   ],
   controllers: [AppController],
   providers: [
