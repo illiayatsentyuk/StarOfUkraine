@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
 import { PassportStrategy } from '@nestjs/passport'
 import type { Profile, VerifyCallback } from 'passport-google-oauth20'
@@ -9,6 +9,8 @@ import { AuthService } from '../auth.service'
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
+  private readonly logger = new Logger(GoogleStrategy.name)
+
   constructor(
     @Inject(googleConfig.KEY)
     private googleKeysConfig: ConfigType<typeof googleConfig>,
@@ -28,7 +30,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ) {
-    console.log(profile)
+    this.logger.debug(
+      `Google profile received: id=${profile.id}, email=${profile._json.email ?? 'n/a'}`,
+    )
     const user = await this.authService.findOrCreateFromGoogle({
       sub: profile.id,
       email: profile._json.email ?? '',
