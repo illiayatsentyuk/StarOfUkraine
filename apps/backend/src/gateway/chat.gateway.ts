@@ -1,4 +1,4 @@
-import { Logger, UseGuards } from '@nestjs/common'
+import { Injectable, Logger, UseGuards } from '@nestjs/common'
 import {
   ConnectedSocket,
   MessageBody,
@@ -23,6 +23,7 @@ type MessagePayload = {
 }
 
 @UseGuards(WsAuthGuard)
+@Injectable()
 @WebSocketGateway({
   cors: {
     origin: '*',

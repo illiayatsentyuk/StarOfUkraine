@@ -1,14 +1,9 @@
 <template lang="pug">
   div
     NuxtRouteAnnouncer
-    NuxtWelcome
+    NuxtPage
 </template>
 
 <script setup lang="ts">
-const counterStore = useCounterStore();
-
-onMounted(() => {
-  counterStore.increment();
-  console.log(counterStore.count);
-});
+// App shell only; actual content lives in `pages/`.
 </script>
