@@ -70,12 +70,13 @@ describe('Tournaments (e2e)', () => {
     jest.clearAllMocks()
   })
 
-  it('GET /tournaments returns paginated response', async () => {
+  it('POST /tournaments returns paginated response', async () => {
     mockPrisma.tournament.count.mockResolvedValue(1)
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock])
 
     const response = await request(app.getHttpServer())
-      .get('/tournaments')
+      .post('/tournaments/list')
+      .send({ page: 1, limit: 10 })
       .expect(200)
 
     expect(response.body).toEqual({

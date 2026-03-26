@@ -11,7 +11,7 @@ describe('Teams (e2e)', () => {
 
   const teamMock = {
     id: 'team-1',
-    teamName: 'Star of Ukraine',
+    name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
     members: ['Olena Kovalenko', 'Taras Shevchenko'],
@@ -66,12 +66,13 @@ describe('Teams (e2e)', () => {
     jest.clearAllMocks()
   })
 
-  it('GET /teams returns paginated response', async () => {
+  it('POST /teams returns paginated response', async () => {
     mockPrisma.team.count.mockResolvedValue(1)
     mockPrisma.team.findMany.mockResolvedValue([teamMock])
 
     const response = await request(app.getHttpServer())
-      .get('/teams')
+      .post('/teams/list')
+      .send({ page: 1, limit: 10 })
       .expect(200)
 
     expect(response.body).toEqual({
@@ -102,7 +103,7 @@ describe('Teams (e2e)', () => {
       .post('/teams')
       .set('Authorization', `Bearer ${signE2eAccessToken(Role.USER)}`)
       .send({
-        teamName: teamMock.teamName,
+        name: teamMock.name,
         captainName: teamMock.captainName,
         captainEmail: teamMock.captainEmail,
         members: teamMock.members,

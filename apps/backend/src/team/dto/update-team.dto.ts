@@ -13,7 +13,7 @@ export class UpdateTeamDto {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  teamName?: string
+  name?: string
 
   @ApiPropertyOptional({ example: 'Olena Kovalenko' })
   @IsOptional()

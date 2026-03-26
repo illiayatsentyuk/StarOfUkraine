@@ -74,7 +74,7 @@ describe('Auth (e2e)', () => {
     jest.clearAllMocks()
   })
 
-  it('POST /auth/register sets HttpOnly cookies', async () => {
+  it('POST /auth/signup sets HttpOnly cookies', async () => {
     mockPrisma.user.create.mockResolvedValue(userMock)
     mockPrisma.user.findUnique.mockResolvedValue(null)
     mockPrisma.user.update.mockResolvedValue({
@@ -83,7 +83,7 @@ describe('Auth (e2e)', () => {
     })
 
     const response = await request(app.getHttpServer())
-      .post('/auth/register')
+      .post('/auth/signup')
       .send({
         email: 'user@example.com',
         password: 'P@ssw0rd123',
@@ -99,7 +99,7 @@ describe('Auth (e2e)', () => {
     expect(setCookie.join(';')).toContain('refresh_token=')
   })
 
-  it('POST /auth/login sets HttpOnly cookies with valid credentials', async () => {
+  it('POST /auth/signin sets HttpOnly cookies with valid credentials', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock)
     mockPrisma.user.update.mockResolvedValue({
       ...userMock,
@@ -107,7 +107,7 @@ describe('Auth (e2e)', () => {
     })
 
     const response = await request(app.getHttpServer())
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({
         email: 'user@example.com',
         password: 'P@ssw0rd123',
@@ -122,11 +122,11 @@ describe('Auth (e2e)', () => {
     expect(setCookie.join(';')).toContain('refresh_token=')
   })
 
-  it('POST /auth/login returns 404 with missing user', async () => {
+  it('POST /auth/signin returns 404 with missing user', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(null)
 
     await request(app.getHttpServer())
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({
         email: 'missing@example.com',
         password: 'wrong',
@@ -134,11 +134,11 @@ describe('Auth (e2e)', () => {
       .expect(404)
   })
 
-  it('POST /auth/login returns 403 with wrong password', async () => {
+  it('POST /auth/signin returns 403 with wrong password', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(userMock)
 
     await request(app.getHttpServer())
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({
         email: 'user@example.com',
         password: 'WrongPassword!',
@@ -175,7 +175,7 @@ describe('Auth (e2e)', () => {
     const agent = request.agent(app.getHttpServer())
 
     await agent
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
       .expect(201)
 
@@ -203,7 +203,7 @@ describe('Auth (e2e)', () => {
     const agent = request.agent(app.getHttpServer())
 
     await agent
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
       .expect(201)
 
@@ -225,7 +225,7 @@ describe('Auth (e2e)', () => {
     const agent = request.agent(app.getHttpServer())
 
     const loginResponse = await agent
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
       .expect(201)
 
@@ -261,7 +261,7 @@ describe('Auth (e2e)', () => {
     const agent = request.agent(app.getHttpServer())
 
     await agent
-      .post('/auth/login')
+      .post('/auth/signin')
       .send({ email: 'user@example.com', password: 'P@ssw0rd123' })
       .expect(201)
 

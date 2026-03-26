@@ -53,7 +53,7 @@ model Account {
 
 model Team {
   id           String   @id @default(cuid())
-  teamName     String   @unique
+  name     String   @unique
   captainName  String
   captainEmail String
   members      String[]

@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common'
 import type { ConfigType } from '@nestjs/config'
+import { Prisma } from '@prisma/client'
 import { FindQueryDto } from '../common/dto/find-query.dto'
 import paginationConfig from '../config/pagination.config'
 import { SortBy, SortOrder } from '../enum'
@@ -23,7 +24,7 @@ export class TeamService {
   async create(data: CreateTeamDto) {
     const existingTeam = await this.prisma.team.findFirst({
       where: {
-        teamName: data.teamName,
+        name: data.name,
       },
     })
     if (existingTeam) {
@@ -31,7 +32,7 @@ export class TeamService {
     }
     const team = await this.prisma.team.create({
       data: {
-        teamName: data.teamName,
+        name: data.name,
         captainName: data.captainName,
         captainEmail: data.captainEmail,
         members: data.members,
@@ -45,6 +46,7 @@ export class TeamService {
   }
 
   async findAll(query: FindQueryDto) {
+    const name = (query.name ?? '').trim()
     const page = Number(query.page ?? 1)
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize)
     const totalCount = await this.prisma.team.count()
@@ -57,7 +59,26 @@ export class TeamService {
     const sortBy = query.sortBy ?? SortBy.CREATED_AT
     const sortOrder = query.sortOrder ?? SortOrder.DESC
 
+    const where: Prisma.TeamWhereInput | undefined = name
+      ? {
+          OR: [
+            {
+              name: {
+                contains: name,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            },
+            {
+              id: {
+                contains: name,
+              },
+            },
+          ],
+        }
+      : undefined
+
     const teams = await this.prisma.team.findMany({
+      where,
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
       orderBy: {
@@ -85,14 +106,14 @@ export class TeamService {
 
   async update(id: string, data: UpdateTeamDto) {
     await this.findOne(id)
-    const isTheSameName = data.teamName === (await this.findOne(id)).teamName
+    const isTheSameName = data.name === (await this.findOne(id)).name
     if (isTheSameName) {
       throw new BadRequestException('Team with this name already exists')
     }
     const updatedTeam = await this.prisma.team.update({
       where: { id },
       data: {
-        teamName: data.teamName,
+        name: data.name,
         captainName: data.captainName,
         captainEmail: data.captainEmail,
         members: data.members,

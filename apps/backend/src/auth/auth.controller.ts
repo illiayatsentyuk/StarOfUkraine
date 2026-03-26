@@ -27,7 +27,7 @@ import {
 import { GoogleAuthGuard } from '../common/guards'
 import { RtGuard } from '../common/guards/rt.guard'
 import { authExamples } from '../examples'
-import type { AuthService } from './auth.service'
+import { AuthService } from './auth.service'
 import { SigninDto, SignupDto } from './dto'
 @ApiTags('Auth')
 @Controller('auth')
@@ -35,7 +35,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
-  @Post('register')
+  @Post('signup')
   @ApiOperation({
     summary: 'Register a new user',
     description:
@@ -57,7 +57,7 @@ export class AuthController {
     description: 'Validation failed or email already in use',
     schema: { example: authExamples.emailAlreadyInUse },
   })
-  async register(
+  async singup(
     @Body() dto: SignupDto,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -69,7 +69,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('login')
+  @Post('signin')
   @ApiOperation({
     summary: 'Login',
     description:
@@ -97,7 +97,7 @@ export class AuthController {
     description: 'Invalid password',
     schema: { example: authExamples.accessDenied },
   })
-  async login(
+  async signin(
     @Body() dto: SigninDto,
     @Res({ passthrough: true }) res: Response,
   ) {

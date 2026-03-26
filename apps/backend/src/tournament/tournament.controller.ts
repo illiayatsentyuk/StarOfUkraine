@@ -3,10 +3,11 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common'
 import {
   ApiBearerAuth,
@@ -14,7 +15,6 @@ import {
   ApiCookieAuth,
   ApiOperation,
   ApiParam,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger'
@@ -60,28 +60,18 @@ export class TournamentController {
   }
 
   @Public()
-  @Get()
+  @Post('list')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all tournaments' })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    description: 'Page number (1-based)',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Items per page (defaults to PAGE_SIZE env var)',
-    example: 10,
-  })
+  @ApiBody({ type: FindQueryDto })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
     schema: { example: tournamentExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
-  findAll(@Query() query: FindQueryDto) {
-    return this.tournamentService.findAll(query)
+  findAll(@Body() body: FindQueryDto) {
+    return this.tournamentService.findAll(body)
   }
 
   @Public()

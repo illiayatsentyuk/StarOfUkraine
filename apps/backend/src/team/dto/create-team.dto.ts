@@ -12,7 +12,7 @@ export class CreateTeamDto {
   @ApiProperty({ example: 'Star of Ukraine' })
   @IsString()
   @MinLength(1)
-  teamName: string
+  name: string
 
   @ApiProperty({ example: 'Olena Kovalenko' })
   @IsString()

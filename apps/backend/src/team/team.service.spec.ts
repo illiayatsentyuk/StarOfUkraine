@@ -22,7 +22,7 @@ describe('TeamService', () => {
 
   const teamMock = {
     id: 'team-1',
-    teamName: 'Star of Ukraine',
+    name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
     members: ['Olena Kovalenko', 'Taras Shevchenko'],
@@ -64,7 +64,7 @@ describe('TeamService', () => {
       mockPrisma.team.create.mockResolvedValue(teamMock)
 
       const result = await service.create({
-        teamName: teamMock.teamName,
+        name: teamMock.name,
         captainName: teamMock.captainName,
         captainEmail: teamMock.captainEmail,
         members: teamMock.members,
@@ -72,7 +72,7 @@ describe('TeamService', () => {
 
       expect(result).toEqual(teamMock)
       expect(mockPrisma.team.findFirst).toHaveBeenCalledWith({
-        where: { teamName: teamMock.teamName },
+        where: { name: teamMock.name },
       })
     })
 
@@ -81,7 +81,7 @@ describe('TeamService', () => {
 
       await expect(
         service.create({
-          teamName: teamMock.teamName,
+          name: teamMock.name,
           captainName: teamMock.captainName,
           captainEmail: teamMock.captainEmail,
           members: teamMock.members,
@@ -221,14 +221,14 @@ describe('TeamService', () => {
       mockPrisma.team.findUnique.mockResolvedValue(teamMock)
       mockPrisma.team.update.mockResolvedValue({
         ...teamMock,
-        teamName: 'New Team Name',
+        name: 'New Team Name',
       })
 
       const result = await service.update('team-1', {
-        teamName: 'New Team Name',
+        name: 'New Team Name',
       })
 
-      expect(result.teamName).toBe('New Team Name')
+      expect(result.name).toBe('New Team Name')
       expect(mockPrisma.team.update).toHaveBeenCalled()
     })
 
@@ -236,7 +236,7 @@ describe('TeamService', () => {
       mockPrisma.team.findUnique.mockResolvedValue(teamMock)
 
       await expect(
-        service.update('team-1', { teamName: teamMock.teamName }),
+        service.update('team-1', { name: teamMock.name }),
       ).rejects.toThrow(
         new BadRequestException('Team with this name already exists'),
       )
