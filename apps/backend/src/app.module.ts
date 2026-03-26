@@ -10,9 +10,9 @@ import databaseConfig from './config/database.config'
 import googleConfig from './config/google.config'
 import jwtConfig from './config/jwt.config'
 import paginationConfig from './config/pagination.config'
+import { GatewayModule } from './gateway/gateway.module'
 import { TeamModule } from './team/team.module'
 import { TournamentModule } from './tournament/tournament.module'
-import { GatewayModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
