@@ -48,6 +48,10 @@ describe('AppController (e2e)', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
-      .expect('Hello World!')
+      .expect({
+        ok: true,
+        message: 'Server is running',
+        version: '1.0.0',
+      })
   })
 })
