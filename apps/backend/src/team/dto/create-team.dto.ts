@@ -1,27 +1,54 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ArrayMinSize,
+  IsArray,
+  IsEmail,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 
 export class CreateTeamDto {
-  @ApiProperty()
-  teamName: string;
+  @ApiProperty({ example: 'Star of Ukraine' })
+  @IsString()
+  @MinLength(1)
+  name: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'Olena Kovalenko' })
+  @IsString()
+  @MinLength(1)
   captainName: string;
 
-  @ApiProperty()
+  @ApiProperty({ example: 'olena@example.com' })
+  @IsEmail()
   captainEmail: string;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({
+    type: [String],
+    example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsString({ each: true })
   members: string[];
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'Kyiv' })
+  @IsOptional()
+  @IsString()
   city?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'UA Esports' })
+  @IsOptional()
+  @IsString()
   organization?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: '@starofukraine' })
+  @IsOptional()
+  @IsString()
   telegram?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'starofukraine#1234' })
+  @IsOptional()
+  @IsString()
   discord?: string;
 }

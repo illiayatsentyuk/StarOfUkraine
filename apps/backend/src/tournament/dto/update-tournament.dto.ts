@@ -1,37 +1,91 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TournamentStatus } from '@prisma/client';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsBoolean,
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  MaxLength,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 export class UpdateTournamentDto {
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'Star of Ukraine Cup 2026' })
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
   name?: string;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 'Open tournament for teams across Ukraine.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(10_000)
   description?: string;
 
-  @ApiProperty({ type: String, format: 'date-time', required: false })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-04-01T12:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDate()
   startDate?: Date;
 
-  @ApiProperty({ type: String, format: 'date-time', required: false })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-03-20T00:00:00.000Z',
+  })
+  @IsOptional()
+  @IsDate()
   registrationStart?: Date;
 
-  @ApiProperty({ type: String, format: 'date-time', required: false })
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-03-30T23:59:59.000Z',
+  })
+  @IsOptional()
+  @IsDate()
   registrationEnd?: Date;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 64 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   maxTeams?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   rounds?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 5 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   teamSizeMin?: number;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: 7 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   teamSizeMax?: number;
 
-  @ApiProperty({ enum: TournamentStatus, required: false })
+  @ApiPropertyOptional({
+    enum: TournamentStatus,
+    example: TournamentStatus.DRAFT,
+  })
+  @IsOptional()
+  @IsEnum(TournamentStatus)
   status?: TournamentStatus;
 
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
   hideTeamsUntilRegistrationEnds?: boolean;
 }

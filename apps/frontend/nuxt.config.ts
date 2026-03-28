@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+  srcDir: 'app/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: [
@@ -7,7 +8,8 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@pinia/nuxt',
     '@primevue/nuxt-module',
-    '@vee-validate/nuxt'
+    '@vee-validate/nuxt',
+    '@alexcolls/nuxt-socket.io',
   ],
   runtimeConfig: {
     public: {
@@ -22,6 +24,9 @@ export default defineNuxtConfig({
           additionalData: `@use "~/assets/styles/variables.css" as *;`,
         },
       },
+    },
+    optimizeDeps: {
+      include: ['socket.io-client'],
     },
   },
   components: [

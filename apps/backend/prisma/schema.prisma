@@ -20,19 +20,40 @@ enum TournamentStatus {
   CANCELLED
 }
 
+enum AuthProvider {
+  GOOGLE
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
+  id        String    @id @default(cuid())
+  email     String    @unique
+  hash      String?
+  hashedRt  String?   @unique
   name      String?
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  image     String?
+  role      Role      @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  accounts Account[]
+}
+
+model Account {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          AuthProvider
+  providerAccountId String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Team {
   id           String   @id @default(cuid())
-  teamName     String   @unique
+  name     String   @unique
   captainName  String
   captainEmail String
   members      String[]

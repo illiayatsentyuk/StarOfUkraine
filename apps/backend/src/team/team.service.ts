@@ -1,16 +1,38 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
+import { FindQueryDto } from '../common/dto/find-query.dto';
+import paginationConfig from '../config/pagination.config';
+import { SortBy, SortOrder } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Injectable()
 export class TeamService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(paginationConfig.KEY)
+    private paginationsConfig: ConfigType<typeof paginationConfig>,
+  ) {}
 
-  create(data: CreateTeamDto) {
-    return this.prisma.team.create({
+  async create(data: CreateTeamDto) {
+    const existingTeam = await this.prisma.team.findFirst({
+      where: {
+        name: data.name,
+      },
+    });
+    if (existingTeam) {
+      throw new BadRequestException('Team already exists');
+    }
+    const team = await this.prisma.team.create({
       data: {
-        teamName: data.teamName,
+        name: data.name,
         captainName: data.captainName,
         captainEmail: data.captainEmail,
         members: data.members,
@@ -20,10 +42,58 @@ export class TeamService {
         discord: data.discord,
       },
     });
+    return team;
   }
 
-  findAll() {
-    return this.prisma.team.findMany();
+  async findAll(query: FindQueryDto) {
+    const name = (query.name ?? '').trim();
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
+    const totalCount = await this.prisma.team.count();
+    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
+
+    if (page > maximumPage || page < 1) {
+      throw new BadRequestException('Page number is out of range');
+    }
+
+    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortOrder = query.sortOrder ?? SortOrder.DESC;
+
+    const where: Prisma.TeamWhereInput | undefined = name
+      ? {
+          OR: [
+            {
+              name: {
+                contains: name,
+                mode: Prisma.QueryMode.insensitive,
+              },
+            },
+            {
+              id: {
+                contains: name,
+              },
+            },
+          ],
+        }
+      : undefined;
+
+    const teams = await this.prisma.team.findMany({
+      where,
+      skip: Number(page - 1) * Number(limit),
+      take: Number(limit),
+      orderBy: {
+        [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
+      },
+    });
+
+    return {
+      data: teams,
+      currentPage: Number(page),
+      nextPage: page < maximumPage ? Number(page) + 1 : null,
+      previousPage: page > 1 ? Number(page) - 1 : null,
+      totalPages: Number(maximumPage),
+      itemsPerPage: Number(limit),
+    };
   }
 
   async findOne(id: string) {
@@ -36,10 +106,14 @@ export class TeamService {
 
   async update(id: string, data: UpdateTeamDto) {
     await this.findOne(id);
-    return this.prisma.team.update({
+    const isTheSameName = data.name === (await this.findOne(id)).name;
+    if (isTheSameName) {
+      throw new BadRequestException('Team with this name already exists');
+    }
+    const updatedTeam = await this.prisma.team.update({
       where: { id },
       data: {
-        teamName: data.teamName,
+        name: data.name,
         captainName: data.captainName,
         captainEmail: data.captainEmail,
         members: data.members,
@@ -49,10 +123,12 @@ export class TeamService {
         discord: data.discord,
       },
     });
+    return updatedTeam;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.team.delete({ where: { id } });
+    const deletedTeam = await this.prisma.team.delete({ where: { id } });
+    return deletedTeam;
   }
 }
