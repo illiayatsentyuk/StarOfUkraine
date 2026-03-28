@@ -20,6 +20,7 @@ export interface Tournament {
 const LIMIT = 5
 
 export const useTournamentsStore = defineStore('tournaments', () => {
+    const config = useRuntimeConfig()
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
@@ -33,8 +34,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         try {
             const response = await fetch(
-                `https://starofukraine.onrender.com/tournaments?page=${page.value}&limit=${LIMIT}`,
-                {
+                `${config.public.apiURL}/tournaments?page=${page.value}&limit=${LIMIT}`,
+                {   
                     method: 'GET',
                     headers: { 'Content-Type': 'application/json' }
                 }
@@ -61,7 +62,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     const addTournament = async (tournament: Tournament) => {
         try {
-            const response = await fetch('https://starofukraine.onrender.com/tournaments', {
+            const response = await fetch(`${config.public.apiURL}/tournaments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(tournament)

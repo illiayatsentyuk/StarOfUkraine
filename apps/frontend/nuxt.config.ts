@@ -9,6 +9,11 @@ export default defineNuxtConfig({
     '@primevue/nuxt-module',
     '@vee-validate/nuxt'
   ],
+  runtimeConfig: {
+    public: {
+      apiURL: process.env.API_URL || 'http://localhost:4040',
+    }
+  },
   css: ["~/assets/styles/main.scss"],
   vite: {
     css: {
