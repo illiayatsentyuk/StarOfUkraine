@@ -8,7 +8,8 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@pinia/nuxt',
     '@primevue/nuxt-module',
-    '@vee-validate/nuxt'
+    '@vee-validate/nuxt',
+    '@alexcolls/nuxt-socket.io',
   ],
   css: ["~/assets/styles/main.scss"],
   vite: {
@@ -18,6 +19,9 @@ export default defineNuxtConfig({
           additionalData: `@use "~/assets/styles/variables.css" as *;`,
         },
       },
+    },
+    optimizeDeps: {
+      include: ['socket.io-client'],
     },
   },
   components: [

@@ -32,6 +32,6 @@ import { AtStrategy, GoogleStrategy, RtStrategy } from './strategies'
     PrismaService,
     GoogleStrategy,
   ],
-  exports: [AuthService],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

@@ -45,13 +45,10 @@ describe('AppController (e2e)', () => {
   })
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect({
-        ok: true,
-        message: 'Server is running',
-        version: '1.0.0',
-      })
+    return request(app.getHttpServer()).get('/').expect(200).expect({
+      ok: true,
+      message: 'Server is running',
+      version: '1.0.0',
+    })
   })
 })

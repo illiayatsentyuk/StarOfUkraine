@@ -14,11 +14,13 @@ export class AppController {
   @ApiResponse({
     status: 200,
     description: 'Service is reachable',
-    schema: { example: {
-      "ok": true,
-      "message": "Server is running",
-      "version": "1.0.0",
-    } },
+    schema: {
+      example: {
+        ok: true,
+        message: 'Server is running',
+        version: '1.0.0',
+      },
+    },
   })
   getHello() {
     return this.appService.getHello()
