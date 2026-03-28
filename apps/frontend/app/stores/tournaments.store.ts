@@ -34,10 +34,11 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         try {
             const response = await fetch(
-                `${config.public.apiURL}/tournaments?page=${page.value}&limit=${LIMIT}`,
+                `${config.public.apiURL}/tournaments/list`,
                 {   
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ page: page.value, limit: LIMIT })
                 }
             )
 
