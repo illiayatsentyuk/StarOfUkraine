@@ -8,7 +8,7 @@ import {
   Param,
   Patch,
   Post,
-} from '@nestjs/common'
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -17,15 +17,15 @@ import {
   ApiParam,
   ApiResponse,
   ApiTags,
-} from '@nestjs/swagger'
-import { Roles } from 'src/common/decorators'
-import { Role } from 'src/enum'
-import { Public } from '../common/decorators'
-import { FindQueryDto } from '../common/dto/find-query.dto'
-import { authExamples, teamExamples } from '../examples'
-import { CreateTeamDto } from './dto/create-team.dto'
-import { UpdateTeamDto } from './dto/update-team.dto'
-import { TeamService } from './team.service'
+} from '@nestjs/swagger';
+import { Roles } from 'src/common/decorators';
+import { Role } from 'src/enum';
+import { Public } from '../common/decorators';
+import { FindQueryDto } from '../common/dto/find-query.dto';
+import { authExamples, teamExamples } from '../examples';
+import { CreateTeamDto } from './dto/create-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
+import { TeamService } from './team.service';
 
 @ApiTags('Teams')
 @Controller('teams')
@@ -56,7 +56,7 @@ export class TeamController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   create(@Body() data: CreateTeamDto) {
-    return this.teamService.create(data)
+    return this.teamService.create(data);
   }
 
   @Public()
@@ -71,7 +71,7 @@ export class TeamController {
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
   findAll(@Body() body: FindQueryDto) {
-    return this.teamService.findAll(body)
+    return this.teamService.findAll(body);
   }
 
   @Public()
@@ -85,7 +85,7 @@ export class TeamController {
   })
   @ApiResponse({ status: 404, description: 'Team not found' })
   findOne(@Param('id') id: string) {
-    return this.teamService.findOne(id)
+    return this.teamService.findOne(id);
   }
 
   @Patch(':id')
@@ -117,7 +117,7 @@ export class TeamController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
-    return this.teamService.update(id, data)
+    return this.teamService.update(id, data);
   }
 
   @Delete(':id')
@@ -139,6 +139,6 @@ export class TeamController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
   remove(@Param('id') id: string) {
-    return this.teamService.remove(id)
+    return this.teamService.remove(id);
   }
 }

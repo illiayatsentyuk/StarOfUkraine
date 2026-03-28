@@ -3,15 +3,15 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-} from '@nestjs/common'
-import type { ConfigType } from '@nestjs/config'
-import { Prisma } from '@prisma/client'
-import { FindQueryDto } from '../common/dto/find-query.dto'
-import paginationConfig from '../config/pagination.config'
-import { SortBy, SortOrder } from '../enum'
-import { PrismaService } from '../prisma/prisma.service'
-import { CreateTeamDto } from './dto/create-team.dto'
-import { UpdateTeamDto } from './dto/update-team.dto'
+} from '@nestjs/common';
+import type { ConfigType } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
+import { FindQueryDto } from '../common/dto/find-query.dto';
+import paginationConfig from '../config/pagination.config';
+import { SortBy, SortOrder } from '../enum';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateTeamDto } from './dto/create-team.dto';
+import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Injectable()
 export class TeamService {
@@ -26,9 +26,9 @@ export class TeamService {
       where: {
         name: data.name,
       },
-    })
+    });
     if (existingTeam) {
-      throw new BadRequestException('Team already exists')
+      throw new BadRequestException('Team already exists');
     }
     const team = await this.prisma.team.create({
       data: {
@@ -41,23 +41,23 @@ export class TeamService {
         telegram: data.telegram,
         discord: data.discord,
       },
-    })
-    return team
+    });
+    return team;
   }
 
   async findAll(query: FindQueryDto) {
-    const name = (query.name ?? '').trim()
-    const page = Number(query.page ?? 1)
-    const limit = Number(query.limit ?? this.paginationsConfig.pageSize)
-    const totalCount = await this.prisma.team.count()
-    const maximumPage = Math.max(1, Math.ceil(totalCount / limit))
+    const name = (query.name ?? '').trim();
+    const page = Number(query.page ?? 1);
+    const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
+    const totalCount = await this.prisma.team.count();
+    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 
     if (page > maximumPage || page < 1) {
-      throw new BadRequestException('Page number is out of range')
+      throw new BadRequestException('Page number is out of range');
     }
 
-    const sortBy = query.sortBy ?? SortBy.CREATED_AT
-    const sortOrder = query.sortOrder ?? SortOrder.DESC
+    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortOrder = query.sortOrder ?? SortOrder.DESC;
 
     const where: Prisma.TeamWhereInput | undefined = name
       ? {
@@ -75,7 +75,7 @@ export class TeamService {
             },
           ],
         }
-      : undefined
+      : undefined;
 
     const teams = await this.prisma.team.findMany({
       where,
@@ -84,7 +84,7 @@ export class TeamService {
       orderBy: {
         [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
       },
-    })
+    });
 
     return {
       data: teams,
@@ -93,22 +93,22 @@ export class TeamService {
       previousPage: page > 1 ? Number(page) - 1 : null,
       totalPages: Number(maximumPage),
       itemsPerPage: Number(limit),
-    }
+    };
   }
 
   async findOne(id: string) {
-    const team = await this.prisma.team.findUnique({ where: { id } })
+    const team = await this.prisma.team.findUnique({ where: { id } });
     if (!team) {
-      throw new NotFoundException('Team not found')
+      throw new NotFoundException('Team not found');
     }
-    return team
+    return team;
   }
 
   async update(id: string, data: UpdateTeamDto) {
-    await this.findOne(id)
-    const isTheSameName = data.name === (await this.findOne(id)).name
+    await this.findOne(id);
+    const isTheSameName = data.name === (await this.findOne(id)).name;
     if (isTheSameName) {
-      throw new BadRequestException('Team with this name already exists')
+      throw new BadRequestException('Team with this name already exists');
     }
     const updatedTeam = await this.prisma.team.update({
       where: { id },
@@ -122,13 +122,13 @@ export class TeamService {
         telegram: data.telegram,
         discord: data.discord,
       },
-    })
-    return updatedTeam
+    });
+    return updatedTeam;
   }
 
   async remove(id: string) {
-    await this.findOne(id)
-    const deletedTeam = await this.prisma.team.delete({ where: { id } })
-    return deletedTeam
+    await this.findOne(id);
+    const deletedTeam = await this.prisma.team.delete({ where: { id } });
+    return deletedTeam;
   }
 }
