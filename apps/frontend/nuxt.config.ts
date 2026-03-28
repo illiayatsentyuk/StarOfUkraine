@@ -11,6 +11,11 @@ export default defineNuxtConfig({
     '@vee-validate/nuxt',
     '@alexcolls/nuxt-socket.io',
   ],
+  runtimeConfig: {
+    public: {
+      apiURL: process.env.API_URL || 'http://localhost:4040',
+    }
+  },
   css: ["~/assets/styles/main.scss"],
   vite: {
     css: {

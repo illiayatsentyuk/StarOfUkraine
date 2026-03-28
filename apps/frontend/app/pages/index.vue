@@ -1,41 +1,29 @@
-<template lang="pug">
-  .home
-    h1.home__title Welcome
-    p.home__lead File-based routing is active. Use the header links to navigate.
-    p.home__counter
-      | Counter: {{ counterStore.count }}
-      |  (double: {{ counterStore.doubleCount }})
-    Button.home__action(label="Increment" severity="primary" @click="counterStore.increment")
-</template>
-
-<script setup lang="ts">
-const counterStore = useCounterStore()
+<script lang="ts" setup>
+// HeaderCompetition and TournamentsList are auto-imported
 </script>
 
-<style scoped lang="scss">
-.home {
-  max-width: 42rem;
-}
+<template lang="pug">
+.view-tournaments
+    main.view-tournaments__content
+        TournamentsList
+</template>
 
-.home__title {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-semibold);
-  margin: 0 0 var(--space-4);
-}
+<style lang="scss" scoped>
+.view-tournaments {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--color-bg);
 
-.home__lead {
-  font-size: var(--font-size-base);
-  color: var(--color-text-muted);
-  margin: 0 0 var(--space-6);
-  line-height: 1.5;
-}
-
-.home__counter {
-  font-size: var(--font-size-base);
-  margin: 0 0 var(--space-4);
-}
-
-.home__action {
-  margin-top: var(--space-2);
+    &__content {
+        padding: 48px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+        max-width: 1440px;
+        margin: 0 auto;
+        width: 100%;
+    }
 }
 </style>
