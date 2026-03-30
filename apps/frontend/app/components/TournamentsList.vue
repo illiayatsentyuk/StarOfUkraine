@@ -1,5 +1,19 @@
 <script lang="ts" setup>
 const store = useTournamentsStore()
+const filtersStore = useFiltersTournamentsStore()
+
+const filters = [
+    { key: 'all',               label: 'Всі' },
+    { key: 'byDate',            label: 'За датою' },
+    { key: 'byName',            label: 'За назвою' },
+    { key: 'byMaxTeams',        label: 'К-ть команд' },
+    { key: 'byTeamSizeMin',     label: 'Мін. склад' },
+    { key: 'byTeamSizeMax',     label: 'Макс. склад' },
+    { key: 'byRounds',          label: 'Раунди' },
+    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
+    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
+]
+
 const formatDate = (dateString: string) => {
     if (!dateString) return ""
     return new Date(dateString).toLocaleDateString("uk-UA")
@@ -14,8 +28,23 @@ section.tournaments-list
     .tournaments-list__header
         h2.tournaments-list__title НАЙБЛИЖЧІ ТУРНІРИ
     
-    .tournaments-list__grid
-        .tournament-card(v-for="tournament in store.tournaments" :key="tournament.id || tournament.name")
+    .filter-bar
+        button.filter-btn(
+            v-for="f in filters"
+            :key="f.key"
+            :class="{ 'filter-btn--active': filtersStore.activeFilter === f.key }"
+            type="button"
+            @click="filtersStore.activeFilter = f.key"
+        ) {{ f.label }}
+    
+    // Loading State (Initial)
+    .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
+        ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s")
+        span.loading-text ЗАВАНТАЖЕННЯ
+
+    // Content State
+    .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
+        NuxtLink.tournament-card(v-for="tournament in filtersStore.filteredTournaments" :key="tournament.id || tournament.name" :to="`/tournaments/${tournament.id}`")
             .tournament-card__status(v-if="tournament.status")
                 span {{ tournament.status }}
             
@@ -31,9 +60,15 @@ section.tournaments-list
             
             p.tournament-card__description {{ tournament.description }}
 
-    .tournaments-list__footer
+    // No Data State
+    .no-data(v-else-if="!store.loading")
+        p Турнірів поки немає.
+
+    .tournaments-list__footer(v-if="store.tournaments.length > 0")
         button.load-more(@click="store.loadFromDatabase" :disabled="!store.hasMore || store.loading" type="button")
-            | {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
+            .btn-content
+                ProgressSpinner(v-if="store.loading" style="width: 16px; height: 16px" strokeWidth="6" fill="transparent" animationDuration=".5s")
+                span {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
 </template>
 
 <style lang="scss" scoped>
@@ -42,6 +77,7 @@ section.tournaments-list
     flex-direction: column;
     gap: var(--space-8);
     padding: var(--space-8) 0;
+    min-height: 400px;
 
     &__header {
         margin-bottom: var(--space-4);
@@ -85,6 +121,22 @@ section.tournaments-list
     }
 }
 
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 0;
+    gap: 16px;
+
+    .loading-text {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-text-muted);
+        letter-spacing: 2px;
+    }
+}
+
 .tournament-card {
     display: flex;
     flex-direction: column;
@@ -93,9 +145,11 @@ section.tournaments-list
     background: var(--color-bg);
     border: 1px solid var(--color-border);
     transition: transform 0.2s ease, border-color 0.2s ease;
+    text-decoration: none;
 
     &:hover {
         border-color: var(--color-text);
+        transform: translateY(-2px);
     }
 
     &__status {
@@ -175,6 +229,12 @@ section.tournaments-list
     text-transform: uppercase;
     transition: opacity 0.2s ease;
 
+    .btn-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
     &:hover:not(:disabled) {
         opacity: 0.9;
     }
@@ -184,4 +244,41 @@ section.tournaments-list
         cursor: not-allowed;
     }
 }
-</style>
+
+:deep(.p-progressspinner-circle) {
+    stroke: var(--color-primary) !important;
+}
+
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: var(--space-2);
+}
+
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+
+    &:hover:not(.filter-btn--active) {
+        border-color: var(--color-text);
+    }
+
+    &--active {
+        background-color: var(--color-primary);
+        border-color: var(--color-primary);
+        color: #fff;
+        font-weight: 600;
+    }
+}
+</style>

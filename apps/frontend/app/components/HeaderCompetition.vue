@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+const store = useTournamentsStore()
 const mode = ref("Адмін")
 const isOpen = ref(false)
 
@@ -12,7 +13,12 @@ function closeModal(){
 
 <template lang="pug">
 header.header-competition
-    .header-competition__logo STAR OF UKRAINE
+    .header-competition__left
+        .header-competition__logo STAR OF UKRAINE
+    
+    .header-competition__center
+        SearchBar(v-model="store.search" :loading="store.loading")
+
     .header-competition__nav
         .nav-item
             span.nav-label Режим:
@@ -38,12 +44,19 @@ CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
         letter-spacing: -1px;
     }
 
+    &__center {
+        flex: 1;
+        max-width: 400px;
+        margin: 0 40px;
+    }
+
     &__nav {
         display: flex;
         align-items: center;
         gap: 24px;
     }
 }
+
 
 .nav-item {
     font-family: var(--font-sans);

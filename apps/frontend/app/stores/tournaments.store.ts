@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 
 export interface Tournament {
     id?: string
@@ -25,12 +26,28 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const page = ref(1)
     const totalPages = ref(0)
     const loading = ref(false)
+    const error = ref<string | null>(null)
+    const search = ref('')
 
     const hasMore = computed(() => page.value <= totalPages.value)
 
-    const loadFromDatabase = async () => {
+    const reset = () => {
+        page.value = 1
+        tournaments.value = []
+        totalPages.value = 0
+        error.value = null
+    }
+
+    const loadFromDatabase = async (reset = false) => {
         if (loading.value) return
+        // if (reset) {
+        //     page.value = 1
+        //     tournaments.value = []
+        // }
+        
+        // loading.value = true
         loading.value = true
+        error.value = null
 
         try {
             const response = await fetch(
@@ -38,7 +55,11 @@ export const useTournamentsStore = defineStore('tournaments', () => {
                 {   
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ page: page.value, limit: LIMIT })
+                    body: JSON.stringify({ 
+                        page: page.value, 
+                        limit: LIMIT,
+                        name: search.value.trim() || undefined
+                    })
                 }
             )
 
@@ -83,11 +104,35 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     // Removed automatic load on initialization to prevent double calls with components
     // loadFromDatabase()
 
+    const fetchTournamentById = async (id: string) => {
+        loading.value = true
+        try {
+            const response = await fetch(`${config.public.apiURL}/tournaments/${id}`)
+            if (!response.ok) throw new Error('Не вдалося завантажити дані турніру')
+            return await response.json()
+        } catch (error) {
+            console.error('Помилка API при завантаженні турніру:', error)
+            throw error
+        } finally {
+            loading.value = false
+        }
+    }
+    const debouncedSearch = useDebounceFn(() => {
+        reset()
+        loadFromDatabase()
+    }, 300)
+
+    watch(search, () => debouncedSearch())
+
     return {
         tournaments,
         loading,
+        error,
         hasMore,
+        search,      
+        reset,
         loadFromDatabase,
+        fetchTournamentById,
         addTournament
     }
 })

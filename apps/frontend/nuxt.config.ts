@@ -13,7 +13,9 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     public: {
-      apiURL: process.env.API_URL || 'http://localhost:4040',
+      apiURL: process.env.API_URL || 'http://localhost:3000',
+      devAdminEmail: process.env.DEV_ADMIN_EMAIL,
+      devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
   },
   css: ["~/assets/styles/main.scss"],
