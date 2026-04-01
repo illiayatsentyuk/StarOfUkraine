@@ -16,7 +16,8 @@ function closeModal(){
 <template lang="pug">
 header.header-competition
     .header-competition__left
-        .header-competition__logo STAR OF UKRAINE
+        .header-competition__logo
+         NuxtLink(to="/" style="text-decoration: none; color: inherit;") STAR OF UKRAINE
     
     .header-competition__center
         SearchBar(v-model="store.search" :loading="store.loading")

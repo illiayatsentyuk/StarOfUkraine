@@ -71,12 +71,10 @@ export const useTournamentsStore = defineStore('tournaments', () => {
                 totalPages.value = data.totalPages
                 page.value++
             }
-            toast.success("Турніри успішно завантажено");
 
             return data
         } catch (error) {
             console.error('Помилка API при завантаженні турнірів:', error)
-            toast.error("Помилка API при завантаженні турнірів");
             throw error
         } finally {
             loading.value = false
@@ -105,11 +103,9 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const response = await axios.get(`${config.public.apiURL}/tournaments/${id}`)
             if (!response.data) throw new Error('Не вдалося завантажити дані турніру')
-            toast.success("Дані турніру успішно завантажено");
             return response.data
         } catch (error) {
             console.error('Помилка API при завантаженні турніру:', error)
-            toast.error("Помилка API при завантаженні турніру");
             throw error
         } finally {
             loading.value = false
