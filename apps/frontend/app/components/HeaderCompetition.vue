@@ -1,6 +1,8 @@
 <script lang="ts" setup>
+import { ref } from 'vue'
+import { useTournamentsStore } from '../stores/tournaments.store'
+
 const store = useTournamentsStore()
-const mode = ref("Адмін")
 const isOpen = ref(false)
 
 function openModal(){
@@ -20,9 +22,6 @@ header.header-competition
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
-        .nav-item
-            span.nav-label Режим:
-            span.nav-value {{ mode }}
         Button.create-btn(@click="openModal" type="button" label="Створити турнір")
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 </template>

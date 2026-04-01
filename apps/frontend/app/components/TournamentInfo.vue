@@ -1,11 +1,8 @@
 <template lang="pug">
 section.tournament-info
-    // Loading State
     .loading-overlay(v-if="store.loading")
-        ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s" aria-label="Loading")
-        span.loading-text ЗАВАНТАЖЕННЯ
+        Loader
 
-    // Content State
     template(v-else)
         .tournament-info__header
             h1.tournament-info__title НАЙБЛИЖЧІ ТУРНІРИ

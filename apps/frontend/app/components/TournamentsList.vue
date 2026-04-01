@@ -37,12 +37,9 @@ section.tournaments-list
             @click="filtersStore.activeFilter = f.key"
         ) {{ f.label }}
     
-    // Loading State (Initial)
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
-        ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s")
-        span.loading-text ЗАВАНТАЖЕННЯ
+        Loader
 
-    // Content State
     .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
         NuxtLink.tournament-card(v-for="tournament in filtersStore.filteredTournaments" :key="tournament.id || tournament.name" :to="`/tournaments/${tournament.id}`")
             .tournament-card__status(v-if="tournament.status")
@@ -60,14 +57,12 @@ section.tournaments-list
             
             p.tournament-card__description {{ tournament.description }}
 
-    // No Data State
     .no-data(v-else-if="!store.loading")
         p Турнірів поки немає.
 
     .tournaments-list__footer(v-if="store.tournaments.length > 0")
         button.load-more(@click="store.loadFromDatabase" :disabled="!store.hasMore || store.loading" type="button")
             .btn-content
-                ProgressSpinner(v-if="store.loading" style="width: 16px; height: 16px" strokeWidth="6" fill="transparent" animationDuration=".5s")
                 span {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
 </template>
 

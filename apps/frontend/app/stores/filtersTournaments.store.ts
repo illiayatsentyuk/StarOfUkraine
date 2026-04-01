@@ -4,7 +4,6 @@ import { useTournamentsStore } from './tournaments.store'
 
 export const useFiltersTournamentsStore = defineStore('filtersTournaments', () => {
     const tournamentsStore = useTournamentsStore()
-
     const activeFilter = ref('all')
 
     const filteredTournaments = computed(() => {

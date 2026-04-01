@@ -53,16 +53,31 @@ section.tournament-detail
                         .status-info
                             span.label ПОТОЧНИЙ СТАТУС
                             span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
+                        Button.delete-btn(@click="handleDelete" type="button" label="Видалити турнір")
     
     .error-state(v-else)
         p Турнір не знайдено.
         NuxtLink(to="/") Повернутися до списку
+    
+    DeleteModal(
+        v-if="tournament"
+        :isOpen="isDeleteModalOpen" 
+        :tournament="tournament" 
+        @close="isDeleteModalOpen = false" 
+        @delete="onTournamentDeleted"
+    )
 </template>
 
 <script lang="ts" setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, navigateTo } from '#app'
+import { useTournamentsStore } from '../../stores/tournaments.store'
+import DeleteModal from '../../components/deleteModal.vue'
+
 const route = useRoute()
 const store = useTournamentsStore()
 const tournament = ref<any>(null)
+const isDeleteModalOpen = ref(false)
 
 const formatDate = (dateString: string) => {
     if (!dateString) return "ТВА"
@@ -81,6 +96,14 @@ onMounted(async () => {
         console.error("Failed to load tournament detail")
     }
 })
+
+const handleDelete = () => {
+    isDeleteModalOpen.value = true
+}
+
+const onTournamentDeleted = async () => {
+    await navigateTo('/')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -243,22 +266,50 @@ onMounted(async () => {
             margin: 40px 0;
         }
 
-        .stat-entry {
+        .sidebar__footer {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 24px;
 
-            .label {
-                font-size: 11px;
-                font-weight: 700;
-                letter-spacing: 1px;
-            }
-            .value {
-                font-family: var(--font-display);
-                font-size: 20px;
-                font-weight: 700;
+            .status-info {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+
+                .label {
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--color-text-muted);
+                    letter-spacing: 1.5px;
+                }
+                .value {
+                    font-family: var(--font-display);
+                    font-size: 20px;
+                    font-weight: 700;
+                    color: var(--color-text);
+                }
             }
         }
+    }
+}
+
+:deep(.delete-btn) {
+    margin-top: 16px;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--color-error, #ef4444);
+    color: var(--color-error, #ef4444);
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 0;
+    letter-spacing: 1px;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: var(--color-error, #ef4444);
+        color: white;
     }
 }
 

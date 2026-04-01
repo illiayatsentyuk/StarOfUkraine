@@ -44,7 +44,7 @@ async function submitForm() {
         Object.assign(form, initialState)
         emit("close")
     } catch (e) {
-        alert("Виникла помилка під час створення турніру.")
+        console.error("Виникла помилка під час створення турніру.", e)
     } finally {
         isLoading.value = false
     }
