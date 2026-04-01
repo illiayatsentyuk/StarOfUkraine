@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import axios from 'axios'
 import { useToast } from "vue-toastification";
 
 export interface Tournament {
@@ -24,7 +23,6 @@ const toast = useToast();
 const LIMIT = 5
 
 export const useTournamentsStore = defineStore('tournaments', () => {
-    const config = useRuntimeConfig()
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
@@ -53,13 +51,14 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         error.value = null
 
         try {
-            const response = await axios.post(
-                `${config.public.apiURL}/tournaments/list`,
+            const api = useApi()
+            const response = await api.post(
+                `/tournaments/list`,
                 { 
                     page: page.value, 
                     limit: LIMIT,
                     name: search.value.trim() || undefined
-                }
+                },
             )
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')
@@ -85,7 +84,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     const addTournament = async (tournament: Tournament) => {
         try {
-            const response = await axios.post(`${config.public.apiURL}/tournaments`, tournament)
+            const api = useApi()
+            const response = await api.post(`/tournaments`, tournament)
 
             if (!response.data) throw new Error('Не вдалося створити турнір')
 
@@ -103,7 +103,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const fetchTournamentById = async (id: string) => {
         loading.value = true
         try {
-            const response = await axios.get(`${config.public.apiURL}/tournaments/${id}`)
+            const api = useApi()
+            const response = await api.get(`/tournaments/${id}`)
             if (!response.data) throw new Error('Не вдалося завантажити дані турніру')
             toast.success("Дані турніру успішно завантажено");
             return response.data
@@ -124,7 +125,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     const deleteTournament = async (id: string) => {
         try {
-            await axios.delete(`${config.public.apiURL}/tournaments/${id}`)
+            const api = useApi()
+            await api.delete(`/tournaments/${id}`)
             tournaments.value = tournaments.value.filter(t => t.id !== id)
             toast.success("Турнір успішно видалено");
         } catch (error) {

@@ -34,11 +34,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       `Google profile received: id=${profile.id}, email=${profile._json.email ?? 'n/a'}`,
     );
     const user = await this.authService.findOrCreateFromGoogle({
-      sub: profile.id,
+      id: profile.id,
       email: profile._json.email ?? '',
       name: profile._json.name,
       picture: profile._json.picture,
     });
-    done(null, user);
+    // Normalize shape to match JWT payload used across the app (sub/email/role).
+    done(null, { sub: user.id, email: user.email, role: user.role });
   }
 }

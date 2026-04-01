@@ -190,6 +190,7 @@ export class AuthController {
     schema: { example: authExamples.userNotFound },
   })
   me(@GetCurrentUserId() userId: string) {
+    console.log('userId', userId);
     return this.authService.getMe(userId);
   }
 
@@ -215,12 +216,12 @@ export class AuthController {
   @ApiOperation({
     summary: 'Google OAuth callback',
     description:
-      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies and returns `{ ok: true }`.',
+      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies, then redirects to FRONTEND_URL/auth?oauth=success (default http://localhost:4040).',
   })
   @ApiResponse({
-    status: 200,
-    description: 'Signed in; cookies set',
-    schema: { example: authExamples.okResponse },
+    status: 302,
+    description:
+      'Redirects to FRONTEND_URL/auth?oauth=success; HttpOnly cookies set',
   })
   @ApiResponse({
     status: 401,
@@ -229,8 +230,9 @@ export class AuthController {
   })
   async googleCallback(
     @GetCurrentOAuthUser() user: { sub: string; email: string; role: Role },
-    @Res({ passthrough: true }) res: Response,
+    @Res() res: Response,
   ) {
+    console.log('user', user);
     const tokens = await this.authService.getTokens(
       user.sub,
       user.email,
@@ -238,9 +240,8 @@ export class AuthController {
     );
 
     this.setAuthCookies(res, tokens.access_token, tokens.refresh_token);
-    return {
-      ok: true,
-    };
+    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4040';
+    return res.redirect(302, `${frontendUrl}/auth?oauth=success`);
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {
