@@ -1,4 +1,4 @@
-import { Injectable, Logger, UseGuards } from '@nestjs/common'
+import { Injectable, Logger, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,19 +8,19 @@ import {
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
-} from '@nestjs/websockets'
-import { Server, Socket } from 'socket.io'
-import { WsAuthGuard } from '../common/guards'
-import { RoomInfo } from '../common/types'
-import { WsJwtMiddleware } from 'src/middleware'
+} from '@nestjs/websockets';
+import { Server, Socket } from 'socket.io';
+import { WsJwtMiddleware } from 'src/middleware';
+import { WsAuthGuard } from '../common/guards';
+import { RoomInfo } from '../common/types';
 
 type BroadcastPayload = {
-  message?: string
-}
+  message?: string;
+};
 
 type MessagePayload = {
-  message?: string
-}
+  message?: string;
+};
 
 @UseGuards(WsAuthGuard)
 @Injectable()
@@ -32,25 +32,25 @@ type MessagePayload = {
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  @WebSocketServer() server: Server
+  @WebSocketServer() server: Server;
 
-  private logger: Logger = new Logger('ChatGateway')
-  private rooms: Map<string, RoomInfo> = new Map()
+  private logger: Logger = new Logger('ChatGateway');
+  private rooms: Map<string, RoomInfo> = new Map();
 
   constructor(private readonly wsJwtMiddleware: WsJwtMiddleware) {}
   afterInit() {
     this.server.use(this.wsJwtMiddleware.apply());
-    this.logger.log('Initialized')
+    this.logger.log('Initialized');
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`)
+    this.logger.log(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    client.removeAllListeners()
-    client.disconnect(true)
-    this.logger.log(`Client disconnected: ${client.id}`)
+    client.removeAllListeners();
+    client.disconnect(true);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
 
   @SubscribeMessage('broadcast')
@@ -62,7 +62,7 @@ export class ChatGateway
       message: `Broadcast to all: ${data?.message || 'No message'}`,
       timestamp: new Date().toISOString(),
       fromClient: client.id,
-    })
+    });
   }
 
   @SubscribeMessage('message')
@@ -72,22 +72,22 @@ export class ChatGateway
   ): string {
     this.logger.log(
       `Received message from ${client.id}: ${JSON.stringify(data)}`,
-    )
+    );
 
-    let originalMsg: string | undefined
+    let originalMsg: string | undefined;
     if (data && typeof data === 'string') {
-      originalMsg = JSON.parse(data)?.message
+      originalMsg = JSON.parse(data)?.message;
     }
     if (data && typeof data === 'object') {
-      originalMsg = data?.message
+      originalMsg = data?.message;
     }
 
     this.server.to(client.id).emit('message', {
       originalMsg,
       timestamp: new Date().toISOString(),
-    })
+    });
 
-    return 'Message received'
+    return 'Message received';
   }
 
   @SubscribeMessage('joinRoom')
@@ -97,9 +97,9 @@ export class ChatGateway
     },
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomId } = data
+    const { roomId } = data;
 
-    client.join(roomId)
+    client.join(roomId);
 
     if (!this.rooms.has(roomId)) {
       this.rooms.set(roomId, {
@@ -107,28 +107,28 @@ export class ChatGateway
         clients: new Set([client.id]),
         createdAt: new Date(),
         lastActivity: new Date(),
-      })
+      });
     }
 
-    const room = this.rooms.get(roomId)
+    const room = this.rooms.get(roomId);
     if (room) {
-      room.clients.add(client.id)
-      room.lastActivity = new Date()
+      room.clients.add(client.id);
+      room.lastActivity = new Date();
     }
 
     this.server.to(roomId).emit('joinRoom', {
       roomId,
       clientId: client.id,
       clientsInRoom: room?.clients.size || 0,
-    })
+    });
 
-    this.logger.log(`Client ${client.id} joined room ${roomId}`)
+    this.logger.log(`Client ${client.id} joined room ${roomId}`);
 
     return {
       success: true,
       message: `Joined room ${roomId}`,
       roomInfo: room,
-    }
+    };
   }
 
   @SubscribeMessage('roomMessage')
@@ -136,19 +136,19 @@ export class ChatGateway
     @MessageBody() data: { roomId: string; message: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomId, message } = data
+    const { roomId, message } = data;
 
-    const room = this.rooms.get(roomId)
+    const room = this.rooms.get(roomId);
 
     if (!room?.clients.has(client.id) || !client.rooms.has(roomId)) {
       this.server
         .to(client.id)
-        .emit('roomMessage', { error: 'You are not in this room' })
-      return
+        .emit('roomMessage', { error: 'You are not in this room' });
+      return;
     }
 
     if (room) {
-      room.lastActivity = new Date()
+      room.lastActivity = new Date();
     }
 
     this.server.to(roomId).emit('roomMessage', {
@@ -156,16 +156,16 @@ export class ChatGateway
       message,
       timestamp: new Date().toISOString(),
       fromClient: client.id,
-    })
+    });
 
     this.logger.log(
       `Client ${client.id} sent message to room ${roomId}: ${message}`,
-    )
+    );
 
     return {
       success: true,
       message: `Message sent to room ${roomId}`,
-    }
+    };
   }
 
   @SubscribeMessage('listRooms')
@@ -175,11 +175,11 @@ export class ChatGateway
       clientCount: room.clients.size,
       lastActivity: room.lastActivity,
       createdAt: room.createdAt,
-    }))
+    }));
     return {
       success: true,
       roomList,
-    }
+    };
   }
 
   @SubscribeMessage('leaveRoom')
@@ -187,30 +187,30 @@ export class ChatGateway
     @MessageBody() data: { roomId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    const { roomId } = data
+    const { roomId } = data;
 
-    this.leaveRoom(client, roomId)
+    this.leaveRoom(client, roomId);
   }
 
   private leaveRoom(client: Socket, roomId: string): void {
     if (client.rooms.has(roomId)) {
-      client.leave(roomId)
+      client.leave(roomId);
     }
 
-    const room = this.rooms.get(roomId)
+    const room = this.rooms.get(roomId);
 
     if (room) {
-      room.clients.delete(client.id)
+      room.clients.delete(client.id);
 
       if (room.clients.size === 0) {
-        this.rooms.delete(roomId)
+        this.rooms.delete(roomId);
       } else {
-        room.lastActivity = new Date()
+        room.lastActivity = new Date();
       }
     }
     client.emit('leaveRoom', {
       roomId,
-    })
-    this.logger.log(`Client ${client.id} left room ${roomId}`)
+    });
+    this.logger.log(`Client ${client.id} left room ${roomId}`);
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
@@ -7,6 +7,6 @@ export class AppService {
       ok: true,
       message: 'Server is running',
       version: '1.0.0',
-    }
+    };
   }
 }

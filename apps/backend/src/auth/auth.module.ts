@@ -1,12 +1,12 @@
-import { Module } from '@nestjs/common'
-import { ConfigModule, ConfigService } from '@nestjs/config'
-import { JwtModule } from '@nestjs/jwt'
-import { PassportModule } from '@nestjs/passport'
-import type { SignOptions } from 'jsonwebtoken'
-import { PrismaService } from '../prisma/prisma.service'
-import { AuthController } from './auth.controller'
-import { AuthService } from './auth.service'
-import { AtStrategy, GoogleStrategy, RtStrategy } from './strategies'
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
+import type { SignOptions } from 'jsonwebtoken';
+import { PrismaService } from '../prisma/prisma.service';
+import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { AtStrategy, GoogleStrategy, RtStrategy } from './strategies';
 
 @Module({
   imports: [

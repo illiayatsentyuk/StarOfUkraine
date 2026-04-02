@@ -1,1 +1,1 @@
-export * from './find-query.dto'
+export * from './find-query.dto';
