@@ -21,32 +21,50 @@
     .divider
       span або пошта
     
-    form.form-content(@submit.prevent="handleRegister")
-      AppInput(
-        v-model="form.email"
-        type="email"
-        label="Електронна пошта *"
-        placeholder="example@mail.com"
-        required
+    VeeForm.form-content(@submit="handleRegister")
+      VeeField(
+        v-slot="{ value, errorMessage, handleChange }"
+        name="email"
+        rules="required|email"
       )
+        AppInput(
+          :model-value="value"
+          @update:model-value="handleChange"
+          type="email"
+          label="Електронна пошта *"
+          placeholder="example@mail.com"
+        )
+        .error-message(v-if="errorMessage") {{ errorMessage }}
       
       .row
-        AppInput(
-          v-model="form.password"
-          type="text"
-          label="Пароль *"
-          placeholder="........"
-          is-password-field
-          required
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="password"
+          rules="required|min:6"
         )
+          AppInput(
+            :model-value="value"
+            @update:model-value="handleChange"
+            type="text"
+            label="Пароль *"
+            placeholder="........"
+            is-password-field
+          )
+          .error-message(v-if="errorMessage") {{ errorMessage }}
         
-        AppInput(
-          v-model="form.confirmPassword"
-          type="password"
-          label="Повтор пароля *"
-          placeholder="........"
-          required
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="confirmPassword"
+          rules="required|confirmed:@password"
         )
+          AppInput(
+            :model-value="value"
+            @update:model-value="handleChange"
+            type="password"
+            label="Повтор пароля *"
+            placeholder="........"
+          )
+          .error-message(v-if="errorMessage") {{ errorMessage }}
       
       // Секція особистих даних
       .personal-info-box
@@ -54,37 +72,66 @@
           span.icon-user 👤
           h3 Особисті дані
         
-        AppInput(
-          v-model="form.fullName"
-          type="text"
-          placeholder="Повне ім'я *"
-          required
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="fullName"
+          rules="required"
         )
+          AppInput(
+            :model-value="value"
+            @update:model-value="handleChange"
+            type="text"
+            placeholder="Повне ім'я *"
+          )
+          .error-message(v-if="errorMessage") {{ errorMessage }}
         
         .row
-          AppInput(
-            v-model="form.birthDate"
-            type="date"
-            label="Дата народження"
-            is-mini
+          VeeField(
+            v-slot="{ value, errorMessage, handleChange }"
+            name="birthDate"
           )
+            AppInput(
+              :model-value="value"
+              @update:model-value="handleChange"
+              type="date"
+              label="Дата народження"
+              is-mini
+            )
+            .error-message(v-if="errorMessage") {{ errorMessage }}
           
-          AppInput(
-            v-model="form.gender"
-            type="select"
-            label="Стать"
-            is-mini
+          VeeField(
+            v-slot="{ value, errorMessage, handleChange }"
+            name="gender"
           )
-            option(value="" disabled selected) Оберіть
-            option(value="male") Чоловіча
-            option(value="female") Жіноча
+            AppInput(
+              :model-value="value"
+              @update:model-value="handleChange"
+              type="select"
+              label="Стать"
+              is-mini
+            )
+              option(value="" disabled selected) Оберіть
+              option(value="male") Чоловіча
+              option(value="female") Жіноча
+            .error-message(v-if="errorMessage") {{ errorMessage }}
       
       .terms-check
-        input#terms(v-model="form.acceptTerms" type="checkbox" required)
-        label(for="terms")
-          | Я приймаю 
-          a(href="#") Умови використання
-          |  та надаю згоду на обробку даних.
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="acceptTerms"
+          rules="required"
+          type="checkbox"
+        )
+          input#terms(
+            :checked="value"
+            @change="handleChange($event.target.checked)"
+            type="checkbox"
+          )
+          label(for="terms")
+            | Я приймаю 
+            a(href="#") Умови використання
+            |  та надаю згоду на обробку даних.
+          .error-message(v-if="errorMessage") {{ errorMessage }}
       
       button.submit-btn(type="submit") Зареєструватися
     
@@ -104,22 +151,8 @@ interface FormData {
   acceptTerms: boolean
 }
 
-const form = reactive<FormData>({
-  email: '',
-  password: '',
-  confirmPassword: '',
-  fullName: '',
-  birthDate: '',
-  gender: '',
-  acceptTerms: false
-})
-
-const handleRegister = () => {
-  if (form.password !== form.confirmPassword) {
-    alert('Паролі не збігаються!')
-    return
-  }
-  console.log('Дані форми:', form)
+const handleRegister = (values: FormData) => {
+  console.log('Дані форми:', values)
   // TODO: Add API call to register user
 }
 </script>
@@ -322,5 +355,11 @@ const handleRegister = () => {
       }
     }
   }
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 </style>

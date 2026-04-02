@@ -210,9 +210,15 @@ importers:
       '@primevue/nuxt-module':
         specifier: 4.5.4
         version: 4.5.4(@babel/parser@7.29.0)(magicast@0.5.2)(vue@3.5.30(typescript@5.9.3))
+      '@vee-validate/i18n':
+        specifier: ^4.15.1
+        version: 4.15.1
       '@vee-validate/nuxt':
         specifier: 4.15.1
         version: 4.15.1(magicast@0.5.2)(vue@3.5.30(typescript@5.9.3))
+      '@vee-validate/rules':
+        specifier: ^4.15.1
+        version: 4.15.1(vue@3.5.30(typescript@5.9.3))
       '@vueuse/core':
         specifier: ^14.2.1
         version: 14.2.1(vue@3.5.30(typescript@5.9.3))
@@ -2823,8 +2829,14 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@vee-validate/i18n@4.15.1':
+    resolution: {integrity: sha512-6ogEyxkoTr7IZk4EAUT0rD3pr34Nw/YEToez/c0DSlI1/cBeOpunSmGmoYPh32pmd3imxFPEawCB7IyFvRJSAw==}
+
   '@vee-validate/nuxt@4.15.1':
     resolution: {integrity: sha512-vy+BYUmwy7d01js8jg3qApyrE8/nJHbHvPZNYZSe+hTQEblNqyVt+MnD1incyxMCcivED8FX5w4rjxdoUn7iMQ==}
+
+  '@vee-validate/rules@4.15.1':
+    resolution: {integrity: sha512-2TGXq2MYt21nT8ysuxyFY/LBVQDcMPKn1hY0w3uIDmG333vzBkOtXAylmvrS93AsJ7N5coHMJjcCGG4JxCO2hQ==}
 
   '@vercel/nft@1.5.0':
     resolution: {integrity: sha512-IWTDeIoWhQ7ZtRO/JRKH+jhmeQvZYhtGPmzw/QGDY+wDCQqfm25P9yIdoAFagu4fWsK4IwZXDFIjrmp5rRm/sA==}
@@ -10071,6 +10083,8 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
+  '@vee-validate/i18n@4.15.1': {}
+
   '@vee-validate/nuxt@4.15.1(magicast@0.5.2)(vue@3.5.30(typescript@5.9.3))':
     dependencies:
       '@nuxt/kit': 3.21.2(magicast@0.5.2)
@@ -10078,6 +10092,12 @@ snapshots:
       vee-validate: 4.15.1(vue@3.5.30(typescript@5.9.3))
     transitivePeerDependencies:
       - magicast
+      - vue
+
+  '@vee-validate/rules@4.15.1(vue@3.5.30(typescript@5.9.3))':
+    dependencies:
+      vee-validate: 4.15.1(vue@3.5.30(typescript@5.9.3))
+    transitivePeerDependencies:
       - vue
 
   '@vercel/nft@1.5.0(rollup@4.59.0)':

@@ -11,6 +11,14 @@ export default defineNuxtConfig({
     '@vee-validate/nuxt',
     '@alexcolls/nuxt-socket.io',
   ],
+  veeValidate: {
+    // Using built-in rules
+    autoImports: true,
+    componentNames: {
+      Form: 'VeeForm',
+      Field: 'VeeField',
+    },
+  },
   primevue: {
     options: {
       theme: {
