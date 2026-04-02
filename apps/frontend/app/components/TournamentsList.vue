@@ -34,8 +34,14 @@ section.tournaments-list
             :key="f.key"
             :class="{ 'filter-btn--active': filtersStore.activeFilter === f.key }"
             type="button"
-            @click="filtersStore.activeFilter = f.key"
-        ) {{ f.label }}
+            @click="filtersStore.setFilter(f.key)"
+        ) 
+            span {{ f.label }}
+            .filter-icon(v-if="filtersStore.activeFilter === f.key && f.key !== 'all'")
+                svg(v-if="!filtersStore.isMinimum" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round")
+                    polyline(points="6 9 12 15 18 9")
+                svg(v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round")
+                    polyline(points="18 15 12 9 6 15")
     
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
         Loader
@@ -49,10 +55,14 @@ section.tournaments-list
             
             .tournament-card__details
                 .detail-group
-                    span.detail-label ДАТА СТАРТУ
+                    span.detail-label 
+                        i.pi.pi-calendar.mr-2
+                        | ДАТА СТАРТУ
                     span.detail-value {{ formatDate(tournament.startDate) }}
                 .detail-group
-                    span.detail-label МАКС. КОМАНД
+                    span.detail-label 
+                        i.pi.pi-users.mr-2
+                        | МАКС. КОМАНД
                     span.detail-value {{ tournament.maxTeams }}
             
             p.tournament-card__description {{ tournament.description }}
@@ -80,25 +90,22 @@ section.tournaments-list
 
     &__title {
         font-family: var(--font-display);
-        font-size: 48px;
+        font-size: 44px;
         font-weight: 700;
         color: var(--color-text);
         text-transform: uppercase;
-        letter-spacing: -1px;
+        letter-spacing: -1.5px;
+        line-height: 1;
 
         @media (max-width: 1024px) {
             font-size: 36px;
-        }
-
-        @media (max-width: 768px) {
-            font-size: 28px;
         }
     }
 
     &__grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-6);
+        gap: 32px;
 
         @media (max-width: 1200px) {
             grid-template-columns: repeat(2, 1fr);
@@ -112,96 +119,111 @@ section.tournaments-list
     &__footer {
         display: flex;
         justify-content: center;
-        margin-top: var(--space-4);
-    }
-}
-
-.loading-overlay {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 100px 0;
-    gap: 16px;
-
-    .loading-text {
-        font-size: 12px;
-        font-weight: 600;
-        color: var(--color-text-muted);
-        letter-spacing: 2px;
+        margin-top: 64px;
     }
 }
 
 .tournament-card {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
-    padding: var(--space-6);
-    background: var(--color-bg);
+    gap: 24px;
+    padding: 40px;
+    background: white;
     border: 1px solid var(--color-border);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--color-primary);
+        transform: translateY(-100%);
+        transition: transform 0.3s ease;
+    }
 
     &:hover {
         border-color: var(--color-text);
-        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
+        transform: translateY(-4px);
+
+        &::before {
+            transform: translateY(0);
+        }
     }
 
     &__status {
         width: fit-content;
-        padding: 4px 12px;
+        padding: 6px 12px;
         background-color: var(--color-primary);
-        border-radius: 2px;
         
         span {
             font-family: var(--font-display);
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 800;
             color: white;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
     }
 
     &__title {
         font-family: var(--font-display);
-        font-size: 24px;
+        font-size: 32px;
         font-weight: 700;
         color: var(--color-text);
-        line-height: 1.2;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        margin: 0;
     }
 
     &__details {
-        display: flex;
-        gap: var(--space-8);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 24px 0;
+        border-top: 1px solid var(--color-border);
         border-bottom: 1px solid var(--color-border);
-        padding-bottom: var(--space-4);
-        margin-bottom: var(--space-2);
     }
 
     .detail-group {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
     }
 
     .detail-label {
         font-family: var(--font-sans);
         font-size: 10px;
-        font-weight: 500;
+        font-weight: 700;
         color: var(--color-text-muted);
         text-transform: uppercase;
+        letter-spacing: 1px;
+        display: flex;
+        align-items: center;
+
+        i {
+            font-size: 12px;
+            margin-right: 8px;
+            color: var(--color-primary);
+        }
     }
 
     .detail-value {
-        font-family: var(--font-sans);
-        font-size: 14px;
-        font-weight: 600;
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
         color: var(--color-text);
     }
 
     &__description {
         font-family: var(--font-sans);
-        font-size: 14px;
+        font-size: 15px;
         color: var(--color-text-muted);
         line-height: 1.6;
         display: -webkit-box;
@@ -209,6 +231,7 @@ section.tournaments-list
         line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
+        margin: 0;
     }
 }
 
@@ -274,6 +297,12 @@ section.tournaments-list
         border-color: var(--color-primary);
         color: #fff;
         font-weight: 600;
+    }
+
+    .filter-icon {
+        margin-left: 6px;
+        font-size: 11px;
+        color: #fff;
     }
 }
 </style>

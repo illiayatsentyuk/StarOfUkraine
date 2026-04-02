@@ -5,52 +5,49 @@ import { useTournamentsStore } from './tournaments.store'
 export const useFiltersTournamentsStore = defineStore('filtersTournaments', () => {
     const tournamentsStore = useTournamentsStore()
     const activeFilter = ref('all')
+    const isMinimum = ref(false)
+
+    const getSortValue = (t: any, key: string) => {
+        switch (key) {
+            case 'byDate': return new Date(t.startDate).getTime()
+            case 'byName': return t.name.toLowerCase()
+            case 'byMaxTeams': return Number(t.maxTeams)
+            case 'byTeamSizeMin': return Number(t.teamSizeMin)
+            case 'byTeamSizeMax': return Number(t.teamSizeMax)
+            case 'byRounds': return Number(t.rounds)
+            case 'byRegistrationStart': return new Date(t.registrationStart).getTime()
+            case 'byRegistrationEnd': return new Date(t.registrationEnd).getTime()
+            default: return 0
+        }
+    }
 
     const filteredTournaments = computed(() => {
         const result = [...tournamentsStore.tournaments]
+        if (activeFilter.value === 'all') return result
 
-        if (activeFilter.value === 'all') {
-            return result
-        } else if (activeFilter.value === 'byDate') {
-            return result.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
-        } else if (activeFilter.value === 'byName') {
-            return result.sort((a, b) => a.name.localeCompare(b.name))
-        } else if (activeFilter.value === 'byMaxTeams') {
-            return result.sort((a, b) => Number(b.maxTeams) - Number(a.maxTeams))
-        } else if (activeFilter.value === 'byTeamSizeMin') {
-            return result.sort((a, b) => Number(b.teamSizeMin) - Number(a.teamSizeMin))
-        } else if (activeFilter.value === 'byTeamSizeMax') {
-            return result.sort((a, b) => Number(b.teamSizeMax) - Number(a.teamSizeMax))
-        } else if (activeFilter.value === 'byRounds') {
-            return result.sort((a, b) => Number(b.rounds) - Number(a.rounds))
-        } else if (activeFilter.value === 'byRegistrationStart') {
-            return result.sort((a, b) => new Date(b.registrationStart).getTime() - new Date(a.registrationStart).getTime())
-        } else if (activeFilter.value === 'byRegistrationEnd') {
-            return result.sort((a, b) => new Date(b.registrationEnd).getTime() - new Date(a.registrationEnd).getTime())
-        }
+        return result.sort((a, b) => {
+            const valA = getSortValue(a, activeFilter.value)
+            const valB = getSortValue(b, activeFilter.value)
 
-        return result
+            if (valA < valB) return isMinimum.value ? -1 : 1
+            if (valA > valB) return isMinimum.value ? 1 : -1
+            return 0
+        })
     })
 
-    function sortByDate() { activeFilter.value = 'byDate' }
-    function sortByName() { activeFilter.value = 'byName' }
-    function sortByMaxTeams() { activeFilter.value = 'byMaxTeams' }
-    function sortByTeamSizeMin() { activeFilter.value = 'byTeamSizeMin' }
-    function sortByTeamSizeMax() { activeFilter.value = 'byTeamSizeMax' }
-    function sortByRounds() { activeFilter.value = 'byRounds' }
-    function sortByRegistrationStart() { activeFilter.value = 'byRegistrationStart' }
-    function sortByRegistrationEnd() { activeFilter.value = 'byRegistrationEnd' }
+    const setFilter = (key: string) => {
+        if (activeFilter.value === key) {
+            isMinimum.value = !isMinimum.value
+        } else {
+            activeFilter.value = key
+            isMinimum.value = false
+        }
+    }
 
     return {
         activeFilter,
+        isMinimum,
         filteredTournaments,
-        sortByDate,
-        sortByName,
-        sortByMaxTeams,
-        sortByTeamSizeMin,
-        sortByTeamSizeMax,
-        sortByRounds,
-        sortByRegistrationStart,
-        sortByRegistrationEnd,
+        setFilter
     }
 })

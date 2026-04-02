@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from "vue-toastification";
+import { useApi } from '~/composables/useApi';
 
 export interface Tournament {
     id?: string

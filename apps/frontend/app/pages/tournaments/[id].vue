@@ -108,9 +108,7 @@ const onTournamentDeleted = async () => {
 
 <style lang="scss" scoped>
 .tournament-detail {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 60px 48px;
+    padding-top: 60px;
     min-height: 80vh;
     animation: fadeIn 0.4s ease-out;
 

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useTournamentsStore } from '../stores/tournaments.store'
 
 const store = useTournamentsStore()
+const loginStore = useLoginStore()
 const isOpen = ref(false)
 
 function openModal(){
@@ -24,6 +25,15 @@ header.header-competition
 
     .header-competition__nav
         Button.create-btn(@click="openModal" type="button" label="Створити турнір")
+        
+        .auth-section
+            template(v-if="loginStore.user")
+                .user-info
+                    span.user-name {{ loginStore.user.name || loginStore.user.email }}
+                    Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" label="Вийти" text)
+            template(v-else)
+                Button.login-btn(@click="loginStore.login" type="button" icon="pi pi-google" label="Увійти" severity="secondary")
+
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 </template>
 
@@ -54,6 +64,27 @@ CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
         display: flex;
         align-items: center;
         gap: 24px;
+    }
+
+    .auth-section {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding-left: 16px;
+        border-left: 1px solid var(--color-border);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .user-name {
+        font-family: var(--font-sans);
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--color-text);
     }
 }
 
