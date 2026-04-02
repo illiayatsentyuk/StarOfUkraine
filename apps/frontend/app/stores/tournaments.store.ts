@@ -3,27 +3,12 @@ import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useToast } from "vue-toastification";
 import { useApi } from '~/composables/useApi';
-
-export interface Tournament {
-    id?: string
-    name: string
-    description: string
-    startDate: string
-    registrationStart: string
-    registrationEnd: string
-    rounds: string | number
-    maxTeams: string | number
-    teamSizeMin: string | number
-    teamSizeMax: string | number
-    status?: string
-    hideTeamsUntilRegistrationEnds: boolean
-    createdAt?: string
-}
-const toast = useToast();
+import type { Tournament } from '~/types';
 
 const LIMIT = 5
 
 export const useTournamentsStore = defineStore('tournaments', () => {
+    const toast = useToast();
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
@@ -40,23 +25,22 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         error.value = null
     }
 
-    const loadFromDatabase = async (reset = false) => {
+    const loadFromDatabase = async (resetData = false) => {
         if (loading.value) return
-        // if (reset) {
-        //     page.value = 1
-        //     tournaments.value = []
-        // }
-
-        // loading.value = true
+        
         loading.value = true
         error.value = null
+
+        if (resetData) {
+            reset()
+        }
 
         try {
             const api = useApi()
             const response = await api.post(
                 `/tournaments/list`,
-                {
-                    page: page.value,
+                { 
+                    page: page.value, 
                     limit: LIMIT,
                     name: search.value.trim() || undefined
                 },
@@ -67,14 +51,19 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             const data = response.data
 
             if (data.data && Array.isArray(data.data)) {
-                tournaments.value.push(...data.data)
+                if (resetData) {
+                    tournaments.value = data.data
+                } else {
+                    tournaments.value.push(...data.data)
+                }
                 totalPages.value = data.totalPages
                 page.value++
             }
 
             return data
-        } catch (error) {
+        } catch (error: any) {
             console.error('Помилка API при завантаженні турнірів:', error)
+            error.value = error.message || 'Помилка завантаження'
             throw error
         } finally {
             loading.value = false
@@ -89,7 +78,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             if (!response.data) throw new Error('Не вдалося створити турнір')
 
             const createdTournament = response.data
-            tournaments.value.unshift(createdTournament)
+            tournaments.value.unshift(createdTournament) 
             toast.success("Турнір успішно створено");
             return createdTournament
         } catch (error) {
@@ -113,12 +102,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             loading.value = false
         }
     }
-    const debouncedSearch = useDebounceFn(() => {
-        reset()
-        loadFromDatabase()
-    }, 300)
-
-    watch(search, () => debouncedSearch())
 
     const deleteTournament = async (id: string) => {
         try {
@@ -133,12 +116,18 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const debouncedSearch = useDebounceFn(() => {
+        loadFromDatabase(true)
+    }, 300)
+
+    watch(search, () => debouncedSearch())
+
     return {
         tournaments,
         loading,
         error,
         hasMore,
-        search,
+        search,      
         reset,
         loadFromDatabase,
         fetchTournamentById,
