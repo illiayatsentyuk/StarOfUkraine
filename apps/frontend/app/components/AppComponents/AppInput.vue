@@ -32,17 +32,9 @@
 </template>
 
 <script setup lang="ts">
-interface Props {
-  modelValue: string | number | boolean
-  label?: string
-  type?: string
-  placeholder?: string
-  required?: boolean
-  isMini?: boolean
-  isPasswordField?: boolean
-}
+import type { AppInputProps } from '@/types'
 
-defineProps<Props>()
+defineProps<AppInputProps>()
 defineEmits<{
   'update:modelValue': [value: string | number | boolean]
 }>()
