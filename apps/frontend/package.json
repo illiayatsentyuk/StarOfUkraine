@@ -19,6 +19,7 @@
     "@vee-validate/nuxt": "4.15.1",
     "nuxt": "^4.4.2",
     "pinia": "^3.0.4",
+    "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
     "socket.io-client": "^4.8.3",
     "vue": "^3.5.30",
