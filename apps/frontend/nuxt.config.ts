@@ -28,7 +28,7 @@ export default defineNuxtConfig({
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
   },
-  css: ["~/assets/styles/main.scss"],
+  css: ["~/assets/styles/main.scss", "primeicons/primeicons.css"],
   vite: {
     css: {
       preprocessorOptions: {
