@@ -1,1 +1,1 @@
-export * from './ws-jwt.middleware'
+export * from './ws-jwt.middleware';

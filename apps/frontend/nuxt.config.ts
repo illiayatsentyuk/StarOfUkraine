@@ -11,6 +11,23 @@ export default defineNuxtConfig({
     '@vee-validate/nuxt',
     '@alexcolls/nuxt-socket.io',
   ],
+  primevue: {
+    options: {
+      theme: {
+        preset: 'Aura',
+        options: {
+          darkModeSelector: '.dark-mode'
+        }
+      }
+    }
+  },
+  runtimeConfig: {
+    public: {
+      apiURL: process.env.API_URL || 'http://localhost:3000',
+      devAdminEmail: process.env.DEV_ADMIN_EMAIL,
+      devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
+    }
+  },
   css: ["~/assets/styles/main.scss"],
   vite: {
     css: {

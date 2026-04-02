@@ -1,4 +1,4 @@
-import { Role } from '../../enum'
+import { Role } from '../../enum';
 
 export const authExamples = {
   signupRequest: {
@@ -50,4 +50,4 @@ export const authExamples = {
     message: 'Access Denied',
     error: 'Forbidden',
   },
-} as const
+} as const;
