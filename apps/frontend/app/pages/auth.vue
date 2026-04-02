@@ -10,7 +10,7 @@
       p {{ isLogin ? 'Швидкий вхід за допомогою соцмереж або пошти' : 'Швидкий вхід або заповнення даних' }}
     
     .social-grid
-      button.social-btn(type="button" @click="loginStore.login()")
+      button.social-btn(type="button" @click="loginStore.loginByGoogle()")
         i(class="pi pi-google")
         | Google
       
@@ -40,7 +40,7 @@
         VeeField(
           v-slot="{ value, errorMessage, handleChange }"
           name="password"
-          rules="required|min:6"
+          rules="required|min:8"
         )
           AppInput(
             :model-value="value"
@@ -133,7 +133,7 @@
             |  та надаю згоду на обробку даних.
           .error-message(v-if="errorMessage") {{ errorMessage }}
       
-      button.submit-btn(type="submit") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
+      button.submit-btn(type="submit" :disabled="loginStore.loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
     
     .card-footer
       template(v-if="isLogin")
@@ -145,8 +145,10 @@
 </template>
 
 <script setup lang="ts">
-import {useLoginStore} from "~/stores/login.store"
+import {useLoginStore} from "~/stores/auth.store"
+import { ref } from 'vue'
 
+const isLogin = ref(true)
 const loginStore = useLoginStore()
 const route = useRoute()
 
@@ -175,9 +177,15 @@ interface FormData {
   acceptTerms: boolean
 }
 
-const handleRegister = (values: FormData) => {
-  console.log('Дані форми:', values)
-  // TODO: Add API call to register user
+const handleRegister = async (values: FormData) => {
+  if (isLogin.value) {
+    await loginStore.loginByEmail({
+      email: values.email,
+      password: values.password
+    })
+  } else {
+    await loginStore.signupByEmail(values)
+  }
 }
 </script>
 

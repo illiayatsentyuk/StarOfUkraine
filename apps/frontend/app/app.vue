@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import 'primeicons/primeicons.css'
+import { useLoginStore } from './stores/auth.store'
 
-import { useLoginStore } from './stores/login.store'
-import 'primeicons/primeicons.css'
-
+const auth = useLoginStore()
 const loginStore = useLoginStore()
 
 onMounted(() => {
   loginStore.fetchUser()
 })
+await auth.init()
 </script>
 
 <template lang="pug">
