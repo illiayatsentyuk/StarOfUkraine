@@ -46,7 +46,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         //     page.value = 1
         //     tournaments.value = []
         // }
-        
+
         // loading.value = true
         loading.value = true
         error.value = null
@@ -55,8 +55,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             const api = useApi()
             const response = await api.post(
                 `/tournaments/list`,
-                { 
-                    page: page.value, 
+                {
+                    page: page.value,
                     limit: LIMIT,
                     name: search.value.trim() || undefined
                 },
@@ -89,7 +89,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             if (!response.data) throw new Error('Не вдалося створити турнір')
 
             const createdTournament = response.data
-            tournaments.value.unshift(createdTournament) 
+            tournaments.value.unshift(createdTournament)
             toast.success("Турнір успішно створено");
             return createdTournament
         } catch (error) {
@@ -138,7 +138,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         loading,
         error,
         hasMore,
-        search,      
+        search,
         reset,
         loadFromDatabase,
         fetchTournamentById,

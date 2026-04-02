@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import 'primeicons/primeicons.css'
+
 import { useLoginStore } from './stores/login.store'
 
 const loginStore = useLoginStore()
@@ -15,6 +17,3 @@ onMounted(() => {
       NuxtPage
 </template>
 
-<script setup lang="ts">
-import 'primeicons/primeicons.css'
-</script>
