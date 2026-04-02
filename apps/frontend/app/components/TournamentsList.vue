@@ -71,7 +71,7 @@ section.tournaments-list
         p Турнірів поки немає.
 
     .tournaments-list__footer(v-if="store.tournaments.length > 0")
-        button.load-more(@click="store.loadFromDatabase" :disabled="!store.hasMore || store.loading" type="button")
+        button.load-more(@click="store.loadFromDatabase()" :disabled="!store.hasMore || store.loading" type="button")
             .btn-content
                 span {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
 </template>

@@ -33,6 +33,28 @@ section.tournament-detail
                         span.label МАКС. КОМАНД
                         span.value {{ tournament.maxTeams }}
 
+                .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
+                    h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
+                    .admin-dota-form
+                        input.dota-input(
+                            v-model="dotaMatchId" 
+                            type="text" 
+                            placeholder="Введіть Dota 2 Match ID (напр. 7600000000)"
+                        )
+                        button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? 'Шукаємо...' : 'Знайти' }}
+                    
+                    .dota-result(v-if="dotaMatchData")
+                        .dota-score(:class="dotaMatchData.radiant_win ? 'radiant-win' : 'dire-win'")
+                            span.team.radiant Radiant {{ dotaMatchData.radiant_score }}
+                            span.vs -
+                            span.team.dire {{ dotaMatchData.dire_score }} Dire
+                        
+                        .dota-info
+                            span.info-item Переможець: {{ dotaMatchData.radiant_win ? 'Radiant' : 'Dire' }}
+                            span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
+                    
+                    .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
+
             aside.sidebar
                 .sidebar__card
                     h3.section-label КЛЮЧОВІ ДАТИ
@@ -72,10 +94,12 @@ section.tournament-detail
 import { ref, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
+import { useLoginStore } from '../../stores/auth.store'
 import DeleteModal from '../../components/deleteModal.vue'
 
 const route = useRoute()
 const store = useTournamentsStore()
+const authStore = useLoginStore()
 const tournament = ref<any>(null)
 const isDeleteModalOpen = ref(false)
 
@@ -103,6 +127,29 @@ const handleDelete = () => {
 
 const onTournamentDeleted = async () => {
     await navigateTo('/')
+}
+
+const dotaMatchId = ref('')
+const dotaMatchLoading = ref(false)
+const dotaMatchData = ref<any>(null)
+const dotaMatchError = ref('')
+
+const fetchDotaMatch = async () => {
+    if (!dotaMatchId.value) return
+    dotaMatchLoading.value = true
+    dotaMatchError.value = ''
+    dotaMatchData.value = null
+    try {
+        const response = await fetch(`https://api.opendota.com/api/matches/${dotaMatchId.value}`)
+        if (!response.ok) throw new Error('Матч не знайдено або помилка API')
+        const data = await response.json()
+        if (data.error) throw new Error(data.error)
+        dotaMatchData.value = data
+    } catch (e: any) {
+        dotaMatchError.value = e.message || 'Помилка завантаження'
+    } finally {
+        dotaMatchLoading.value = false
+    }
 }
 </script>
 
@@ -343,5 +390,90 @@ const onTournamentDeleted = async () => {
 
 :deep(.p-progressspinner-circle) {
     stroke: var(--color-primary) !important;
+}
+
+.admin-dota-section {
+    background: var(--color-surface);
+    border: 1px dashed var(--color-primary);
+    padding: 24px;
+    margin-top: 32px;
+
+    .admin-dota-form {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+
+        .dota-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--color-border);
+            font-family: var(--font-sans);
+            font-size: 14px;
+            background: var(--color-bg);
+            color: var(--color-text);
+
+            &:focus {
+                outline: none;
+                border-color: var(--color-primary);
+            }
+        }
+
+        .dota-btn {
+            padding: 0 24px;
+            background: var(--color-text);
+            color: var(--color-bg);
+            border: none;
+            font-family: var(--font-display);
+            font-weight: 600;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: opacity 0.2s;
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .dota-result {
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 1px solid var(--color-border);
+
+        .dota-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+
+            .team {
+                &.radiant { color: #10b981; } /* Emerald */
+                &.dire { color: #ef4444; }    /* Red */
+            }
+
+            .vs {
+                color: var(--color-text-muted);
+            }
+        }
+
+        .dota-info {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            font-size: 14px;
+            color: var(--color-text-muted);
+        }
+    }
+
+    .error-text {
+        color: var(--color-error, #ef4444);
+        margin-top: 16px;
+        font-size: 14px;
+    }
 }
 </style>
