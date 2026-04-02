@@ -2,6 +2,7 @@
 import 'primeicons/primeicons.css'
 
 import { useLoginStore } from './stores/login.store'
+import 'primeicons/primeicons.css'
 
 const loginStore = useLoginStore()
 

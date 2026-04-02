@@ -9,8 +9,15 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@primevue/nuxt-module',
     '@vee-validate/nuxt',
-    '@alexcolls/nuxt-socket.io',
   ],
+  veeValidate: {
+    // Using built-in rules
+    autoImports: true,
+    componentNames: {
+      Form: 'VeeForm',
+      Field: 'VeeField',
+    },
+  },
   primevue: {
     options: {
       theme: {
@@ -28,7 +35,7 @@ export default defineNuxtConfig({
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
   },
-  css: ["~/assets/styles/main.scss"],
+  css: ["~/assets/styles/main.scss", "primeicons/primeicons.css"],
   vite: {
     css: {
       preprocessorOptions: {

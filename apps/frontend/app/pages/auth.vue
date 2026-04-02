@@ -21,42 +21,50 @@
     .divider
       span або пошта
     
-    form.form-content(@submit.prevent="handleSubmit")
-      AppInput(
-        v-model="form.email"
-        type="email"
-        label="Електронна пошта *"
-        placeholder="example@mail.com"
-        required
+    VeeForm.form-content(@submit="handleRegister")
+      VeeField(
+        v-slot="{ value, errorMessage, handleChange }"
+        name="email"
+        rules="required|email"
       )
+        AppInput(
+          :model-value="value"
+          @update:model-value="handleChange"
+          type="email"
+          label="Електронна пошта *"
+          placeholder="example@mail.com"
+        )
+        .error-message(v-if="errorMessage") {{ errorMessage }}
       
-      template(v-if="!isLogin")
-        .row
+      .row
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="password"
+          rules="required|min:6"
+        )
           AppInput(
-            v-model="form.password"
-            type="password"
+            :model-value="value"
+            @update:model-value="handleChange"
+            type="text"
             label="Пароль *"
             placeholder="........"
             is-password-field
-            required
           )
-          
+          .error-message(v-if="errorMessage") {{ errorMessage }}
+        
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="confirmPassword"
+          rules="required|confirmed:@password"
+        )
           AppInput(
-            v-model="form.confirmPassword"
+            :model-value="value"
+            @update:model-value="handleChange"
             type="password"
             label="Повтор пароля *"
             placeholder="........"
-            required
           )
-      template(v-else)
-        AppInput(
-          v-model="form.password"
-          type="password"
-          label="Пароль *"
-          placeholder="........"
-          is-password-field
-          required
-        )
+          .error-message(v-if="errorMessage") {{ errorMessage }}
       
       // Секція особистих даних
       .personal-info-box(v-if="!isLogin")
@@ -64,37 +72,66 @@
           i.pi.pi-user.icon-user
           h3 Особисті дані
         
-        AppInput(
-          v-model="form.fullName"
-          type="text"
-          placeholder="Повне ім'я *"
-          required
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="fullName"
+          rules="required"
         )
+          AppInput(
+            :model-value="value"
+            @update:model-value="handleChange"
+            type="text"
+            placeholder="Повне ім'я *"
+          )
+          .error-message(v-if="errorMessage") {{ errorMessage }}
         
         .row
-          AppInput(
-            v-model="form.birthDate"
-            type="date"
-            label="Дата народження"
-            is-mini
+          VeeField(
+            v-slot="{ value, errorMessage, handleChange }"
+            name="birthDate"
           )
+            AppInput(
+              :model-value="value"
+              @update:model-value="handleChange"
+              type="date"
+              label="Дата народження"
+              is-mini
+            )
+            .error-message(v-if="errorMessage") {{ errorMessage }}
           
-          AppInput(
-            v-model="form.gender"
-            type="select"
-            label="Стать"
-            is-mini
+          VeeField(
+            v-slot="{ value, errorMessage, handleChange }"
+            name="gender"
           )
-            option(value="" disabled selected) Оберіть
-            option(value="male") Чоловіча
-            option(value="female") Жіноча
+            AppInput(
+              :model-value="value"
+              @update:model-value="handleChange"
+              type="select"
+              label="Стать"
+              is-mini
+            )
+              option(value="" disabled selected) Оберіть
+              option(value="male") Чоловіча
+              option(value="female") Жіноча
+            .error-message(v-if="errorMessage") {{ errorMessage }}
       
-      .terms-check(v-if="!isLogin")
-        input#terms(v-model="form.acceptTerms" type="checkbox" required)
-        label(for="terms")
-          | Я приймаю 
-          a(href="#") Умови використання
-          |  та надаю згоду на обробку даних.
+      .terms-check
+        VeeField(
+          v-slot="{ value, errorMessage, handleChange }"
+          name="acceptTerms"
+          rules="required"
+          type="checkbox"
+        )
+          input#terms(
+            :checked="value"
+            @change="handleChange($event.target.checked)"
+            type="checkbox"
+          )
+          label(for="terms")
+            | Я приймаю 
+            a(href="#") Умови використання
+            |  та надаю згоду на обробку даних.
+          .error-message(v-if="errorMessage") {{ errorMessage }}
       
       button.submit-btn(type="submit") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
     
@@ -138,30 +175,9 @@ interface FormData {
   acceptTerms: boolean
 }
 
-const form = reactive<FormData>({
-  email: '',
-  password: '',
-  confirmPassword: '',
-  fullName: '',
-  birthDate: '',
-  gender: '',
-  acceptTerms: false
-})
-
-const isLogin = ref(false)
-
-const handleSubmit = () => {
-  if (isLogin.value) {
-    console.log('Login Дані:', { email: form.email, password: form.password })
-    // TODO: Add API call to login user
-  } else {
-    if (form.password !== form.confirmPassword) {
-      alert('Паролі не збігаються!')
-      return
-    }
-    console.log('Дані форми:', form)
-    // TODO: Add API call to register user
-  }
+const handleRegister = (values: FormData) => {
+  console.log('Дані форми:', values)
+  // TODO: Add API call to register user
 }
 </script>
 
@@ -412,5 +428,17 @@ const handleSubmit = () => {
       }
     }
   }
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.error-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
 }
 </style>
