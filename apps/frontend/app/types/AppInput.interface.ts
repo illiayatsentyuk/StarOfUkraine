@@ -1,5 +1,5 @@
 export interface AppInputProps {
-  modelValue: string | number | boolean
+  modelValue?: string | number | boolean
   label?: string
   type?: string
   placeholder?: string
