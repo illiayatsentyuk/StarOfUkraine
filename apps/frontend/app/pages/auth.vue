@@ -197,7 +197,6 @@ const handleRegister = async (values: FormData) => {
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background: var(--color-surface);
 }
 
 .auth-card {
@@ -207,6 +206,8 @@ const handleRegister = async (values: FormData) => {
   border-radius: var(--pencil-radius);
   box-shadow: var(--pencil-shadow);
   overflow: hidden;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
 
   .header-section {
     position: static;
