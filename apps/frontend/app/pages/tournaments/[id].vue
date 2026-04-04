@@ -33,6 +33,22 @@ section.tournament-detail
                         span.label МАКС. КОМАНД
                         span.value {{ tournament.maxTeams }}
 
+                .content-section
+                    h3.section-label КОМАНДИ
+                    p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
+                    template(v-else)
+                        p.description(v-if="teamsStore.loading") Завантаження команд...
+                        p.description(v-else-if="!teams.length") Команди поки не додані.
+                        .teams-grid(v-else)
+                            .team-card(v-for="team in teams" :key="team.id")
+                                h4.team-card__name {{ team.name || team.teamName }}
+                                p.team-card__meta
+                                    | Капітан:
+                                    span  {{ team.captainName }}
+                                p.team-card__meta(v-if="team.city")
+                                    | Місто:
+                                    span  {{ team.city }}
+
                 .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
                     h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
                     .admin-dota-form
@@ -91,17 +107,26 @@ section.tournament-detail
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
-import DeleteModal from '../../components/deleteModal.vue'
+import DeleteModal from '../../components/tournaments/deleteModal.vue'
 
 const route = useRoute()
 const store = useTournamentsStore()
 const authStore = useLoginStore()
+const teamsStore = useTeamsStore()
+
 const tournament = ref<any>(null)
+const teams = ref<any[]>([])
 const isDeleteModalOpen = ref(false)
+const shouldHideTeams = computed(() => {
+    if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
+    if (!tournament.value?.registrationEnd) return false
+    return new Date(tournament.value.registrationEnd) > new Date()
+})
+
 
 const formatDate = (dateString: string) => {
     if (!dateString) return "ТВА"
@@ -116,6 +141,10 @@ const formatDate = (dateString: string) => {
 onMounted(async () => {
     try {
         tournament.value = await store.fetchTournamentById(route.params.id as string)
+        if(!shouldHideTeams.value) {
+            const teamsResponse = await teamsStore.loadFromDatabase(true)
+            teams.value = teamsResponse?.data || []
+        }
     } catch (e) {
         console.error("Failed to load tournament detail")
     }
@@ -262,6 +291,37 @@ const fetchDotaMatch = async () => {
                 font-weight: 700;
                 color: var(--color-text);
             }
+        }
+    }
+}
+
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.team-card {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 16px;
+
+    &__name {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-family: var(--font-display);
+    }
+
+    &__meta {
+        margin: 0;
+        color: var(--color-text-muted);
+        font-size: 14px;
+
+        span {
+            color: var(--color-text);
+            font-weight: 600;
+            margin-left: 6px;
         }
     }
 }

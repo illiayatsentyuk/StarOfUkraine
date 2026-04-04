@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import { useTournamentsStore } from '../stores/tournaments.store'
+import { useTournamentsStore } from '../../stores/tournaments.store'
 
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
