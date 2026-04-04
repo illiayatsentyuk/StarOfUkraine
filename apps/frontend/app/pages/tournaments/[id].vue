@@ -91,14 +91,13 @@ section.tournament-detail
                         .status-info
                             span.label ПОТОЧНИЙ СТАТУС
                             span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
-                        Button.delete-btn(@click="handleDelete" type="button" label="Видалити турнір")
+                        Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
     
     .error-state(v-else)
         p Турнір не знайдено.
         NuxtLink(to="/") Повернутися до списку
-    
     DeleteModal(
-        v-if="tournament"
+        v-if="tournament && authStore.isAdmin"
         :isOpen="isDeleteModalOpen" 
         :tournament="tournament" 
         @close="isDeleteModalOpen = false" 
@@ -111,6 +110,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
+import { useTeamsStore } from '../../stores/teams.store'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
 
 const route = useRoute()
