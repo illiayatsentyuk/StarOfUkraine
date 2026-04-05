@@ -97,6 +97,16 @@ section.tournament-detail
                                         td {{ element.name || element.teamName || 'Без назви' }}
                                         td {{ element.points || 0 }}
 
+                    .bracket-wrapper(v-if="tournament.rounds && tournament.rounds.length > 0")
+                        h3.section-label СІТКА ТУРНІРУ
+                        TournamentBracket(
+                            :teams="teams"
+                            :rounds="tournament.rounds"
+                            @onMatchClick="onMatchClick"
+                            @onParticipantClick="onParticipantClick"
+                            @onMatchResult="onMatchResult"
+                        )
+
                 
 
 
@@ -140,6 +150,7 @@ import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
 import { useTeamsStore } from '../../stores/teams.store'
+import {TournamentBracket} from 'vue3-tournament'
 import { VueDraggableNext } from 'vue-draggable-next'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
 
@@ -157,6 +168,18 @@ const shouldHideTeams = computed(() => {
     return new Date(tournament.value.registrationEnd) > new Date()
 })
 
+
+const onMatchClick = (match: any) => {
+    console.log('Match clicked:', match)
+}
+
+const onParticipantClick = (participant: any) => {
+    console.log('Participant clicked:', participant)
+}
+
+const onMatchResult = (result: any) => {
+    console.log('Match result:', result)
+}
 
 const formatDate = (dateString: string) => {
     if (!dateString) return "ТВА"
@@ -192,6 +215,56 @@ const shuffleTeams = () => {
     teams.value = [...teams.value].sort(() => Math.random() - 0.5)
 }
 
+const generateBracket = () => {
+    if (!teams.value || teams.value.length === 0) {
+        alert('Немає команд для генерації сітки')
+        return
+    }
+
+    // Шукаємо найближчу ступінь двійки (2, 4, 8, 16...)
+    let numTeams = teams.value.length
+    let bracketSize = 1
+    while (bracketSize < numTeams) bracketSize *= 2
+
+    const generatedRounds = []
+    
+    // Раунд 1
+    const firstRoundMatches = []
+    for (let i = 0; i < bracketSize / 2; i++) {
+        const t1 = teams.value[i * 2]
+        const t2 = teams.value[i * 2 + 1]
+
+        firstRoundMatches.push({
+            id: `round1_match${i + 1}`,
+            winner: null,
+            team1: t1 ? { id: t1.id, name: t1.name || t1.teamName || 'Без назви', score: 0 } : { id: null, name: "BYE", score: null },
+            team2: t2 ? { id: t2.id, name: t2.name || t2.teamName || 'Без назви', score: 0 } : { id: null, name: "BYE", score: null },
+        })
+    }
+    generatedRounds.push({ matchs: firstRoundMatches })
+
+    // Наступні раунди (Півфінал, Фінал і тд)
+    let currentMatchesCount = bracketSize / 2
+    let roundNum = 2
+    while (currentMatchesCount > 1) {
+        currentMatchesCount /= 2
+        const matches = []
+        for (let i = 0; i < currentMatchesCount; i++) {
+            matches.push({
+                id: `round${roundNum}_match${i + 1}`,
+                winner: null,
+                team1: { id: null, name: "TBD", score: null },
+                team2: { id: null, name: "TBD", score: null },
+            })
+        }
+        generatedRounds.push({ matchs: matches })
+        roundNum++
+    }
+
+    if (tournament.value) {
+        tournament.value.rounds = generatedRounds
+    }
+}
 
 const dotaMatchId = ref('')
 const dotaMatchLoading = ref(false)
@@ -727,6 +800,123 @@ const fetchDotaMatch = async () => {
                     font-size: 16px;
                     color: var(--color-text-muted);
                 }
+            }
+        }
+    }
+}
+
+/* --- ВІЗУАЛІЗАЦІЯ СІТКИ VUE3-TOURNAMENT --- */
+.bracket-wrapper {
+    margin-top: 48px;
+    padding: 32px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow-x: auto;
+    position: relative;
+
+    .section-label {
+        margin-bottom: 32px;
+        color: var(--color-primary);
+    }
+
+    /* Кастомізація скролбару для контейнера з сіткою */
+    &::-webkit-scrollbar {
+        height: 10px;
+    }
+    &::-webkit-scrollbar-track {
+        background: var(--color-bg);
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: var(--color-border);
+        border-radius: 4px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: var(--color-primary);
+    }
+
+    /* Стилі компонентів бібліотеки */
+    :deep(.vtb-wrapper) {
+        display: flex;
+        font-family: var(--font-sans);
+        min-width: max-content;
+
+        /* Блоки з матчами */
+        .vtb-item-players {
+            display: flex;
+            flex-direction: column;
+            width: 220px;
+            background: #111; /* Глибокий темний */
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            margin: 12px 0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, border-color 0.2s;
+
+            &:hover {
+                transform: translateY(-4px) scale(1.02);
+                border-color: var(--color-primary);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+                z-index: 2;
+            }
+
+            /* Конкретний гравець/команда всередині блоку */
+            .vtb-item-player {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 12px 16px;
+                color: var(--color-text);
+                font-weight: 500;
+                font-size: 13px;
+                position: relative;
+                cursor: pointer;
+                transition: background 0.2s;
+
+                &:first-child {
+                    border-bottom: 1px solid var(--color-border);
+                }
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    height: 100%;
+                    width: 3px;
+                    background: transparent;
+                    transition: background 0.2s;
+                }
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.05);
+                }
+
+                /* Оформлення переможця */
+                &.winner {
+                    font-weight: 700;
+                    color: #fff;
+                    
+                    &::before {
+                        background: var(--color-primary); /* Яскрава лінія */
+                    }
+                }
+
+                /* Оформлення команди, що програла */
+                &.defeated {
+                    color: var(--color-text-muted);
+                    opacity: 0.6;
+                }
+            }
+        }
+
+        /* SVG лінії, які з'єднують матчі */
+        svg {
+            path {
+                stroke: var(--color-border) !important;
+                stroke-width: 2px !important;
             }
         }
     }

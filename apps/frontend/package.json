@@ -28,7 +28,8 @@
     "socket.io-client": "^4.8.3",
     "vue": "^3.5.30",
     "vue-router": "^5.0.3",
-    "vue-toastification": "2.0.0-rc.5"
+    "vue-toastification": "2.0.0-rc.5",
+    "vue3-tournament": "^1.4.1"
   },
   "devDependencies": {
     "pug": "^3.0.4",
