@@ -9,14 +9,12 @@ const emit = defineEmits<{
 
 const store = useTeamsStore()
 
-// Redundant load removed to avoid double fetching
-
 
 const initialState = {
-    teamName: "",
+    name: "",
     captainName: "",
     captainEmail: "",
-    members:[""],
+    members:"",
     city:"",
     organization: "",
     telegram: "",
@@ -27,14 +25,19 @@ const form = reactive({ ...initialState })
 
 const isLoading = ref(false)
 
+function formateMembers(members: string) {
+  return members.split(",").map((member) => member.trim())
+}
+
 async function submitForm() {
     try {
         isLoading.value = true
         const payload = {
             ...form,
-            organization: Number(form.organization) || 0,
-            telegram: Number(form.telegram) || 0,
-            discord: Number(form.discord) || 0,
+            members: formateMembers(form.members),
+            organization: form.organization,
+            telegram: form.telegram,
+            discord: form.discord,
         }
         
         await store.createTeam(payload)
@@ -53,6 +56,7 @@ function closeModal() {
 function formatDate(date: string) {
   return new Date(date).toLocaleDateString("uk-UA")
 }
+
 </script>
 
 <template lang="pug">
@@ -66,7 +70,7 @@ function formatDate(date: string) {
         form.modal-form(@submit.prevent="submitForm")
             .form-group
                 label.form-label Назва команди
-                input.form-input(type="text" v-model="form.teamName" placeholder="Введіть назву команди" required)
+                input.form-input(type="text" v-model="form.name" placeholder="Введіть назву команди" required)
             
             .form-group
                 label.form-label Ім'я капітана
