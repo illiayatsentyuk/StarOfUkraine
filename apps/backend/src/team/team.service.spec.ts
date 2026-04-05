@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import paginationConfig from '../config/pagination.config';
-import { SortBy, SortOrder } from '../enum';
+import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { TeamService } from './team.service';
 
@@ -138,7 +138,7 @@ describe('TeamService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.CREATED_AT,
+          sortBy: TeamsSortBy.CREATED_AT,
           sortOrder: SortOrder.ASC,
         });
 
@@ -151,7 +151,7 @@ describe('TeamService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TeamsSortBy.UPDATED_AT,
           sortOrder: SortOrder.DESC,
         });
 
@@ -164,7 +164,7 @@ describe('TeamService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TeamsSortBy.UPDATED_AT,
           sortOrder: SortOrder.ASC,
         });
 
@@ -177,7 +177,7 @@ describe('TeamService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TeamsSortBy.UPDATED_AT,
         });
 
         expect(mockPrisma.team.findMany).toHaveBeenCalledWith(

@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TournamentStatus } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
-import { SortBy, SortOrder } from '../enum';
+import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { TournamentService } from './tournament.service';
 
@@ -122,7 +122,7 @@ describe('TournamentService', () => {
       expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith({
         skip: 10,
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       });
     });
 
@@ -147,7 +147,9 @@ describe('TournamentService', () => {
         await service.findAll({ page: 1, limit: 10 });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -155,12 +157,14 @@ describe('TournamentService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.CREATED_AT,
+          sortBy: TournamentsSortBy.CREATED_AT,
           sortOrder: SortOrder.ASC,
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -168,12 +172,14 @@ describe('TournamentService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TournamentsSortBy.UPDATED_AT,
           sortOrder: SortOrder.DESC,
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -181,12 +187,14 @@ describe('TournamentService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TournamentsSortBy.UPDATED_AT,
           sortOrder: SortOrder.ASC,
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -194,11 +202,13 @@ describe('TournamentService', () => {
         await service.findAll({
           page: 1,
           limit: 10,
-          sortBy: SortBy.UPDATED_AT,
+          sortBy: TournamentsSortBy.UPDATED_AT,
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -210,7 +220,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
     });

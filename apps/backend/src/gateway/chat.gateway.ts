@@ -17,7 +17,7 @@ import { RoomInfo } from '../common/types';
 type BroadcastPayload = {
   message?: string;
 };
-
+    
 type MessagePayload = {
   message?: string;
 };
