@@ -9,9 +9,33 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@primevue/nuxt-module',
     '@vee-validate/nuxt',
-    '@alexcolls/nuxt-socket.io',
   ],
-  css: ["~/assets/styles/main.scss"],
+  veeValidate: {
+    // Using built-in rules
+    autoImports: true,
+    componentNames: {
+      Form: 'VeeForm',
+      Field: 'VeeField',
+    },
+  },
+  primevue: {
+    options: {
+      theme: {
+        preset: 'Aura',
+        options: {
+          darkModeSelector: '.dark-mode'
+        }
+      }
+    }
+  },
+  runtimeConfig: {
+    public: {
+      apiURL: process.env.API_URL || 'http://localhost:3000',
+      devAdminEmail: process.env.DEV_ADMIN_EMAIL,
+      devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
+    }
+  },
+  css: ["~/assets/styles/main.scss", "primeicons/primeicons.css"],
   vite: {
     css: {
       preprocessorOptions: {
@@ -31,6 +55,6 @@ export default defineNuxtConfig({
     },
   ],
   devServer: {
-    port:4040,
+    port: 4040,
   },
 })

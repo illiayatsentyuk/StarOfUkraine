@@ -2,15 +2,17 @@
 
 :root {
   /* Colors */
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-text: #1f2937;
-  --color-text-muted: #6b7280;
-  --color-bg: #ffffff;
-  --color-border: #e5e7eb;
+  --color-primary: #E42313;
+  --color-primary-hover: #C31F10;
+  --color-text: #0D0D0D;
+  --color-text-muted: #7A7A7A;
+  --color-bg: #FFFFFF;
+  --color-border: #E8E8E8;
+  --color-surface: #FAFAFA;
 
   /* Typography */
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
   --font-size-sm: 0.875rem;
   --font-size-base: 1rem;
   --font-size-lg: 1.125rem;
