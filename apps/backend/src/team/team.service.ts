@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
-import { FindQueryDto } from '../common/dto/find-query.dto';
 import paginationConfig from '../config/pagination.config';
-import { SortBy, SortOrder } from '../enum';
+import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { FindTeamQueryDto } from './dto/find-team-query.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 
 @Injectable()
@@ -45,7 +45,7 @@ export class TeamService {
     return team;
   }
 
-  async findAll(query: FindQueryDto) {
+  async findAll(query: FindTeamQueryDto) {
     const name = (query.name ?? '').trim();
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
@@ -56,7 +56,7 @@ export class TeamService {
       throw new BadRequestException('Page number is out of range');
     }
 
-    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortBy = query.sortBy ?? TeamsSortBy.CREATED_AT;
     const sortOrder = query.sortOrder ?? SortOrder.DESC;
 
     const where: Prisma.TeamWhereInput | undefined = name

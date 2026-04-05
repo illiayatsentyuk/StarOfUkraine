@@ -6,11 +6,11 @@ import {
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
-import { FindQueryDto } from '../common/dto/find-query.dto';
 import paginationConfig from '../config/pagination.config';
-import { SortBy, SortOrder } from '../enum';
+import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
+import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 
 @Injectable()
@@ -49,7 +49,7 @@ export class TournamentService {
     return tournament;
   }
 
-  async findAll(query: FindQueryDto) {
+  async findAll(query: FindTournamentQueryDto) {
     const name = (query.name ?? '').trim();
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
@@ -60,7 +60,7 @@ export class TournamentService {
       throw new BadRequestException('Page number is out of range');
     }
 
-    const sortBy = query.sortBy ?? SortBy.CREATED_AT;
+    const sortBy = query.sortBy ?? TournamentsSortBy.CREATED_AT;
     const sortOrder = query.sortOrder ?? SortOrder.DESC;
 
     const where: Prisma.TournamentWhereInput | undefined = name

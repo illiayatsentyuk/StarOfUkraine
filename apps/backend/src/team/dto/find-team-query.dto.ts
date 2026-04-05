@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { SortBy, SortOrder } from '../../enum';
+import { SortOrder, TeamsSortBy } from '../../enum';
 
-export class FindQueryDto {
+export class FindTeamQueryDto {
   @ApiPropertyOptional({ example: 1, description: 'Page number (1-based)' })
   @IsOptional()
   @Type(() => Number)
@@ -26,14 +26,14 @@ export class FindQueryDto {
   @IsEnum(SortOrder)
   sortOrder?: SortOrder;
 
-  @ApiPropertyOptional({ enum: SortBy, description: 'Sort by' })
+  @ApiPropertyOptional({ enum: TeamsSortBy, description: 'Sort by' })
   @IsOptional()
-  @IsEnum(SortBy)
-  sortBy?: SortBy;
+  @IsEnum(TeamsSortBy)
+  sortBy?: TeamsSortBy;
 
   @ApiPropertyOptional({
-    example: 'Cup 2026',
-    description: 'Filter by name (case-insensitive contains)',
+    example: 'Kyiv',
+    description: 'Filter by name or id (case-insensitive contains)',
   })
   @IsOptional()
   @IsString()
