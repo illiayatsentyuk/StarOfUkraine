@@ -43,9 +43,9 @@ export const useTeamsStore = defineStore('teams', ()=> {
                 },
             )
 
-            if (!response.data)
+            if (!response.data) {
                 throw new Error('Не вдалося завантажити команди')
-                toast.error('Не вдалося завантажити команди')
+            }
 
             const data = response.data
 
@@ -69,6 +69,38 @@ export const useTeamsStore = defineStore('teams', ()=> {
             loading.value = false
         }
     }
+    const createTeam = async (team: Omit<Team, 'id' | 'createdAt'>) => {
+        if (loading.value) return
+        
+        loading.value = true
+        error.value = null
+
+        try {
+            const api = useApi()
+            const response = await api.post(
+                `/teams`,
+                team,
+            )
+
+            if (!response.data) {
+                throw new Error('Не вдалося створити команду')
+            }
+
+            const data = response.data
+
+            teams.value.push(data)
+            toast.success('Команду успішно створено')
+
+            return data
+        } catch (error: any) {
+            console.error('Помилка API при створенні команди:', error)
+            toast.error('Не вдалося створити команду')
+            error.value = error.message || 'Помилка створення'
+            throw error
+        } finally {
+            loading.value = false
+        }
+    }
 
     return {
         teams,
@@ -78,7 +110,8 @@ export const useTeamsStore = defineStore('teams', ()=> {
         error,
         hasMore,
         reset,
-        loadFromDatabase
+        loadFromDatabase,
+        createTeam
     }
 })
     

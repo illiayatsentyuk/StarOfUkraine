@@ -5,13 +5,19 @@ import { useTournamentsStore } from '../../stores/tournaments.store'
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
 const isOpen = ref(false)
+const isTeamOpen = ref(false)
 
 function openModal(){
     isOpen.value=true
 }
+function openTeamModal(){
+    isTeamOpen.value=true
+}
 function closeModal(){
     isOpen.value=false
+    isTeamOpen.value=false
 }
+
 </script>
 
 <template lang="pug">
@@ -25,6 +31,8 @@ header.header-competition
 
     .header-competition__nav
         Button.create-btn(@click="openModal" type="button" label="Створити турнір")
+        Button.create-btn(@click="openTeamModal" type="button" label="Створити команду")
+
         
         .auth-section
             template(v-if="loginStore.user")
@@ -35,6 +43,7 @@ header.header-competition
                 NuxtLink(to="/auth").login-btn(icon="pi pi-google" label="Увійти" severity="secondary" style="text-decoration: none; color: inherit;") Увійти
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
+CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
 </template>
 
 <style lang="scss" scoped>
