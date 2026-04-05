@@ -33,7 +33,7 @@ export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new tournament' })
@@ -89,7 +89,7 @@ export class TournamentController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
@@ -121,7 +121,7 @@ export class TournamentController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
