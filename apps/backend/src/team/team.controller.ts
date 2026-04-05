@@ -33,7 +33,7 @@ export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
   @Post()
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new team' })
@@ -89,7 +89,7 @@ export class TeamController {
   }
 
   @Patch(':id')
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })
@@ -121,7 +121,7 @@ export class TeamController {
   }
 
   @Delete(':id')
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })
