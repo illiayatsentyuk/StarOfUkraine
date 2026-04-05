@@ -13,10 +13,6 @@
       button.social-btn(type="button" @click="loginStore.loginByGoogle()")
         i(class="pi pi-google")
         | Google
-      
-      button.social-btn(type="button")
-        i(class="pi pi-github")
-        | GitHub
 
     .divider
       span або пошта
@@ -255,7 +251,6 @@ const handleRegister = async (values: FormData) => {
 
   .social-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
     padding: 0 1.5rem 1rem;
 
@@ -266,22 +261,22 @@ const handleRegister = async (values: FormData) => {
       gap: 0.5rem;
       padding: 0.7rem;
       border-radius: var(--pencil-radius);
-      border: var(--pencil-border-light);
+      border: 1px solid black;
+      border-radius: 10px;
       background: var(--color-bg);
       font-weight: 500;
       color: var(--color-text);
       font-family: var(--font-sans);
       cursor: pointer;
       transition: var(--pencil-transition);
+      width: 100%;
 
       i {
         font-size: 1rem;
       }
 
       &:hover {
-        border: var(--pencil-border);
-        background: var(--color-surface);
-        box-shadow: none;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       }
     }
   }

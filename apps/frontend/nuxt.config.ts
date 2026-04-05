@@ -40,7 +40,7 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         scss: {
-          additionalData: `@use "~/assets/styles/variables.css" as *;`,
+          additionalData: `@use "~/assets/styles/breakpoints.scss" as *; @use "~/assets/styles/variables.css" as *;`,
         },
       },
     },
