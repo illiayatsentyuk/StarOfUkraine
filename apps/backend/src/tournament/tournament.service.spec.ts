@@ -122,7 +122,7 @@ describe('TournamentService', () => {
       expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith({
         skip: 10,
         take: 10,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
       });
     });
 
@@ -147,7 +147,9 @@ describe('TournamentService', () => {
         await service.findAll({ page: 1, limit: 10 });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -160,7 +162,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -173,7 +177,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -186,7 +192,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -198,7 +206,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { updatedAt: 'desc' } }),
+          expect.objectContaining({
+            orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }],
+          }),
         );
       });
 
@@ -210,7 +220,9 @@ describe('TournamentService', () => {
         });
 
         expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-          expect.objectContaining({ orderBy: { createdAt: 'asc' } }),
+          expect.objectContaining({
+            orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          }),
         );
       });
     });

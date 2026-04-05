@@ -53,15 +53,6 @@ export class TournamentService {
     const name = (query.name ?? '').trim();
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
-    const totalCount = await this.prisma.tournament.count();
-    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
-
-    if (page > maximumPage || page < 1) {
-      throw new BadRequestException('Page number is out of range');
-    }
-
-    const sortBy = query.sortBy ?? TournamentsSortBy.CREATED_AT;
-    const sortOrder = query.sortOrder ?? SortOrder.DESC;
 
     const where: Prisma.TournamentWhereInput | undefined = name
       ? {
@@ -81,13 +72,24 @@ export class TournamentService {
         }
       : undefined;
 
+    const totalCount = await (where
+      ? this.prisma.tournament.count({ where })
+      : this.prisma.tournament.count());
+    const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
+
+    if (page > maximumPage || page < 1) {
+      throw new BadRequestException('Page number is out of range');
+    }
+
+    const sortBy = query.sortBy ?? TournamentsSortBy.CREATED_AT;
+    const sortOrder = query.sortOrder ?? SortOrder.DESC;
+    const orderBy = this.buildTournamentOrderBy(sortBy, sortOrder);
+
     const tournaments = await this.prisma.tournament.findMany({
-      where,
+      ...(where ? { where } : {}),
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
-      orderBy: {
-        [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
-      },
+      orderBy,
     });
 
     return {
@@ -98,6 +100,55 @@ export class TournamentService {
       totalPages: Number(maximumPage),
       itemsPerPage: Number(limit),
     };
+  }
+
+  /**
+   * Maps `FindTournamentQueryDto.sortBy` / `sortOrder` to Prisma `orderBy`.
+   * Secondary sort by `id` keeps page order stable when primary values tie.
+   */
+  private buildTournamentOrderBy(
+    sortBy: TournamentsSortBy,
+    sortOrder: SortOrder,
+  ): Prisma.TournamentOrderByWithRelationInput[] {
+    const dir = sortOrder === SortOrder.ASC ? 'asc' : 'desc';
+    let primary: Prisma.TournamentOrderByWithRelationInput;
+    switch (sortBy) {
+      case TournamentsSortBy.CREATED_AT:
+        primary = { createdAt: dir };
+        break;
+      case TournamentsSortBy.UPDATED_AT:
+        primary = { updatedAt: dir };
+        break;
+      case TournamentsSortBy.NAME:
+        primary = { name: dir };
+        break;
+      case TournamentsSortBy.START_DATE:
+        primary = { startDate: dir };
+        break;
+      case TournamentsSortBy.REGISTRATION_START:
+        primary = { registrationStart: dir };
+        break;
+      case TournamentsSortBy.REGISTRATION_END:
+        primary = { registrationEnd: dir };
+        break;
+      case TournamentsSortBy.MAX_TEAMS:
+        primary = { maxTeams: dir };
+        break;
+      case TournamentsSortBy.ROUNDS:
+        primary = { rounds: dir };
+        break;
+      case TournamentsSortBy.TEAM_SIZE_MIN:
+        primary = { teamSizeMin: dir };
+        break;
+      case TournamentsSortBy.TEAM_SIZE_MAX:
+        primary = { teamSizeMax: dir };
+        break;
+      default: {
+        const _exhaustive: never = sortBy;
+        throw new Error(`Unhandled tournaments sortBy: ${_exhaustive as string}`);
+      }
+    }
+    return [primary, { id: 'asc' }];
   }
 
   async findOne(id: string) {
