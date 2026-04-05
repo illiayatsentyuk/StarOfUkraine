@@ -1,12 +1,12 @@
 export interface Team {
     id: string;
-    teamName: string;
+    name: string;
     captainName: string;
     captainEmail: string;
     members: string[];
     city: string;
-    organization: number;
-    telegram: number;
-    discord: number;
+    organization: string;
+    telegram: string;
+    discord: string;
     createdAt?: string
 }
