@@ -32,7 +32,7 @@ header.header-competition
                     span.user-name {{ loginStore.user.name || loginStore.user.email }}
                     Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" label="Вийти" text)
             template(v-else)
-                Button.login-btn(@click="loginStore.login" type="button" icon="pi pi-google" label="Увійти" severity="secondary")
+                NuxtLink(to="/auth").login-btn(icon="pi pi-google" label="Увійти" severity="secondary" style="text-decoration: none; color: inherit;") Увійти
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 </template>

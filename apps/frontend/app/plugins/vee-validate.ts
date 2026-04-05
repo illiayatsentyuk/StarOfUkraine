@@ -12,7 +12,7 @@ export default defineNuxtPlugin(() => {
       const messages: Record<string, string> = {
         required: 'Це поле обов\'язкове',
         email: 'Введіть правильну електронну адресу',
-        min: `Мінімальна довжина ${ctx.rule?.params?.[0] || ''} символів`,
+        min: `Мінімальна довжина ${(ctx.rule?.params as any[])?.[0] || ''} символів`,
         confirmed: 'Паролі не збігаються',
       }
       return messages[ctx.rule?.name || ''] || `${ctx.field} is invalid`
