@@ -70,6 +70,35 @@ section.tournament-detail
                             span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
                     
                     .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
+                .tables-section
+                    .wrapper
+                        .actions
+                            button.btn-bracket(@click="generateBracket") Згенерувати сітку
+                            button(@click="shuffleTeams") Рандомно перемешать
+
+                        ClientOnly
+                            table.table
+                                thead
+                                    tr
+                                        th
+                                        th #
+                                        th Команда
+                                        th Очки
+
+                                VueDraggableNext(
+                                    v-model="teams"
+                                    tag="tbody"
+                                    handle=".drag-handle"
+                                    :animation="200"
+                                )
+                                    tr(v-for="(element, index) in teams" :key="element.id || index")
+                                        td.drag-handle ⋮⋮
+                                        td {{ index + 1 }}
+                                        td {{ element.name || element.teamName || 'Без назви' }}
+                                        td {{ element.points || 0 }}
+
+                
+
 
             aside.sidebar
                 .sidebar__card
@@ -111,6 +140,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
+import { useTeamsStore } from '../../stores/teams.store'
+import { VueDraggableNext } from 'vue-draggable-next'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
 
 const route = useRoute()
@@ -157,6 +188,11 @@ const handleDelete = () => {
 const onTournamentDeleted = async () => {
     await navigateTo('/')
 }
+
+const shuffleTeams = () => {
+    teams.value = [...teams.value].sort(() => Math.random() - 0.5)
+}
+
 
 const dotaMatchId = ref('')
 const dotaMatchLoading = ref(false)
@@ -534,6 +570,166 @@ const fetchDotaMatch = async () => {
         color: var(--color-error, #ef4444);
         margin-top: 16px;
         font-size: 14px;
+    }
+}
+
+.tables-section {
+    margin-top: 48px;
+
+    .wrapper {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        padding: 24px;
+        
+        .actions {
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
+            
+            button {
+                padding: 8px 16px;
+                background: var(--color-text);
+                color: var(--color-bg);
+                border: none;
+                font-family: var(--font-display);
+                font-weight: 600;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: opacity 0.2s, transform 0.2s;
+
+                &:hover {
+                    opacity: 0.8;
+                    transform: translateY(-2px);
+                }
+
+                &.btn-bracket {
+                    background: var(--color-primary);
+                    color: white;
+                }
+            }
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+
+            th, td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid var(--color-border);
+            }
+
+            th {
+                font-family: var(--font-display);
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--color-text-muted);
+                letter-spacing: 2px;
+            }
+
+            .drag-handle {
+                cursor: grab;
+                color: var(--color-text-muted);
+                width: 40px;
+                text-align: center;
+                user-select: none;
+                font-weight: bold;
+                
+                &:active {
+                    cursor: grabbing;
+                }
+            }
+        }
+    }
+}
+
+.bracket-section {
+    margin-top: 64px;
+
+    .matchups-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+    }
+
+    .matchup-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+            border-color: var(--color-primary);
+        }
+
+        .match-header {
+            background: var(--color-border);
+            padding: 8px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: var(--font-display);
+            letter-spacing: 2px;
+            color: var(--color-text-muted);
+            text-align: center;
+        }
+
+        .match-teams {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+
+            .vs-divider {
+                position: absolute;
+                top: 50%;
+                left: 16px;
+                transform: translateY(-50%);
+                font-size: 10px;
+                font-weight: 800;
+                color: var(--color-text-muted);
+                opacity: 0.5;
+            }
+
+            .team {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 12px 16px 12px 32px;
+                background: var(--color-bg);
+                border-radius: 6px;
+                border: 1px solid transparent;
+                transition: border-color 0.2s;
+
+                &.is-bye {
+                    opacity: 0.5;
+                    border: 1px dashed var(--color-border);
+                    background: transparent;
+                }
+
+                &:hover:not(.is-bye) {
+                    border-color: var(--color-primary);
+                }
+
+                .team-name {
+                    font-weight: 600;
+                    font-size: 15px;
+                    color: var(--color-text);
+                }
+
+                .score {
+                    font-family: var(--font-display);
+                    font-weight: 700;
+                    font-size: 16px;
+                    color: var(--color-text-muted);
+                }
+            }
+        }
     }
 }
 </style>
