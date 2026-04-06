@@ -62,7 +62,7 @@ export class AuthService {
       throw new BadRequestException('Email already in use');
     }
 
-    const nameId = `${dto.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 1000)}`;
+    const nameId = `${dto.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
 
     const savedUser = await this.prisma.user.create({
       data: {
@@ -191,7 +191,7 @@ export class AuthService {
 
     // 3. Create user if they don't exist at all
     if (!user) {
-      const nameId = `${profile.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 1000)}`;
+      const nameId = `${profile.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
       user = await this.prisma.user.create({
         data: {
           email: profile.email,
