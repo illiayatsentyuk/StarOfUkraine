@@ -30,6 +30,7 @@ model User {
   hash      String?
   hashedRt  String?   @unique
   name      String?
+  nameId    String?   @unique
   image     String?
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
