@@ -25,12 +25,13 @@ export class CreateTeamDto {
 
   @ApiProperty({
     type: [String],
-    example: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+    description: 'Registered user emails; must include the captain email.',
+    example: ['olena@example.com', 'taras@example.com', 'andrii@example.com'],
   })
   @IsArray()
   @ArrayMinSize(1)
-  @IsString({ each: true })
-  members: string[];
+  @IsEmail({}, { each: true })
+  memberEmails: string[];
 
   @ApiPropertyOptional({ example: 'Kyiv' })
   @IsOptional()
