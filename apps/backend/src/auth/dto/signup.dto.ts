@@ -22,9 +22,4 @@ export class SignupDto {
   @IsOptional()
   @IsString()
   name?: string;
-
-  @ApiPropertyOptional({ enum: Role, example: Role.USER })
-  @IsOptional()
-  @IsEnum(Role)
-  role?: Role;
 }
