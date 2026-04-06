@@ -9,16 +9,41 @@ import { signE2eAccessToken } from './helpers/sign-e2e-access-token';
 describe('Teams (e2e)', () => {
   let app: INestApplication;
 
+  const memberOlena = {
+    id: 'user-olena',
+    email: 'olena@example.com',
+    name: 'Olena Kovalenko',
+    nameId: 'olena-1',
+    image: null,
+    role: Role.USER,
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
+  const memberTaras = {
+    id: 'user-taras',
+    email: 'taras@example.com',
+    name: 'Taras Shevchenko',
+    nameId: 'taras-1',
+    image: null,
+    role: Role.USER,
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
   const teamMock = {
     id: 'team-1',
     name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
-    members: ['Olena Kovalenko', 'Taras Shevchenko'],
+    members: [memberOlena, memberTaras],
+    captain: memberOlena,
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
   };
 
   const mockPrisma = {
@@ -43,6 +68,7 @@ describe('Teams (e2e)', () => {
     user: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
   };
 
@@ -97,6 +123,11 @@ describe('Teams (e2e)', () => {
 
   it('POST /teams creates team', async () => {
     mockPrisma.team.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findMany.mockResolvedValue([
+      { id: 'u1' },
+      { id: 'u2' },
+      { id: 'u3' },
+    ]);
     mockPrisma.team.create.mockResolvedValue(teamMock);
 
     const response = await request(app.getHttpServer())
@@ -106,7 +137,11 @@ describe('Teams (e2e)', () => {
         name: teamMock.name,
         captainName: teamMock.captainName,
         captainEmail: teamMock.captainEmail,
-        members: teamMock.members,
+        memberEmails: [
+          'olena@example.com',
+          'taras@example.com',
+          'andrii@example.com',
+        ],
       })
       .expect(201);
 

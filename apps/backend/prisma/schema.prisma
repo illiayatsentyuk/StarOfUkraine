@@ -36,7 +36,9 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  accounts Account[]
+  accounts       Account[]
+  teamsAsCaptain Team[]    @relation("TeamCaptain")
+  teamsAsMember  Team[]    @relation("TeamMembers")
 }
 
 model Account {
@@ -57,7 +59,8 @@ model Team {
   name     String   @unique
   captainName  String
   captainEmail String
-  members      String[]
+  captain      User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
+  members      User[]   @relation("TeamMembers")
   city         String?
   organization String?
   telegram     String?

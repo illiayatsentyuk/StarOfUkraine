@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import paginationConfig from '../config/pagination.config';
-import { SortOrder, TeamsSortBy } from '../enum';
+import { Role, SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { TeamService } from './team.service';
 
@@ -18,6 +18,31 @@ describe('TeamService', () => {
       delete: jest.fn(),
       count: jest.fn(),
     },
+    user: {
+      findMany: jest.fn(),
+    },
+  };
+
+  const memberOlena = {
+    id: 'user-olena',
+    email: 'olena@example.com',
+    name: 'Olena Kovalenko',
+    nameId: 'olena-1',
+    image: null,
+    role: Role.USER,
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
+  const memberTaras = {
+    id: 'user-taras',
+    email: 'taras@example.com',
+    name: 'Taras Shevchenko',
+    nameId: 'taras-1',
+    image: null,
+    role: Role.USER,
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
   };
 
   const teamMock = {
@@ -25,11 +50,21 @@ describe('TeamService', () => {
     name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
-    members: ['Olena Kovalenko', 'Taras Shevchenko'],
+    members: [memberOlena, memberTaras],
+    captain: memberOlena,
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
+    createdAt: new Date('2025-01-01'),
+    updatedAt: new Date('2025-01-01'),
+  };
+
+  const createPayload = {
+    name: teamMock.name,
+    captainName: teamMock.captainName,
+    captainEmail: teamMock.captainEmail,
+    memberEmails: ['olena@example.com', 'taras@example.com'],
   };
 
   beforeEach(async () => {
@@ -59,34 +94,67 @@ describe('TeamService', () => {
   });
 
   describe('create', () => {
-    it('creates a team when name is unique', async () => {
+    it('creates a team when name is unique and all members are registered users', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
       mockPrisma.team.create.mockResolvedValue(teamMock);
 
-      const result = await service.create({
-        name: teamMock.name,
-        captainName: teamMock.captainName,
-        captainEmail: teamMock.captainEmail,
-        members: teamMock.members,
-      });
+      const result = await service.create(createPayload);
 
       expect(result).toEqual(teamMock);
       expect(mockPrisma.team.findFirst).toHaveBeenCalledWith({
         where: { name: teamMock.name },
       });
+      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
+        where: { email: { in: ['olena@example.com', 'taras@example.com'] } },
+        select: { id: true },
+      });
+      expect(mockPrisma.team.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          captain: { connect: { email: 'olena@example.com' } },
+          members: {
+            connect: [
+              { email: 'olena@example.com' },
+              { email: 'taras@example.com' },
+            ],
+          },
+        }),
+        include: expect.any(Object),
+      });
+    });
+
+    it('throws when captain email is not in member emails', async () => {
+      mockPrisma.team.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.create({
+          ...createPayload,
+          memberEmails: ['taras@example.com'],
+        }),
+      ).rejects.toThrow(
+        new BadRequestException('Captain email must be included in member emails'),
+      );
+      expect(mockPrisma.team.create).not.toHaveBeenCalled();
+    });
+
+    it('throws when a member email is not registered', async () => {
+      mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }]);
+
+      await expect(service.create(createPayload)).rejects.toThrow(
+        new NotFoundException(
+          'One or more member emails are not registered users',
+        ),
+      );
+      expect(mockPrisma.team.create).not.toHaveBeenCalled();
     });
 
     it('throws when team with same name exists', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(teamMock);
 
-      await expect(
-        service.create({
-          name: teamMock.name,
-          captainName: teamMock.captainName,
-          captainEmail: teamMock.captainEmail,
-          members: teamMock.members,
-        }),
-      ).rejects.toThrow(new BadRequestException('Team already exists'));
+      await expect(service.create(createPayload)).rejects.toThrow(
+        new BadRequestException('Team already exists'),
+      );
     });
   });
 
@@ -105,11 +173,14 @@ describe('TeamService', () => {
         totalPages: 2,
         itemsPerPage: 10,
       });
-      expect(mockPrisma.team.findMany).toHaveBeenCalledWith({
-        skip: 0,
-        take: 10,
-        orderBy: { createdAt: 'desc' },
-      });
+      expect(mockPrisma.team.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 0,
+          take: 10,
+          orderBy: { createdAt: 'desc' },
+          include: expect.any(Object),
+        }),
+      );
     });
 
     it('throws when page number is out of range', async () => {
@@ -205,6 +276,10 @@ describe('TeamService', () => {
 
       const result = await service.findOne('team-1');
       expect(result).toEqual(teamMock);
+      expect(mockPrisma.team.findUnique).toHaveBeenCalledWith({
+        where: { id: 'team-1' },
+        include: expect.any(Object),
+      });
     });
 
     it('throws when team is not found', async () => {
@@ -217,8 +292,24 @@ describe('TeamService', () => {
   });
 
   describe('update', () => {
+    const existingForUpdate = {
+      id: 'team-1',
+      name: 'Star of Ukraine',
+      captainName: 'Olena Kovalenko',
+      captainEmail: 'olena@example.com',
+      members: [{ email: 'olena@example.com' }, { email: 'taras@example.com' }],
+      city: 'Kyiv',
+      organization: 'UA Esports',
+      telegram: '@starofukraine',
+      discord: 'starofukraine#1234',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
     it('updates team when name differs from existing', async () => {
-      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+      mockPrisma.team.findUnique.mockResolvedValue(existingForUpdate);
+      mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
       mockPrisma.team.update.mockResolvedValue({
         ...teamMock,
         name: 'New Team Name',
@@ -232,11 +323,22 @@ describe('TeamService', () => {
       expect(mockPrisma.team.update).toHaveBeenCalled();
     });
 
-    it('throws when new name matches current name', async () => {
-      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+    it('allows unchanged name (no duplicate-name error)', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(existingForUpdate);
+      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+      mockPrisma.team.update.mockResolvedValue(teamMock);
+
+      await service.update('team-1', { name: 'Star of Ukraine' });
+
+      expect(mockPrisma.team.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('throws when new name is taken by another team', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(existingForUpdate);
+      mockPrisma.team.findFirst.mockResolvedValue({ id: 'other-team' });
 
       await expect(
-        service.update('team-1', { name: teamMock.name }),
+        service.update('team-1', { name: 'Taken Name' }),
       ).rejects.toThrow(
         new BadRequestException('Team with this name already exists'),
       );
@@ -252,6 +354,7 @@ describe('TeamService', () => {
       expect(result).toEqual(teamMock);
       expect(mockPrisma.team.delete).toHaveBeenCalledWith({
         where: { id: 'team-1' },
+        include: expect.any(Object),
       });
     });
   });

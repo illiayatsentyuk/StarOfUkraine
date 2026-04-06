@@ -1,9 +1,33 @@
+import { Role } from '../../enum';
+
+const memberUserExample = {
+  id: 'clx_user_1',
+  email: 'olena@example.com',
+  name: 'Olena Kovalenko',
+  nameId: 'olena-kovalenko-123',
+  image: null as string | null,
+  role: Role.USER,
+  createdAt: '2026-03-12T10:00:00.000Z',
+  updatedAt: '2026-03-12T10:00:00.000Z',
+};
+
+const memberUserExample2 = {
+  id: 'clx_user_2',
+  email: 'taras@example.com',
+  name: 'Taras Shevchenko',
+  nameId: 'taras-shevchenko-456',
+  image: null as string | null,
+  role: Role.USER,
+  createdAt: '2026-03-12T10:00:00.000Z',
+  updatedAt: '2026-03-12T10:00:00.000Z',
+};
+
 export const teamExamples = {
   createRequest: {
-    teamName: 'Star of Ukraine',
+    name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
-    members: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+    memberEmails: ['olena@example.com', 'taras@example.com', 'andrii@example.com'],
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
@@ -11,29 +35,33 @@ export const teamExamples = {
   },
   response: {
     id: 'clx_team_123',
-    teamName: 'Star of Ukraine',
+    name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
-    members: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+    members: [memberUserExample, memberUserExample2],
+    captain: memberUserExample,
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
     createdAt: '2026-03-12T10:00:00.000Z',
+    updatedAt: '2026-03-12T10:00:00.000Z',
   },
   paginatedResponse: {
     data: [
       {
         id: 'clx_team_123',
-        teamName: 'Star of Ukraine',
+        name: 'Star of Ukraine',
         captainName: 'Olena Kovalenko',
         captainEmail: 'olena@example.com',
-        members: ['Olena Kovalenko', 'Taras Shevchenko', 'Andrii Melnyk'],
+        members: [memberUserExample, memberUserExample2],
+        captain: memberUserExample,
         city: 'Kyiv',
         organization: 'UA Esports',
         telegram: '@starofukraine',
         discord: 'starofukraine#1234',
         createdAt: '2026-03-12T10:00:00.000Z',
+        updatedAt: '2026-03-12T10:00:00.000Z',
       },
     ],
     currentPage: 1,
