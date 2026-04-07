@@ -123,6 +123,7 @@ describe('TournamentService', () => {
         skip: 10,
         take: 10,
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        include: { teams: true },
       });
     });
 

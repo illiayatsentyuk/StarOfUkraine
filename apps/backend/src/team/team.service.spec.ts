@@ -20,6 +20,7 @@ describe('TeamService', () => {
     },
     user: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
 
@@ -63,8 +64,6 @@ describe('TeamService', () => {
   const createPayload = {
     name: teamMock.name,
     captainName: teamMock.captainName,
-    captainEmail: teamMock.captainEmail,
-    memberEmails: ['olena@example.com', 'taras@example.com'],
   };
 
   beforeEach(async () => {
@@ -94,57 +93,38 @@ describe('TeamService', () => {
   });
 
   describe('create', () => {
-    it('creates a team when name is unique and all members are registered users', async () => {
+    it('creates a team when name is unique (creator becomes captain + initial member)', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-olena' });
       mockPrisma.team.create.mockResolvedValue(teamMock);
 
-      const result = await service.create(createPayload);
+      const result = await service.create(createPayload, 'olena@example.com');
 
       expect(result).toEqual(teamMock);
       expect(mockPrisma.team.findFirst).toHaveBeenCalledWith({
         where: { name: teamMock.name },
       });
-      expect(mockPrisma.user.findMany).toHaveBeenCalledWith({
-        where: { email: { in: ['olena@example.com', 'taras@example.com'] } },
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'olena@example.com' },
         select: { id: true },
       });
       expect(mockPrisma.team.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           captain: { connect: { email: 'olena@example.com' } },
           members: {
-            connect: [
-              { email: 'olena@example.com' },
-              { email: 'taras@example.com' },
-            ],
+            connect: [{ email: 'olena@example.com' }],
           },
         }),
         include: expect.any(Object),
       });
     });
 
-    it('throws when captain email is not in member emails', async () => {
+    it('throws when creator email is not a registered user', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.create({
-          ...createPayload,
-          memberEmails: ['taras@example.com'],
-        }),
-      ).rejects.toThrow(
-        new BadRequestException('Captain email must be included in member emails'),
-      );
-      expect(mockPrisma.team.create).not.toHaveBeenCalled();
-    });
-
-    it('throws when a member email is not registered', async () => {
-      mockPrisma.team.findFirst.mockResolvedValue(null);
-      mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }]);
-
-      await expect(service.create(createPayload)).rejects.toThrow(
-        new NotFoundException(
-          'One or more member emails are not registered users',
-        ),
+      await expect(service.create(createPayload, 'olena@example.com')).rejects.toThrow(
+        new NotFoundException('User not found'),
       );
       expect(mockPrisma.team.create).not.toHaveBeenCalled();
     });
@@ -152,7 +132,7 @@ describe('TeamService', () => {
     it('throws when team with same name exists', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(teamMock);
 
-      await expect(service.create(createPayload)).rejects.toThrow(
+      await expect(service.create(createPayload, 'olena@example.com')).rejects.toThrow(
         new BadRequestException('Team already exists'),
       );
     });

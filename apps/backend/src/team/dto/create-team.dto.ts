@@ -1,8 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  ArrayMinSize,
-  IsArray,
-  IsEmail,
   IsOptional,
   IsString,
   MinLength,
@@ -18,20 +15,6 @@ export class CreateTeamDto {
   @IsString()
   @MinLength(1)
   captainName: string;
-
-  @ApiProperty({ example: 'olena@example.com' })
-  @IsEmail()
-  captainEmail: string;
-
-  @ApiProperty({
-    type: [String],
-    description: 'Registered user emails; must include the captain email.',
-    example: ['olena@example.com', 'taras@example.com', 'andrii@example.com'],
-  })
-  @IsArray()
-  @ArrayMinSize(1)
-  @IsEmail({}, { each: true })
-  memberEmails: string[];
 
   @ApiPropertyOptional({ example: 'Kyiv' })
   @IsOptional()
