@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
+import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @Injectable()
 export class TournamentService {
@@ -90,6 +91,9 @@ export class TournamentService {
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
       orderBy,
+      include: {
+        teams: true,
+      },
     });
 
     return {
@@ -159,6 +163,27 @@ export class TournamentService {
       throw new NotFoundException('Tournament not found');
     }
     return tournament;
+  }
+
+  async joinTournament(id: string, data: JoinTournamentDto) {
+    const tournament = await this.findOne(id);
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+    const team = await this.prisma.team.findUnique({
+      where: { id: data.teamId },
+    });
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+    return this.prisma.tournament.update({
+      where: { id },
+      data: {
+        teams: {
+          connect: { id: team.id },
+        },
+      },
+    });
   }
 
   async update(id: string, data: UpdateTournamentDto) {

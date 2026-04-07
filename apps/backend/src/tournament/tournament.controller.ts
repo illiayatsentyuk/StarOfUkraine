@@ -26,6 +26,7 @@ import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { TournamentService } from './tournament.service';
+import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -86,6 +87,12 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   findOne(@Param('id') id: string) {
     return this.tournamentService.findOne(id);
+  }
+
+  @Patch("join/:id")
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
+    return this.tournamentService.joinTournament(id, data);
   }
 
   @Patch(':id')
