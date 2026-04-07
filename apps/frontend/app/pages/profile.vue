@@ -52,10 +52,10 @@ import { computed, onMounted } from 'vue'
 const loginStore = useLoginStore()
 
 onMounted(() => {
-  // If user is not yet fetched, fetch it.
-  if (!loginStore.user && !loginStore.loading) {
-    loginStore.fetchUser()
-  }
+  // Placeholder for now
+  // if (!loginStore.user && !loginStore.loading) {
+  //   loginStore.fetchUser()
+  // }
 })
 
 
