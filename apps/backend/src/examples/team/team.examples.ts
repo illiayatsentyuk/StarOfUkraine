@@ -26,8 +26,6 @@ export const teamExamples = {
   createRequest: {
     name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
-    captainEmail: 'olena@example.com',
-    memberEmails: ['olena@example.com', 'taras@example.com', 'andrii@example.com'],
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
