@@ -9,9 +9,7 @@ import { Prisma } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTeamDto } from './dto/create-team.dto';
-import { FindTeamQueryDto } from './dto/find-team-query.dto';
-import { UpdateTeamDto } from './dto/update-team.dto';
+import { CreateTeamDto, FindTeamQueryDto, UpdateTeamDto } from './dto';
 
 const memberUserSelect = {
   id: true,
