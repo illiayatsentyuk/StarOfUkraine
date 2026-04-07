@@ -5,7 +5,6 @@
     p.welcome-page__subtitle The ultimate platform for organizing, managing, and hosting competitive tournaments with ease.
     .welcome-page__actions
       Button(label="View Tournaments" severity="danger" size="large" @click="goToHome")
-    //-   Button(label="Discover Events" severity="secondary" outlined size="large" @click="scrollDown")
 
   .welcome-page__features(ref="featuresSection")
     .welcome-page__feature
@@ -26,17 +25,11 @@
 
 <script setup lang="ts">
 const router = useRouter()
-const featuresSection = ref<HTMLElement | null>(null)
 
 function goToHome() {
   router.push('/')
 }
 
-function scrollDown() {
-  if (featuresSection.value) {
-    featuresSection.value.scrollIntoView({ behavior: 'smooth' })
-  }
-}
 </script>
 
 <style scoped lang="scss">
