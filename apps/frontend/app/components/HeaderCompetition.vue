@@ -29,7 +29,7 @@ header.header-competition
         .auth-section
             template(v-if="loginStore.user")
                 .user-info
-                    span.user-name {{ loginStore.user.name || loginStore.user.email }}
+                    NuxtLink(to="/profile" style="text-decoration: none; color: inherit;").user-name {{ loginStore.user.name || loginStore.user.email }}
                     Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" label="Вийти" text)
             template(v-else)
                 NuxtLink(to="/auth").login-btn(icon="pi pi-google" label="Увійти" severity="secondary" style="text-decoration: none; color: inherit;") Увійти

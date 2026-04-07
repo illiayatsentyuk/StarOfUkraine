@@ -151,7 +151,7 @@ const route = useRoute()
 // Автоматичний редирект, як тільки користувач залогінився
 watch(() => loginStore.user, (user) => {
   if (user) {
-    navigateTo('/')
+    navigateTo('/profile')
   }
 }, { immediate: true })
 
@@ -163,17 +163,9 @@ onMounted(() => {
   }
 })
 
-interface FormData {
-  email: string
-  password: string
-  confirmPassword: string
-  fullName: string
-  birthDate: string
-  gender: string
-  acceptTerms: boolean
-}
+import type { AuthFormData } from '~/types'
 
-const handleRegister = async (values: FormData) => {
+const handleRegister = async (values: AuthFormData) => {
   if (isLogin.value) {
     await loginStore.loginByEmail({
       email: values.email,
