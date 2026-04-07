@@ -13,6 +13,7 @@ import paginationConfig from './config/pagination.config';
 import { GatewayModule } from './gateway/gateway.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { TournamentModule } from './tournament/tournament.module';
       load: [jwtConfig, paginationConfig, databaseConfig, googleConfig],
     }),
     GatewayModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [

@@ -21,11 +21,12 @@ import {
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
 import { Public } from '../common/decorators';
-import { FindQueryDto } from '../common/dto/find-query.dto';
 import { authExamples, tournamentExamples } from '../examples';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
+import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { TournamentService } from './tournament.service';
+import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -33,7 +34,7 @@ export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new tournament' })
@@ -63,14 +64,14 @@ export class TournamentController {
   @Post('list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all tournaments' })
-  @ApiBody({ type: FindQueryDto })
+  @ApiBody({ type: FindTournamentQueryDto })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
     schema: { example: tournamentExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
-  findAll(@Body() body: FindQueryDto) {
+  findAll(@Body() body: FindTournamentQueryDto) {
     return this.tournamentService.findAll(body);
   }
 
@@ -88,8 +89,14 @@ export class TournamentController {
     return this.tournamentService.findOne(id);
   }
 
+  @Patch("join/:id")
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
+    return this.tournamentService.joinTournament(id, data);
+  }
+
   @Patch(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
@@ -121,7 +128,7 @@ export class TournamentController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Tournament ID' })
