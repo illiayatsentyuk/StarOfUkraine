@@ -123,11 +123,7 @@ describe('Teams (e2e)', () => {
 
   it('POST /teams creates team', async () => {
     mockPrisma.team.findFirst.mockResolvedValue(null);
-    mockPrisma.user.findMany.mockResolvedValue([
-      { id: 'u1' },
-      { id: 'u2' },
-      { id: 'u3' },
-    ]);
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1' });
     mockPrisma.team.create.mockResolvedValue(teamMock);
 
     const response = await request(app.getHttpServer())
@@ -136,12 +132,6 @@ describe('Teams (e2e)', () => {
       .send({
         name: teamMock.name,
         captainName: teamMock.captainName,
-        captainEmail: teamMock.captainEmail,
-        memberEmails: [
-          'olena@example.com',
-          'taras@example.com',
-          'andrii@example.com',
-        ],
       })
       .expect(201);
 
