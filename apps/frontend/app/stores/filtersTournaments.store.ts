@@ -7,42 +7,17 @@ export const useFiltersTournamentsStore = defineStore('filtersTournaments', () =
     const activeFilter = ref('all')
     const isMinimum = ref(false)
 
-    const getSortValue = (t: Record<string, unknown>, key: string) => {
-        switch (key) {
-            case 'byDate':
-                return new Date(String(t.startDate)).getTime()
-            case 'byName':
-                return String(t.name).toLowerCase()
-            case 'byMaxTeams':
-                return Number(t.maxTeams)
-            case 'byTeamSizeMin':
-                return Number(t.teamSizeMin)
-            case 'byTeamSizeMax':
-                return Number(t.teamSizeMax)
-            case 'byRounds':
-                return Number(t.rounds)
-            case 'byRegistrationStart':
-                return new Date(String(t.registrationStart)).getTime()
-            case 'byRegistrationEnd':
-                return new Date(String(t.registrationEnd)).getTime()
-            default:
-                return 0
-        }
+    const filterMap: Record<string, string> = {
+        all: 'createdAt',
+        byDate: 'startDate',
+        byName: 'name',
+        byMaxTeams: 'maxTeams',
+        byTeamSizeMin: 'teamSizeMin',
+        byTeamSizeMax: 'teamSizeMax',
+        byRounds: 'rounds',
+        byRegistrationStart: 'registrationStart',
+        byRegistrationEnd: 'registrationEnd',
     }
-
-    const filteredTournaments = computed(() => {
-        const result = [...tournamentsStore.tournaments]
-        if (activeFilter.value === 'all') return result
-
-        return result.sort((a, b) => {
-            const valA = getSortValue(a as Record<string, unknown>, activeFilter.value)
-            const valB = getSortValue(b as Record<string, unknown>, activeFilter.value)
-
-            if (valA < valB) return isMinimum.value ? -1 : 1
-            if (valA > valB) return isMinimum.value ? 1 : -1
-            return 0
-        })
-    })
 
     const setFilter = (key: string) => {
         if (activeFilter.value === key) {
@@ -51,12 +26,15 @@ export const useFiltersTournamentsStore = defineStore('filtersTournaments', () =
             activeFilter.value = key
             isMinimum.value = false
         }
+
+        tournamentsStore.sortBy = filterMap[key] || 'createdAt'
+        tournamentsStore.sortOrder = isMinimum.value ? 'ASC' : 'DESC'
+        tournamentsStore.loadFromDatabase(true)
     }
 
     return {
         activeFilter,
         isMinimum,
-        filteredTournaments,
         setFilter,
     }
 })

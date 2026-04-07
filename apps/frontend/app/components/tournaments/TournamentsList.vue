@@ -71,7 +71,7 @@ section.tournaments-list
 
     .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
         NuxtLink.tournament-card(
-            v-for="tournament in filtersStore.filteredTournaments"
+            v-for="tournament in store.tournaments"
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )

@@ -2,8 +2,7 @@
 section.tournament-detail
     // Loading State
     .loading-overlay(v-if="store.loading")
-        ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s" aria-label="Loading")
-        span.loading-text ЗАВАНТАЖЕННЯ
+        Loader
 
     // Content State
     template(v-else-if="tournament")
@@ -15,8 +14,11 @@ section.tournament-detail
         header.tournament-detail__hero
             .status-badge {{ (tournament.status || 'РЕЄСТРАЦІЯ ВІДКРИТА').toUpperCase() }}
             h1.title {{ tournament.name }}
+            .tournament-detail__hero__actions
+                Button.home-btn( @click="isOpenBracket = false" type="button" label="Опис турніру")
+                Button.bracket-btn( @click="isOpenBracket = !isOpenBracket" type="button" :label="isOpenBracket ? 'Сховати сітку' : 'Відкрити сітку'")
         
-        .tournament-detail__layout
+        .tournament-detail__layout(v-if="!isOpenBracket")
             main.main-content
                 .content-section
                     h3.section-label ПРО ТУРНІР
@@ -25,7 +27,7 @@ section.tournament-detail
                 .content-section.stats-section
                     .stat-box
                         span.label РАУНДІВ
-                        span.value {{ tournament.rounds }}
+                        span.value {{ roundsStatDisplay }}
                     .stat-box
                         span.label ГРАВЦІВ У КОМАНДІ
                         span.value {{ tournament.teamSizeMin }} — {{ tournament.teamSizeMax }}
@@ -70,42 +72,13 @@ section.tournament-detail
                             span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
                     
                     .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
-                .tables-section
-                    .wrapper
-                        .actions
-                            button.btn-bracket(@click="generateBracket") Згенерувати сітку
-                            button(@click="shuffleTeams") Рандомно перемешать
-
-                        ClientOnly
-                            table.table
-                                thead
-                                    tr
-                                        th
-                                        th #
-                                        th Команда
-                                        th Очки
-
-                                VueDraggableNext(
-                                    v-model="teams"
-                                    tag="tbody"
-                                    handle=".drag-handle"
-                                    :animation="200"
-                                )
-                                    tr(v-for="(element, index) in teams" :key="element.id || index")
-                                        td.drag-handle ⋮⋮
-                                        td {{ index + 1 }}
-                                        td {{ element.name || element.teamName || 'Без назви' }}
-                                        td {{ element.points || 0 }}
-
-                    .bracket-wrapper(v-if="tournament.rounds && tournament.rounds.length > 0")
-                        h3.section-label СІТКА ТУРНІРУ
-                        TournamentBracket(
-                            :teams="teams"
-                            :rounds="tournament.rounds"
-                            @onMatchClick="onMatchClick"
-                            @onParticipantClick="onParticipantClick"
-                            @onMatchResult="onMatchResult"
-                        )
+                TournamentTeamsTable(
+                    v-model:teams="teams"
+                    :isAdmin="authStore.isAdmin"
+                    :shouldHideTeams="shouldHideTeams"
+                    @shuffle="shuffleTeams"
+                    @generate="generateBracket"
+                )
 
                 
 
@@ -131,6 +104,15 @@ section.tournament-detail
                             span.label ПОТОЧНИЙ СТАТУС
                             span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
                         Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
+                        Button.create-btn(@click="openTeamModal" type="button" label="Створити команду" icon="pi pi-plus")
+        
+        //- Bracket View
+        .tournament-detail__bracket-view(v-else-if="isOpenBracket")
+            TournamentBracket(
+                v-model:rounds="bracketRounds"
+                @matchClick="onMatchClick"
+                @participantClick="onParticipantClick"
+            )
     
     .error-state(v-else)
         p Турнір не знайдено.
@@ -142,16 +124,23 @@ section.tournament-detail
         @close="isDeleteModalOpen = false" 
         @delete="onTournamentDeleted"
     )
+    TeamsCreateTeamModal(
+        v-if="tournament"
+        :isTeamOpen="isTeamOpen"
+        @close="isTeamOpen = false"
+        @success="refreshTeams"
+    )
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, navigateTo } from '#app'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
 import { useTeamsStore } from '../../stores/teams.store'
-import {TournamentBracket} from 'vue3-tournament'
-import { VueDraggableNext } from 'vue-draggable-next'
+import TournamentBracket from '../../components/tournaments/TournamentBracket.vue'
+import TournamentTeamsTable from '../../components/tournaments/TournamentTeamsTable.vue'
+import TeamsCreateTeamModal from '../../components/Teams/CreateTeamModal.vue'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
 
 const route = useRoute()
@@ -159,10 +148,52 @@ const store = useTournamentsStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
 
+
 const tournament = ref<any>(null)
 const teams = ref<any[]>([])
+/** Кількість раундів з API (число), не плутати з даними сітки */
+const configuredRoundsCount = ref<number | null>(null)
+/** Дані для vue3-tournament; окремо від tournament.rounds, щоб не підміняти число JSON-ом */
+const bracketRounds = ref<any[]>([])
 const isDeleteModalOpen = ref(false)
+const isOpenBracket = ref(false)
+
+const isTeamOpen = ref(false)
+
+function openTeamModal() {
+    isTeamOpen.value = true
+}
+
+
+
+watch(isOpenBracket, (newVal) => {
+    if (newVal && bracketRounds.value.length === 0 && teams.value.length > 0) {
+        generateBracket()
+    }
+})
+
+const roundsStatDisplay = computed(() => {
+    if (configuredRoundsCount.value != null) return configuredRoundsCount.value
+    const r = tournament.value?.rounds
+    if (typeof r === 'number' && !Number.isNaN(r)) return r
+    if (Array.isArray(r)) return r.length
+    return '—'
+})
+
+function initRoundsFromTournament() {
+    if (!tournament.value) return
+    const r = tournament.value.rounds
+    if (typeof r === 'number') {
+        configuredRoundsCount.value = r
+        return
+    }
+    if (Array.isArray(r) && r.length > 0) {
+        bracketRounds.value = r
+        configuredRoundsCount.value = r.length
+    }
+}
 const shouldHideTeams = computed(() => {
+    if (authStore.isAdmin) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()
@@ -177,10 +208,6 @@ const onParticipantClick = (participant: any) => {
     console.log('Participant clicked:', participant)
 }
 
-const onMatchResult = (result: any) => {
-    console.log('Match result:', result)
-}
-
 const formatDate = (dateString: string) => {
     if (!dateString) return "ТВА"
     const date = new Date(dateString)
@@ -191,15 +218,23 @@ const formatDate = (dateString: string) => {
     }).replace('р.', '').toUpperCase()
 }
 
+async function refreshTeams() {
+    if (shouldHideTeams.value) return
+    try {
+        const teamsResponse = await teamsStore.loadFromDatabase(true)
+        teams.value = teamsResponse?.data || []
+    } catch (e) {
+        console.error('Failed to refresh teams')
+    }
+}
+
 onMounted(async () => {
     try {
         tournament.value = await store.fetchTournamentById(route.params.id as string)
-        if(!shouldHideTeams.value) {
-            const teamsResponse = await teamsStore.loadFromDatabase(true)
-            teams.value = teamsResponse?.data || []
-        }
+        initRoundsFromTournament()
+        await refreshTeams()
     } catch (e) {
-        console.error("Failed to load tournament detail")
+        console.error('Failed to load tournament detail')
     }
 })
 
@@ -236,9 +271,22 @@ const generateBracket = () => {
 
         firstRoundMatches.push({
             id: `round1_match${i + 1}`,
+            title: String(i + 1),
             winner: null,
-            team1: t1 ? { id: t1.id, name: t1.name || t1.teamName || 'Без назви', score: 0 } : { id: null, name: "BYE", score: null },
-            team2: t2 ? { id: t2.id, name: t2.name || t2.teamName || 'Без назви', score: 0 } : { id: null, name: "BYE", score: null },
+            team1: t1
+                ? {
+                      id: t1.id,
+                      name: t1.name || t1.teamName || 'Без назви',
+                      score: null,
+                  }
+                : { id: null, name: 'BYE', score: null },
+            team2: t2
+                ? {
+                      id: t2.id,
+                      name: t2.name || t2.teamName || 'Без назви',
+                      score: null,
+                  }
+                : { id: null, name: 'BYE', score: null },
         })
     }
     generatedRounds.push({ matchs: firstRoundMatches })
@@ -252,6 +300,7 @@ const generateBracket = () => {
         for (let i = 0; i < currentMatchesCount; i++) {
             matches.push({
                 id: `round${roundNum}_match${i + 1}`,
+                title: `${roundNum}-${i + 1}`,
                 winner: null,
                 team1: { id: null, name: "TBD", score: null },
                 team2: { id: null, name: "TBD", score: null },
@@ -261,9 +310,7 @@ const generateBracket = () => {
         roundNum++
     }
 
-    if (tournament.value) {
-        tournament.value.rounds = generatedRounds
-    }
+    bracketRounds.value = generatedRounds
 }
 
 const dotaMatchId = ref('')
@@ -345,6 +392,58 @@ const fetchDotaMatch = async () => {
                 font-size: 48px;
             }
         }
+
+        &__actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 40px;
+
+            button {
+                min-width: 200px;
+                height: 52px;
+                border-radius: 0;
+                font-family: var(--font-display);
+                font-weight: 700;
+                font-size: 13px;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                border: 1px solid var(--color-text);
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+
+                &.home-btn {
+                    background: transparent;
+                    color: var(--color-text);
+                    opacity: 1;
+
+                    &:hover {
+                        background: var(--color-text);
+                        color: white;
+                    }
+                }
+
+                &.bracket-btn {
+                    background: var(--color-primary);
+                    border-color: var(--color-primary);
+                    color: white;
+
+                    &:hover {
+                        background: var(--color-text);
+                        border-color: var(--color-text);
+                        transform: translateY(-2px);
+                        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+                    }
+
+                    &:active {
+                        transform: translateY(0);
+                    }
+                }
+            }
+        }
     }
 
     &__layout {
@@ -356,6 +455,14 @@ const fetchDotaMatch = async () => {
             grid-template-columns: 1fr;
             gap: 48px;
         }
+    }
+
+    &__bracket-view {
+        width: 100%;
+        margin-top: 32px;
+        animation: fadeIn 0.6s ease-out;
+        overflow-x: auto;
+        padding-bottom: 80px;
     }
 }
 
@@ -526,6 +633,51 @@ const fetchDotaMatch = async () => {
     }
 }
 
+:deep(.create-btn) {
+    margin-top: 16px;
+    width: 100%;
+    background: linear-gradient(135deg, var(--color-primary), #ff4d4d);
+    border: none;
+    color: white;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 18px;
+    border-radius: 0;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    box-shadow: 0 4px 15px rgba(228, 35, 19, 0.2);
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(228, 35, 19, 0.3);
+        filter: brightness(1.1);
+
+        &::after {
+            left: 100%;
+        }
+    }
+
+    &:active {
+        transform: translateY(0);
+    }
+}
+
 .section-label {
     font-family: var(--font-display);
     font-size: 12px;
@@ -645,280 +797,5 @@ const fetchDotaMatch = async () => {
     }
 }
 
-.tables-section {
-    margin-top: 48px;
 
-    .wrapper {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        padding: 24px;
-        
-        .actions {
-            margin-bottom: 24px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 16px;
-            
-            button {
-                padding: 8px 16px;
-                background: var(--color-text);
-                color: var(--color-bg);
-                border: none;
-                font-family: var(--font-display);
-                font-weight: 600;
-                text-transform: uppercase;
-                cursor: pointer;
-                transition: opacity 0.2s, transform 0.2s;
-
-                &:hover {
-                    opacity: 0.8;
-                    transform: translateY(-2px);
-                }
-
-                &.btn-bracket {
-                    background: var(--color-primary);
-                    color: white;
-                }
-            }
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-
-            th, td {
-                padding: 12px;
-                text-align: left;
-                border-bottom: 1px solid var(--color-border);
-            }
-
-            th {
-                font-family: var(--font-display);
-                font-size: 12px;
-                font-weight: 700;
-                color: var(--color-text-muted);
-                letter-spacing: 2px;
-            }
-
-            .drag-handle {
-                cursor: grab;
-                color: var(--color-text-muted);
-                width: 40px;
-                text-align: center;
-                user-select: none;
-                font-weight: bold;
-                
-                &:active {
-                    cursor: grabbing;
-                }
-            }
-        }
-    }
-}
-
-.bracket-section {
-    margin-top: 64px;
-
-    .matchups-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 24px;
-        margin-top: 24px;
-    }
-
-    .matchup-card {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: 8px;
-        overflow: hidden;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-        &:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
-            border-color: var(--color-primary);
-        }
-
-        .match-header {
-            background: var(--color-border);
-            padding: 8px 16px;
-            font-size: 11px;
-            font-weight: 700;
-            font-family: var(--font-display);
-            letter-spacing: 2px;
-            color: var(--color-text-muted);
-            text-align: center;
-        }
-
-        .match-teams {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: relative;
-
-            .vs-divider {
-                position: absolute;
-                top: 50%;
-                left: 16px;
-                transform: translateY(-50%);
-                font-size: 10px;
-                font-weight: 800;
-                color: var(--color-text-muted);
-                opacity: 0.5;
-            }
-
-            .team {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 12px 16px 12px 32px;
-                background: var(--color-bg);
-                border-radius: 6px;
-                border: 1px solid transparent;
-                transition: border-color 0.2s;
-
-                &.is-bye {
-                    opacity: 0.5;
-                    border: 1px dashed var(--color-border);
-                    background: transparent;
-                }
-
-                &:hover:not(.is-bye) {
-                    border-color: var(--color-primary);
-                }
-
-                .team-name {
-                    font-weight: 600;
-                    font-size: 15px;
-                    color: var(--color-text);
-                }
-
-                .score {
-                    font-family: var(--font-display);
-                    font-weight: 700;
-                    font-size: 16px;
-                    color: var(--color-text-muted);
-                }
-            }
-        }
-    }
-}
-
-/* --- ВІЗУАЛІЗАЦІЯ СІТКИ VUE3-TOURNAMENT --- */
-.bracket-wrapper {
-    margin-top: 48px;
-    padding: 32px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 12px;
-    overflow-x: auto;
-    position: relative;
-
-    .section-label {
-        margin-bottom: 32px;
-        color: var(--color-primary);
-    }
-
-    /* Кастомізація скролбару для контейнера з сіткою */
-    &::-webkit-scrollbar {
-        height: 10px;
-    }
-    &::-webkit-scrollbar-track {
-        background: var(--color-bg);
-        border-radius: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-        background: var(--color-border);
-        border-radius: 4px;
-    }
-    &::-webkit-scrollbar-thumb:hover {
-        background: var(--color-primary);
-    }
-
-    /* Стилі компонентів бібліотеки */
-    :deep(.vtb-wrapper) {
-        display: flex;
-        font-family: var(--font-sans);
-        min-width: max-content;
-
-        /* Блоки з матчами */
-        .vtb-item-players {
-            display: flex;
-            flex-direction: column;
-            width: 220px;
-            background: #111; /* Глибокий темний */
-            border: 1px solid var(--color-border);
-            border-radius: 6px;
-            margin: 12px 0;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, border-color 0.2s;
-
-            &:hover {
-                transform: translateY(-4px) scale(1.02);
-                border-color: var(--color-primary);
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-                z-index: 2;
-            }
-
-            /* Конкретний гравець/команда всередині блоку */
-            .vtb-item-player {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 12px 16px;
-                color: var(--color-text);
-                font-weight: 500;
-                font-size: 13px;
-                position: relative;
-                cursor: pointer;
-                transition: background 0.2s;
-
-                &:first-child {
-                    border-bottom: 1px solid var(--color-border);
-                }
-
-                &::before {
-                    content: '';
-                    position: absolute;
-                    left: 0;
-                    top: 0;
-                    height: 100%;
-                    width: 3px;
-                    background: transparent;
-                    transition: background 0.2s;
-                }
-
-                &:hover {
-                    background: rgba(255, 255, 255, 0.05);
-                }
-
-                /* Оформлення переможця */
-                &.winner {
-                    font-weight: 700;
-                    color: #fff;
-                    
-                    &::before {
-                        background: var(--color-primary); /* Яскрава лінія */
-                    }
-                }
-
-                /* Оформлення команди, що програла */
-                &.defeated {
-                    color: var(--color-text-muted);
-                    opacity: 0.6;
-                }
-            }
-        }
-
-        /* SVG лінії, які з'єднують матчі */
-        svg {
-            path {
-                stroke: var(--color-border) !important;
-                stroke-width: 2px !important;
-            }
-        }
-    }
-}
 </style>

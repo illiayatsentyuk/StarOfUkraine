@@ -15,6 +15,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const search = ref('')
+    const sortBy = ref('createdAt')
+    const sortOrder = ref('DESC')
 
     const hasMore = computed(() => page.value <= totalPages.value)
 
@@ -41,10 +43,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
                 page: page.value,
                 limit: LIMIT,
                 name: search.value.trim() || undefined,
-                // У бекенді FindQueryDto.sortBy зараз лише createdAt | updatedAt.
-                // Коли додасте поля турніру — розкоментуйте й передавайте:
-                // sortBy: 'startDate' | 'name' | …
-                // sortOrder: 'ASC' | 'DESC'
+                sortBy: sortBy.value,
+                sortOrder: sortOrder.value,
             })
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')
@@ -131,6 +131,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         error,
         hasMore,
         search,
+        sortBy,
+        sortOrder,
         reset,
         loadFromDatabase,
         fetchTournamentById,
