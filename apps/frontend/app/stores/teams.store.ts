@@ -1,7 +1,6 @@
 import type { Team } from '~/types/teams.interface'
 import { useToast } from "vue-toastification";
 import { useApi } from '~/composables/useApi';
-import { useDebounceFn } from '@vueuse/core';
 
 const LIMIT = 16
 type CreateTeamPayload = {
@@ -174,8 +173,8 @@ export const useTeamsStore = defineStore('teams', () => {
         error.value = null
         try {
             const api = useApi()
-            const response = await api.get(`/users`, {
-                params: { email: trimmedQuery },
+            const response = await api.get(`/users/search`, {
+                params: { query: trimmedQuery },
             })
 
             const raw = response.data

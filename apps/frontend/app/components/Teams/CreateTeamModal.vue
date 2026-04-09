@@ -1,5 +1,6 @@
 <script lang="ts" setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import { useTeamsStore } from '~/stores/teams.store'
 
 const props = defineProps<{ isTeamOpen: boolean }>()
@@ -22,21 +23,70 @@ const initialState = {
 const form = reactive({ ...initialState })
 
 const isLoading = ref(false)
-// Тимчасово вимкнено логіку додавання учасників у команду.
-// Повернемо після узгодження API/UX пошуку користувачів.
-/*
 const memberQuery = ref('')
 const selectedMembers = ref<string[]>([])
 const showDropdown = ref(false)
 const searchRequestId = ref(0)
-*/
+
+const filteredSearchResults = computed(() =>
+    store.searchResults.filter(user => !selectedMembers.value.includes(user.email))
+)
+
+const debouncedSearch = useDebounceFn(async (query: string) => {
+    const reqId = ++searchRequestId.value
+    const results = await store.searchMembers(query)
+    if (reqId !== searchRequestId.value) return
+    showDropdown.value = query.trim().length >= 2 && results.length > 0
+}, 300)
+
+function onMemberInput(val: string) {
+    memberQuery.value = val
+    const q = val.trim()
+    if (q.length < 2) {
+        showDropdown.value = false
+        store.clearSearchResults()
+        return
+    }
+    showDropdown.value = true
+    debouncedSearch(q)
+}
+
+function selectMember(email: string) {
+    if (!selectedMembers.value.includes(email)) {
+        selectedMembers.value.push(email)
+    }
+    memberQuery.value = ''
+    showDropdown.value = false
+    store.clearSearchResults()
+}
+
+function removeMember(email: string) {
+    selectedMembers.value = selectedMembers.value.filter(m => m !== email)
+}
+
+function onBlur() {
+    setTimeout(() => { showDropdown.value = false }, 150)
+}
+
+watch(() => props.isTeamOpen, (opened) => {
+    if (!opened) {
+        memberQuery.value = ''
+        selectedMembers.value = []
+        showDropdown.value = false
+        store.clearSearchResults()
+    }
+})
+
 
 async function submitForm() {
     try {
         isLoading.value = true
         const payload = {
             ...form,
+            members: selectedMembers.value,
         }
+        // Бекенд create-team поки не приймає memberEmails/members.
+        // Вибрані користувачі лишаються в UI для майбутнього кроку.
         await store.createTeam(payload)
         Object.assign(form, initialState)
         emit('success')
@@ -87,15 +137,48 @@ Dialog(
                 placeholder="Місто"
             )
 
-        //- ── Members autocomplete (тимчасово вимкнено) ───────────────────
-        //- .form-group
-        //-     label.form-label Список гравців
-        //-     .members-input-wrapper
-        //-         InputText.form-input(
-        //-             placeholder="Введіть email гравця..."
-        //-             autocomplete="off"
-        //-             disabled
-        //-         )
+        .form-group
+            label.form-label Пошук гравців
+
+            .members-tags(v-if="selectedMembers.length")
+                span.member-tag(
+                    v-for="email in selectedMembers"
+                    :key="email"
+                )
+                    | {{ email }}
+                    button.tag-remove(
+                        type="button"
+                        @click="removeMember(email)"
+                        aria-label="Видалити гравця"
+                    ) ×
+
+            .members-input-wrapper
+                InputText.form-input(
+                    :value="memberQuery"
+                    @input="onMemberInput($event.target.value)"
+                    @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
+                    @blur="onBlur"
+                    placeholder="Пошук за email або nameId..."
+                    autocomplete="off"
+                )
+
+                .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
+                    span Шукаємо...
+
+                .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
+                    .dropdown-item(
+                        v-for="user in filteredSearchResults"
+                        :key="user.id || user.email"
+                        @mousedown.prevent="selectMember(user.email)"
+                    )
+                        span.user-email {{ user.email }}
+                        span.user-name(v-if="user.name || user.nameId")
+                            | — {{ user.name || user.nameId }}
+
+                .members-dropdown.dropdown--empty(
+                    v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2"
+                )
+                    .dropdown-empty Нікого не знайдено
 
         //- ────────────────────────────────────────────────────────────────
 
