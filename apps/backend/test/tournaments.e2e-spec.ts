@@ -122,4 +122,18 @@ describe('Tournaments (e2e)', () => {
 
     expect(response.body).toEqual(tournamentMock);
   });
+
+  it('PATCH /tournaments/join/:id connects team to tournament', async () => {
+    mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    mockPrisma.tournament.update.mockResolvedValue(tournamentMock);
+
+    const response = await request(app.getHttpServer())
+      .patch('/tournaments/join/tournament-1')
+      .set('Authorization', `Bearer ${signE2eAccessToken(Role.USER)}`)
+      .send({ teamId: 'team-1' })
+      .expect(200);
+
+    expect(response.body).toEqual(tournamentMock);
+  });
 });

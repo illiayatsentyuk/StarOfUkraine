@@ -9,19 +9,47 @@ import { Prisma } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTeamDto } from './dto/create-team.dto';
-import { FindTeamQueryDto } from './dto/find-team-query.dto';
-import { UpdateTeamDto } from './dto/update-team.dto';
+import { CreateTeamDto, FindTeamQueryDto, UpdateTeamDto } from './dto';
+
+const memberUserSelect = {
+  id: true,
+  email: true,
+  name: true,
+  nameId: true,
+  image: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+};
+
+const teamInclude = {
+  members: { select: memberUserSelect },
+  captain: { select: memberUserSelect },
+};
 
 @Injectable()
 export class TeamService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
-    private paginationsConfig: ConfigType<typeof paginationConfig>,
+    private readonly paginationsConfig: ConfigType<typeof paginationConfig>,
   ) {}
 
-  async create(data: CreateTeamDto) {
+  private normalizeEmail(email: string): string {
+    return email.trim().toLowerCase();
+  }
+
+  private async assertUserExistsByEmail(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true },
+    });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+  }
+
+  async create(data: CreateTeamDto, creatorEmail: string) {
     const existingTeam = await this.prisma.team.findFirst({
       where: {
         name: data.name,
@@ -30,19 +58,27 @@ export class TeamService {
     if (existingTeam) {
       throw new BadRequestException('Team already exists');
     }
-    const team = await this.prisma.team.create({
+
+    const captainEmail = this.normalizeEmail(creatorEmail);
+    await this.assertUserExistsByEmail(captainEmail);
+
+    return this.prisma.team.create({
       data: {
         name: data.name,
         captainName: data.captainName,
-        captainEmail: data.captainEmail,
-        members: data.members,
+        captain: {
+          connect: { email: captainEmail },
+        },
+        members: {
+          connect: [{ email: captainEmail }],
+        },
         city: data.city,
         organization: data.organization,
         telegram: data.telegram,
         discord: data.discord,
       },
+      include: teamInclude,
     });
-    return team;
   }
 
   async findAll(query: FindTeamQueryDto) {
@@ -84,6 +120,7 @@ export class TeamService {
       orderBy: {
         [sortBy]: sortOrder === SortOrder.ASC ? 'asc' : 'desc',
       },
+      include: teamInclude,
     });
 
     return {
@@ -97,7 +134,10 @@ export class TeamService {
   }
 
   async findOne(id: string) {
-    const team = await this.prisma.team.findUnique({ where: { id } });
+    const team = await this.prisma.team.findUnique({
+      where: { id },
+      include: teamInclude,
+    });
     if (!team) {
       throw new NotFoundException('Team not found');
     }
@@ -105,30 +145,79 @@ export class TeamService {
   }
 
   async update(id: string, data: UpdateTeamDto) {
-    await this.findOne(id);
-    const isTheSameName = data.name === (await this.findOne(id)).name;
-    if (isTheSameName) {
-      throw new BadRequestException('Team with this name already exists');
-    }
-    const updatedTeam = await this.prisma.team.update({
+    const existing = await this.prisma.team.findUnique({
       where: { id },
-      data: {
-        name: data.name,
-        captainName: data.captainName,
-        captainEmail: data.captainEmail,
-        members: data.members,
-        city: data.city,
-        organization: data.organization,
-        telegram: data.telegram,
-        discord: data.discord,
+      include: {
+        members: { select: { email: true } },
       },
     });
-    return updatedTeam;
+    if (!existing) {
+      throw new NotFoundException('Team not found');
+    }
+
+    if (data.name !== undefined && data.name !== existing.name) {
+      const nameTaken = await this.prisma.team.findFirst({
+        where: { name: data.name, NOT: { id } },
+      });
+      if (nameTaken) {
+        throw new BadRequestException('Team with this name already exists');
+      }
+    }
+
+    const captainEmail =
+      data.captainEmail !== undefined
+        ? this.normalizeEmail(data.captainEmail)
+        : existing.captainEmail;
+
+    if (data.captainEmail !== undefined) {
+      await this.assertUserExistsByEmail(captainEmail);
+    }
+
+    return this.prisma.team.update({
+      where: { id },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...(data.captainName !== undefined && { captainName: data.captainName }),
+        ...(data.captainEmail !== undefined && {
+          captain: { connect: { email: captainEmail } },
+        }),
+        ...(data.city !== undefined && { city: data.city }),
+        ...(data.organization !== undefined && {
+          organization: data.organization,
+        }),
+        ...(data.telegram !== undefined && { telegram: data.telegram }),
+        ...(data.discord !== undefined && { discord: data.discord }),
+      },
+      include: teamInclude,
+    });
+  }
+
+  async join(teamId: string, userEmail: string) {
+    const team = await this.findOne(teamId);
+    const email = this.normalizeEmail(userEmail);
+    await this.assertUserExistsByEmail(email);
+
+    const alreadyMember = team.members.some((m) => m.email === email);
+    if (alreadyMember) {
+      throw new BadRequestException('User is already a team member');
+    }
+
+    return this.prisma.team.update({
+      where: { id: teamId },
+      data: {
+        members: {
+          connect: { email },
+        },
+      },
+      include: teamInclude,
+    });
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    const deletedTeam = await this.prisma.team.delete({ where: { id } });
-    return deletedTeam;
+    return this.prisma.team.delete({
+      where: { id },
+      include: teamInclude,
+    });
   }
 }

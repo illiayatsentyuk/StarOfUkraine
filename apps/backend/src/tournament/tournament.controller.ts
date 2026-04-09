@@ -26,6 +26,7 @@ import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
 import { UpdateTournamentDto } from './dto/update-tournament.dto';
 import { TournamentService } from './tournament.service';
+import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -86,6 +87,33 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   findOne(@Param('id') id: string) {
     return this.tournamentService.findOne(id);
+  }
+
+  @Patch("join/:id")
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({ summary: 'Join tournament with a team' })
+  @ApiBody({
+    type: JoinTournamentDto,
+    examples: {
+      join: { value: { teamId: 'team-1' } },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tournament updated (team connected)',
+    schema: { example: tournamentExamples.response },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament or team not found' })
+  joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
+    return this.tournamentService.joinTournament(id, data);
   }
 
   @Patch(':id')
