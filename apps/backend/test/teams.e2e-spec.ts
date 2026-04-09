@@ -9,6 +9,8 @@ import { signE2eAccessToken } from './helpers/sign-e2e-access-token';
 describe('Teams (e2e)', () => {
   let app: INestApplication;
 
+  const dateStr = '2025-01-01T00:00:00.000Z';
+
   const memberOlena = {
     id: 'user-olena',
     email: 'olena@example.com',
@@ -16,8 +18,8 @@ describe('Teams (e2e)', () => {
     nameId: 'olena-1',
     image: null,
     role: Role.USER,
-    createdAt: new Date('2025-01-01'),
-    updatedAt: new Date('2025-01-01'),
+    createdAt: dateStr,
+    updatedAt: dateStr,
   };
 
   const memberTaras = {
@@ -27,8 +29,8 @@ describe('Teams (e2e)', () => {
     nameId: 'taras-1',
     image: null,
     role: Role.USER,
-    createdAt: new Date('2025-01-01'),
-    updatedAt: new Date('2025-01-01'),
+    createdAt: dateStr,
+    updatedAt: dateStr,
   };
 
   const teamMock = {
@@ -42,8 +44,8 @@ describe('Teams (e2e)', () => {
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
-    createdAt: new Date('2025-01-01'),
-    updatedAt: new Date('2025-01-01'),
+    createdAt: dateStr,
+    updatedAt: dateStr,
   };
 
   const mockPrisma = {
@@ -136,5 +138,35 @@ describe('Teams (e2e)', () => {
       .expect(201);
 
     expect(response.body).toEqual(teamMock);
+  });
+
+  it('POST /teams/:id/join joins current user to team', async () => {
+    const joiner = {
+      id: 'user-joiner',
+      email: 'e2e@example.com',
+      name: 'Joiner',
+      nameId: 'joiner-1',
+      image: null,
+      role: Role.USER,
+      createdAt: dateStr,
+      updatedAt: dateStr,
+    };
+
+    mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+    mockPrisma.user.findUnique.mockResolvedValue({ id: joiner.id });
+    mockPrisma.team.update.mockResolvedValue({
+      ...teamMock,
+      members: [...teamMock.members, joiner],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/teams/team-1/join')
+      .set('Authorization', `Bearer ${signE2eAccessToken(Role.USER)}`)
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      id: 'team-1',
+    });
+    expect(response.body.members).toHaveLength(3);
   });
 });
