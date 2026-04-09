@@ -50,6 +50,7 @@ section.tournament-detail
                                 p.team-card__meta(v-if="team.city")
                                     | Місто:
                                     span  {{ team.city }}
+                                Button.delete-btn(v-if="authStore.isAdmin" @click="teamsStore.deleteTeam(team.id)" type="button" label="Видалити команду" icon="pi pi-trash")
 
                 .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
                     h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
@@ -104,7 +105,7 @@ section.tournament-detail
                             span.label ПОТОЧНИЙ СТАТУС
                             span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
                         Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
-                        Button.create-btn(@click="openTeamModal" type="button" label="Створити команду" icon="pi pi-plus")
+                        Button.create-btn(v-if="authStore.isAuthenticated" @click="openTeamModal" type="button" label="Створити команду" icon="pi pi-plus")
         
         //- Bracket View
         .tournament-detail__bracket-view(v-else-if="isOpenBracket")
@@ -125,7 +126,7 @@ section.tournament-detail
         @delete="onTournamentDeleted"
     )
     TeamsCreateTeamModal(
-        v-if="tournament"
+        v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
         @success="refreshTeams"

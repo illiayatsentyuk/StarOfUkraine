@@ -2,66 +2,53 @@
 import { ref, reactive } from 'vue'
 import { useTeamsStore } from '~/stores/teams.store'
 
-const props = defineProps<{
-  isTeamOpen: boolean
-}>()
-
+const props = defineProps<{ isTeamOpen: boolean }>()
 const emit = defineEmits<{
-  (e: "close"): void
-  (e: "success"): void
+  (e: 'close'): void
+  (e: 'success'): void
 }>()
 
 const store = useTeamsStore()
 
-
 const initialState = {
-    name: "",
-    captainName: "",
-    captainEmail: "",
-    members:"",
-    city:"",
-    organization: "",
-    telegram: "",
-    discord: ""
+    name: '',
+    captainName: '',
+    city: '',
+    organization: '',
+    telegram: '',
+    discord: '',
 }
 
 const form = reactive({ ...initialState })
 
 const isLoading = ref(false)
-
-function formateMembers(members: string) {
-  return members.split(",").map((member) => member.trim())
-}
+// Тимчасово вимкнено логіку додавання учасників у команду.
+// Повернемо після узгодження API/UX пошуку користувачів.
+/*
+const memberQuery = ref('')
+const selectedMembers = ref<string[]>([])
+const showDropdown = ref(false)
+const searchRequestId = ref(0)
+*/
 
 async function submitForm() {
     try {
         isLoading.value = true
         const payload = {
             ...form,
-            members: formateMembers(form.members),
-            organization: form.organization,
-            telegram: form.telegram,
-            discord: form.discord,
         }
-        
         await store.createTeam(payload)
         Object.assign(form, initialState)
-        emit("success")
-        emit("close")
+        emit('success')
+        emit('close')
     } catch (e) {
-        console.error("Виникла помилка під час створення турніру.", e)
+        console.error('Помилка створення команди:', e)
     } finally {
         isLoading.value = false
     }
 }
 
-function closeModal() {
-  emit("close")
-}
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("uk-UA")
-}
-
+function closeModal() { emit('close') }
 </script>
 
 <template lang="pug">
@@ -77,54 +64,84 @@ Dialog(
     :pt="{ mask: { style: 'backdrop-filter: blur(8px); background: rgba(0,0,0,0.6)' } }"
 )
     form.modal-form(@submit.prevent="submitForm")
+
         .form-group
             label.form-label Назва команди
-            InputText.form-input(v-model="form.name" placeholder="Введіть назву команди" required)
-        
+            InputText.form-input(
+                v-model="form.name"
+                placeholder="Введіть назву команди"
+                required
+            )
+
         .form-group
             label.form-label Ім'я капітана
-            InputText.form-input(v-model="form.captainName" placeholder="Введіть ім'я капітана")
-        
+            InputText.form-input(
+                v-model="form.captainName"
+                placeholder="Введіть ім'я капітана"
+            )
+
+        .form-group
+            label.form-label Місто
+            InputText.form-input(
+                v-model="form.city"
+                placeholder="Місто"
+            )
+
+        //- ── Members autocomplete (тимчасово вимкнено) ───────────────────
+        //- .form-group
+        //-     label.form-label Список гравців
+        //-     .members-input-wrapper
+        //-         InputText.form-input(
+        //-             placeholder="Введіть email гравця..."
+        //-             autocomplete="off"
+        //-             disabled
+        //-         )
+
+        //- ────────────────────────────────────────────────────────────────
+
         .form-row
-            .form-group
-                label.form-label Email капітана
-                InputText.form-input(v-model="form.captainEmail" placeholder="Email")
-            .form-group
-                label.form-label Список гравців
-                InputText.form-input(v-model="form.members" placeholder="Гравець 1, Гравець 2...")
-        
-        .form-row
-            .form-group
-                label.form-label Місто
-                InputText.form-input(v-model="form.city" placeholder="Місто")
             .form-group
                 label.form-label Організація
-                InputText.form-input(v-model="form.organization" placeholder="Організація")
-        
-        .form-row
+                InputText.form-input(
+                    v-model="form.organization"
+                    placeholder="Організація"
+                )
             .form-group
                 label.form-label Telegram
-                InputText.form-input(v-model="form.telegram" placeholder="@telegram")
-            .form-group
-                label.form-label Discord
-                InputText.form-input(v-model="form.discord" placeholder="@discord")
-        
+                InputText.form-input(
+                    v-model="form.telegram"
+                    placeholder="@telegram"
+                )
+
+        .form-group
+            label.form-label Discord
+            InputText.form-input(
+                v-model="form.discord"
+                placeholder="@discord"
+            )
+
         .modal-footer
-            Button.cancel-btn(type="button" label="Скасувати" @click="closeModal")
+            Button.cancel-btn(
+                type="button"
+                label="Скасувати"
+                @click="closeModal"
+            )
             Button.submit-btn(
-                type="submit" 
-                :label="isLoading ? 'Створення...' : 'Створити команду'" 
+                type="submit"
+                :label="isLoading ? 'Створення...' : 'Створити команду'"
                 :loading="isLoading"
                 :disabled="isLoading"
             )
 </template>
 
 <style lang="scss">
+// ─── Modal shell ───────────────────────────────────────────────────────────────
+
 .create-team-modal {
     background: #ffffff !important;
     border: 2px solid var(--color-text);
     border-radius: 0;
-    box-shadow: 0 40px 100px rgba(0,0,0,0.6);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
 
     .p-dialog-header {
         background: #ffffff !important;
@@ -147,7 +164,7 @@ Dialog(
             width: 32px;
             height: 32px;
             transition: all 0.3s ease;
-            
+
             &:hover {
                 background: var(--color-surface);
                 transform: rotate(90deg);
@@ -168,6 +185,8 @@ Dialog(
     }
 }
 
+// ─── Form layout ───────────────────────────────────────────────────────────────
+
 .modal-form {
     display: flex;
     flex-direction: column;
@@ -177,7 +196,7 @@ Dialog(
 .form-row {
     display: flex;
     gap: 24px;
-    
+
     @media (max-width: 640px) {
         flex-direction: column;
         gap: 24px;
@@ -204,8 +223,11 @@ Dialog(
     opacity: 0.8;
 }
 
+// ─── Inputs ────────────────────────────────────────────────────────────────────
+
 .form-input {
-    &.p-inputtext, .p-inputtext {
+    &.p-inputtext,
+    .p-inputtext {
         width: 100%;
         padding: 16px;
         border: 1px solid var(--color-border);
@@ -224,11 +246,135 @@ Dialog(
         &:focus {
             border-color: var(--color-text);
             background: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
             transform: translateY(-1px);
         }
     }
 }
+
+// ─── Members — теги ────────────────────────────────────────────────────────────
+
+.members-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.member-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: 5px 10px 5px 12px;
+    font-size: 13px;
+    font-family: var(--font-sans);
+    color: var(--color-text);
+    line-height: 1.4;
+
+    .tag-remove {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 18px;
+        height: 18px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        color: var(--color-text-muted);
+        padding: 0;
+        transition: color 0.15s;
+
+        &:hover {
+            color: var(--color-primary);
+        }
+    }
+}
+
+// ─── Members — dropdown ────────────────────────────────────────────────────────
+
+.members-input-wrapper {
+    position: relative;
+}
+
+.members-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    border-top: none;
+    z-index: 200;
+    max-height: 220px;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+
+    // Тонкий скролбар
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+
+    &--empty {
+        border-top: 1px solid var(--color-border);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &:hover {
+        background: var(--color-surface);
+    }
+
+    .user-email {
+        font-size: 14px;
+        color: var(--color-text);
+        font-family: var(--font-sans);
+    }
+
+    .user-name {
+        font-size: 12px;
+        color: var(--color-text-muted);
+        font-family: var(--font-sans);
+    }
+}
+
+.dropdown-empty {
+    padding: 14px 16px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-family: var(--font-sans);
+}
+
+.members-searching {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid var(--color-border);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-family: var(--font-sans);
+    z-index: 200;
+}
+
+// ─── Footer ────────────────────────────────────────────────────────────────────
 
 .modal-footer {
     display: flex;

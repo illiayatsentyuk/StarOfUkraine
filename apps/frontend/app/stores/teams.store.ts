@@ -1,8 +1,18 @@
 import type { Team } from '~/types/teams.interface'
 import { useToast } from "vue-toastification";
 import { useApi } from '~/composables/useApi';
+import { useDebounceFn } from '@vueuse/core';
 
 const LIMIT = 16
+type CreateTeamPayload = {
+    name: string
+    captainName: string
+    city?: string
+    organization?: string
+    telegram?: string
+    discord?: string
+    members?: string[]
+}
 
 export const useTeamsStore = defineStore('teams', () => {
     const toast = useToast();
@@ -12,6 +22,9 @@ export const useTeamsStore = defineStore('teams', () => {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const currentTeam = ref<Team | null>(null) // ⚠️ було `id` — перейменовано щоб не конфліктувало
+    const searchResults = ref<{ id: string; email: string; name?: string }[]>([])
+    const searchingMembers = ref(false)
+
 
     const hasMore = computed(() => page.value <= totalPages.value)
 
@@ -57,7 +70,7 @@ export const useTeamsStore = defineStore('teams', () => {
         }
     }
 
-    const createTeam = async (team: Omit<Team, 'id' | 'createdAt'>) => {
+    const createTeam = async (team: CreateTeamPayload) => {
         if (loading.value) return
         loading.value = true
         error.value = null
@@ -128,8 +141,63 @@ export const useTeamsStore = defineStore('teams', () => {
             loading.value = false
         }
     }
-    const searchMember = 
+    const deleteTeam = async (teamId: string) => {
+        if (loading.value) return
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            await api.delete(`/teams/${teamId}`)
+        }
+        catch (err: any) {
+            console.error('Помилка API при видаленні команди:', err)
+            toast.error('Не вдалося видалити команду')
+            error.value = err.message || 'Помилка видалення'
+            throw err
+        } finally {
+            loading.value = false
+            window.location.reload()
+        }
+    }
+    const clearSearchResults = () => {
+        searchResults.value = []
+    }
 
+    const searchMembers = async (query: string) => {
+        const trimmedQuery = query.trim()
+        if (trimmedQuery.length < 2) {
+            clearSearchResults()
+            return []
+        }
+
+        searchingMembers.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            const response = await api.get(`/users`, {
+                params: { email: trimmedQuery },
+            })
+
+            const raw = response.data
+            const users = Array.isArray(raw)
+                ? raw
+                : Array.isArray(raw?.data)
+                    ? raw.data
+                    : raw
+                        ? [raw]
+                        : []
+
+            searchResults.value = users.filter((user: any) => Boolean(user?.email))
+            return searchResults.value
+        } catch (err: any) {
+            console.error('Помилка пошуку:', err)
+            error.value = err.message || 'Помилка пошуку'
+            clearSearchResults()
+            return []
+        } finally {
+            searchingMembers.value = false
+        }
+    }
     return {
         teams,
         page,
@@ -138,10 +206,15 @@ export const useTeamsStore = defineStore('teams', () => {
         error,
         currentTeam,
         hasMore,
+        searchResults,
+        searchingMembers,
         reset,
         loadFromDatabase,
         createTeam,
         joinTeam,
         fetchTeamById,
+        deleteTeam,
+        clearSearchResults,
+        searchMembers,
     }
 })
