@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { FindUsersDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -25,5 +26,17 @@ export class UsersService {
             throw new NotFoundException('User not found');
         }
         return user;
+    }
+
+    findUsers(dto: FindUsersDto) {
+        const q = dto.query.trim();
+        return this.prisma.user.findMany({
+            where: {
+                OR: [
+                    { email: { contains: q, mode: 'insensitive' } },
+                    { nameId: { contains: q, mode: 'insensitive' } },
+                ],
+            },
+        });
     }
 }

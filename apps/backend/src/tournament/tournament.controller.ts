@@ -91,6 +91,27 @@ export class TournamentController {
 
   @Patch("join/:id")
   @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({ summary: 'Join tournament with a team' })
+  @ApiBody({
+    type: JoinTournamentDto,
+    examples: {
+      join: { value: { teamId: 'team-1' } },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Tournament updated (team connected)',
+    schema: { example: tournamentExamples.response },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament or team not found' })
   joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
     return this.tournamentService.joinTournament(id, data);
   }
