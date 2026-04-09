@@ -1,6 +1,6 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserDto } from './dto/user';
+import { FindUsersDto, UserDto } from './dto';
 import { Serialize } from '../interceptors/serialize.interceptor';
 
 @Controller('users')
@@ -11,6 +11,11 @@ export class UsersController {
     @Get()
     findAll() {
         return this.usersService.findAll();
+    }
+
+    @Get('search')
+    findUsers(@Query() query: FindUsersDto) {
+        return this.usersService.findUsers(query);
     }
 
     @Get(':id')
