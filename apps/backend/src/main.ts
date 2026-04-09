@@ -22,7 +22,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('StarOfUkraine API')
-    .setDescription('API documentation for auth, teams, and tournaments')
+    .setDescription('API documentation for auth, users, teams, and tournaments')
     .setVersion('1.0')
     // We authenticate via HttpOnly cookies, but keep Bearer as fallback.
     .addCookieAuth('access_token')
