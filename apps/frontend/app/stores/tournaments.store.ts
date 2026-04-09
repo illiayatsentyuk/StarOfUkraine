@@ -11,6 +11,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useToast()
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
+    const dotaMatchId = ref('')
+    const dotaMatchData = ref<any>(null)
     const totalPages = ref(0)
     const loading = ref(false)
     const error = ref<string | null>(null)
@@ -116,6 +118,24 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             console.error('Помилка API при видаленні турніру:', error)
             toast.error('Помилка API при видаленні турніру')
             throw error
+        }
+    }
+
+    const dotaMatchCheacker = async (matchId: string) => {
+        loading.value = true
+        error.value = null
+        dotaMatchData.value = null
+        try {
+            const response = await fetch(`https://api.opendota.com/api/matches/${dotaMatchId.value}`)
+            if (!response.ok) throw new Error('Матч не знайдено або помилка API')
+            const data = await response.json()
+            if (data.error) throw new Error(data.error)
+            dotaMatchData.value = data
+        } catch (error: any) {
+            error.value = error.message || 'Помилка завантаження'
+            toast.error('Помилка завантаження')
+        } finally {
+            loading.value = false
         }
     }
 

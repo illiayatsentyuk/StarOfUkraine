@@ -49,27 +49,27 @@ section.tournament-detail
                                     | Місто:
                                     span  {{ team.city }}
 
-                .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
-                    h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
-                    .admin-dota-form
-                        input.dota-input(
-                            v-model="dotaMatchId" 
-                            type="text" 
-                            placeholder="Введіть Dota 2 Match ID (напр. 7600000000)"
-                        )
-                        button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? 'Шукаємо...' : 'Знайти' }}
+                //- .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
+                //-     h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
+                //-     .admin-dota-form
+                //-         input.dota-input(
+                //-             v-model="dotaMatchId" 
+                //-             type="text" 
+                //-             placeholder="Введіть Dota 2 Match ID (напр. 7600000000)"
+                //-         )
+                //-         button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? 'Шукаємо...' : 'Знайти' }}
                     
-                    .dota-result(v-if="dotaMatchData")
-                        .dota-score(:class="dotaMatchData.radiant_win ? 'radiant-win' : 'dire-win'")
-                            span.team.radiant Radiant {{ dotaMatchData.radiant_score }}
-                            span.vs -
-                            span.team.dire {{ dotaMatchData.dire_score }} Dire
+                //-     .dota-result(v-if="dotaMatchData")
+                //-         .dota-score(:class="dotaMatchData.radiant_win ? 'radiant-win' : 'dire-win'")
+                //-             span.team.radiant Radiant {{ dotaMatchData.radiant_score }}
+                //-             span.vs -
+                //-             span.team.dire {{ dotaMatchData.dire_score }} Dire
                         
-                        .dota-info
-                            span.info-item Переможець: {{ dotaMatchData.radiant_win ? 'Radiant' : 'Dire' }}
-                            span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
+                //-         .dota-info
+                //-             span.info-item Переможець: {{ dotaMatchData.radiant_win ? 'Radiant' : 'Dire' }}
+                //-             span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
                     
-                    .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
+                //-     .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
                 .tables-section
                     .wrapper
                         .actions
@@ -193,28 +193,7 @@ const shuffleTeams = () => {
 }
 
 
-const dotaMatchId = ref('')
-const dotaMatchLoading = ref(false)
-const dotaMatchData = ref<any>(null)
-const dotaMatchError = ref('')
 
-const fetchDotaMatch = async () => {
-    if (!dotaMatchId.value) return
-    dotaMatchLoading.value = true
-    dotaMatchError.value = ''
-    dotaMatchData.value = null
-    try {
-        const response = await fetch(`https://api.opendota.com/api/matches/${dotaMatchId.value}`)
-        if (!response.ok) throw new Error('Матч не знайдено або помилка API')
-        const data = await response.json()
-        if (data.error) throw new Error(data.error)
-        dotaMatchData.value = data
-    } catch (e: any) {
-        dotaMatchError.value = e.message || 'Помилка завантаження'
-    } finally {
-        dotaMatchLoading.value = false
-    }
-}
 </script>
 
 <style lang="scss" scoped>
