@@ -32,9 +32,16 @@ export const useFiltersTournamentsStore = defineStore('filtersTournaments', () =
         tournamentsStore.loadFromDatabase(true)
     }
 
+    const sortEndedTournaments = () => {
+        tournamentsStore.sortBy = 'startDate'
+        tournamentsStore.sortOrder = 'DESC'
+        tournamentsStore.loadFromDatabase(true)
+    }
+
     return {
         activeFilter,
         isMinimum,
         setFilter,
+        sortEndedTournaments,
     }
 })
