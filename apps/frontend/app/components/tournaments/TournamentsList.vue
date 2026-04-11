@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { calculateTournamentStatus } from '~/utils/tournament-status'
+
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
@@ -17,6 +19,10 @@ const filters = [
 const formatDate = (dateString: string) => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('uk-UA')
+}
+
+const getTournamentStatus = (tournament: any) => {
+    return calculateTournamentStatus(tournament)
 }
 
 onMounted(() => {
@@ -75,8 +81,8 @@ section.tournaments-list
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )
-            .tournament-card__status(v-if="tournament.status")
-                span {{ tournament.status }}
+            .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
+                span {{ getTournamentStatus(tournament).label }}
 
             h3.tournament-card__title {{ tournament.name }}
 

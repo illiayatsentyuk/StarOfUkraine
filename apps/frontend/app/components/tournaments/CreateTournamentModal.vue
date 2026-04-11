@@ -9,39 +9,33 @@ const emit = defineEmits<{
 
 const store = useTournamentsStore()
 
-// Redundant load removed to avoid double fetching
-
-
-const initialState = {
+const initialValues = {
     name: "",
     description: "",
     startDate: "",
-    registrationStart:"",
-    registrationEnd:"",
-    rounds: "",
-    maxTeams: "",
-    teamSizeMin: "",
-    teamSizeMax: "",
+    registrationStart: "",
+    registrationEnd: "",
+    rounds: null,
+    maxTeams: null,
+    teamSizeMin: 2,
+    teamSizeMax: 5,
     hideTeamsUntilRegistrationEnds: false,
-    status: "DRAFT"
 }
-
-const form = reactive({ ...initialState })
 
 const isLoading = ref(false)
 
-async function submitForm() {
+async function onSubmit(values: any) {
     try {
         isLoading.value = true
         const payload = {
-            ...form,
-            startDate: form.startDate ? new Date(form.startDate).toISOString() : "",
-            registrationStart: form.registrationStart ? new Date(form.registrationStart).toISOString() : "",
-            registrationEnd: form.registrationEnd ? new Date(form.registrationEnd).toISOString() : "",
+            ...values,
+            startDate: values.startDate ? new Date(values.startDate).toISOString() : "",
+            registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : "",
+            registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : "",
+            status: "DRAFT"
         }
         
         await store.addTournament(payload)
-        Object.assign(form, initialState)
         emit("close")
     } catch (e) {
         console.error("Виникла помилка під час створення турніру.", e)
@@ -53,9 +47,6 @@ async function submitForm() {
 function closeModal() {
   emit("close")
 }
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("uk-UA")
-}
 </script>
 
 <template lang="pug">
@@ -63,51 +54,64 @@ function formatDate(date: string) {
     .modal-overlay(@click="closeModal")
     .modal-content
         .modal-header
-            h2.modal-title Створити турнір
+            h2.modal-title НОВИЙ ТУРНІР
             button.icon-btn(@click="closeModal" type="button")
                 i.pi.pi-times
-        form.modal-form(@submit.prevent="submitForm")
+        
+        VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
             .form-group
-                label.form-label Назва турніру
-                input.form-input(type="text" v-model="form.name" placeholder="Введіть назву турніру" required)
+                label.form-label НАЗВА ТУРНІРУ *
+                VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
+                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву турніру" :class="{ 'is-invalid': errorMessage }")
+                    span.error-text(v-if="errorMessage") {{ errorMessage }}
             
             .form-group
-                label.form-label Опис та Правила
-                input.form-input(type="text" v-model="form.description" placeholder="Введіть опис та правила")
+                label.form-label ОПИС ТА ПРАВИЛА
+                VeeField(name="description" v-slot="{ field }")
+                    textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
             
             .form-row
                 .form-group
-                    label.form-label Дата старту турніру
-                    input.form-input(type="date" v-model="form.startDate")
+                    label.form-label ДАТА СТАРТУ *
+                    VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage }")
+                        input.form-input(type="date" v-bind="field" :class="{ 'is-invalid': errorMessage }")
+                        span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
-                    label.form-label Початок реєстрації
-                    input.form-input(type="date" v-model="form.registrationStart")
+                    label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
+                    VeeField(name="registrationStart" v-slot="{ field }")
+                        input.form-input(type="date" v-bind="field")
             
             .form-row
                 .form-group
-                    label.form-label Кількість раундів
-                    input.form-input(type="number" v-model.number="form.rounds" placeholder="Раунди")
+                    label.form-label КІЛЬКІСТЬ РАУНДІВ
+                    VeeField(name="rounds" rules="numeric" v-slot="{ field, errorMessage }")
+                        input.form-input(type="number" v-bind="field" placeholder="6" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label Макс.команд (опційно)
-                    input.form-input(type="number" v-model.number="form.maxTeams" placeholder="Команди")
+                    label.form-label МАКС. КОМАНД
+                    VeeField(name="maxTeams" rules="numeric" v-slot="{ field, errorMessage }")
+                        input.form-input(type="number" v-bind="field" placeholder="16" :class="{ 'is-invalid': errorMessage }")
             
             .form-row
                 .form-group
-                    label.form-label Мін. гравців
-                    input.form-input(type="number" v-model.number="form.teamSizeMin" placeholder="Мін.")
+                    label.form-label МІН. ГРАВЦІВ
+                    VeeField(name="teamSizeMin" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
+                        input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label Макс. гравців
-                    input.form-input(type="number" v-model.number="form.teamSizeMax" placeholder="Макс.")
+                    label.form-label МАКС. ГРАВЦІВ
+                    VeeField(name="teamSizeMax" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
+                        input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
             
             .form-group
-                label.form-label Кінець реєстрації
-                input.form-input(type="date" v-model="form.registrationEnd")
+                label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
+                VeeField(name="registrationEnd" v-slot="{ field }")
+                    input.form-input(type="date" v-bind="field")
             
             .checkbox-group
-                input(type="checkbox" v-model="form.hideTeamsUntilRegistrationEnds" id="hideTeams")
-                label.form-label.checkbox-label(for="hideTeams") Сховати команди до кінця реєстрації
+                VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
+                    input.form-checkbox(type="checkbox" v-bind="field" id="hideTeams" :value="true")
+                    label.form-label.checkbox-label(for="hideTeams") СХОВАТИ КОМАНДИ ДО КІНЦЯ РЕЄСТРАЦІЇ
             
-            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'Створення...' : 'Створити турнір' }}
+            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ ТУРНІР' }}
 </template>
 
 <style lang="scss" scoped>
@@ -117,7 +121,7 @@ function formatDate(date: string) {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1000;
+    z-index: 1100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -129,64 +133,78 @@ function formatDate(date: string) {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(13, 13, 13, 0.5);
-    backdrop-filter: blur(4px);
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: grayscale(1);
 }
 
 .modal-content {
     position: relative;
-    width: 500px;
-    max-width: 90vw;
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    padding: 32px;
+    width: 540px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #000000;
+    padding: 48px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    max-height: 90vh;
+    gap: 32px;
+    max-height: 95vh;
     overflow-y: auto;
+    border-radius: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
 }
 
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 16px;
 }
 
 .modal-title {
     font-family: var(--font-display);
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--color-text);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #000000;
     margin: 0;
+    text-transform: uppercase;
 }
 
 .icon-btn {
     background: transparent;
-    color: var(--color-text-muted);
-    font-size: 18px;
-    padding: 4px;
+    border: none;
+    color: #000000;
+    font-size: 20px;
+    padding: 8px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform 0.2s;
 
     &:hover {
-        color: var(--color-text);
+        transform: rotate(90deg);
     }
 }
 
 .modal-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
 }
 
 .form-row {
     display: flex;
-    gap: 16px;
+    gap: 24px;
     
     .form-group {
         flex: 1;
+    }
+
+    @media (max-width: 600px) {
+        flex-direction: column;
+        gap: 24px;
     }
 }
 
@@ -197,64 +215,114 @@ function formatDate(date: string) {
 }
 
 .form-label {
-    font-family: var(--font-sans);
-    font-size: 12px;
-    color: var(--color-text-muted);
+    font-family: var(--font-display);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .form-input {
     width: 100%;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    background: transparent;
+    padding: 14px;
+    border: 1px solid #e0e0e0;
+    background: #ffffff;
+    border-radius: 0;
     font-family: var(--font-sans);
     font-size: 14px;
-    color: var(--color-text);
+    color: #000000;
     outline: none;
+    transition: all 0.2s;
 
     &::placeholder {
-        color: var(--color-text-muted);
+        color: #aaaaaa;
     }
 
     &:focus {
         border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(228, 35, 19, 0.1);
     }
+
+    &.is-invalid {
+        border-color: var(--color-primary);
+        background: rgba(228, 35, 19, 0.05);
+    }
+}
+
+.form-textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.error-text {
+    font-size: 11px;
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-top: 4px;
 }
 
 .checkbox-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    padding: 8px 0;
 
-    input[type="checkbox"] {
-        width: 16px;
-        height: 16px;
-        accent-color: var(--color-primary);
+    .form-checkbox {
+        width: 18px;
+        height: 18px;
+        border: 2px solid #000000;
+        border-radius: 0;
+        appearance: none;
+        cursor: pointer;
+        position: relative;
+        background: #ffffff;
+
+        &:checked {
+            background: #000000;
+            
+            &::after {
+                content: '✓';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: #ffffff;
+                font-size: 12px;
+            }
+        }
     }
 
     .checkbox-label {
-        color: var(--color-text);
+        font-size: 12px;
         cursor: pointer;
+        font-weight: 600;
     }
 }
 
 .submit-btn {
-    margin-top: 8px;
+    margin-top: 16px;
     background-color: var(--color-primary);
-    color: var(--color-bg);
-    padding: 16px;
+    color: #ffffff;
+    border: 2px solid var(--color-primary);
+    padding: 20px;
     font-family: var(--font-display);
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 800;
     text-align: center;
-    transition: background-color 0.2s, opacity 0.2s;
+    border-radius: 0;
+    cursor: pointer;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.2s;
 
     &:hover:not(:disabled) {
-        background-color: var(--color-primary-hover);
+        background-color: #000000;
+        border-color: #000000;
     }
     
     &:disabled {
-        opacity: 0.7;
+        opacity: 0.5;
         cursor: not-allowed;
     }
 }

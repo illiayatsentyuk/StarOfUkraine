@@ -12,7 +12,7 @@ section.tournament-detail
                 span.text НАЗАД ДО СПИСКУ
 
         header.tournament-detail__hero
-            .status-badge {{ (tournament.status || 'РЕЄСТРАЦІЯ ВІДКРИТА').toUpperCase() }}
+            .status-badge(v-if="tournamentStatus" :style="{ backgroundColor: tournamentStatus.color }") {{ tournamentStatus.label }}
             h1.title {{ tournament.name }}
             .tournament-detail__hero__actions
                 Button.home-btn( @click="isOpenBracket = false" type="button" label="Опис турніру")
@@ -52,27 +52,6 @@ section.tournament-detail
                                     span  {{ team.city }}
                                 Button.delete-btn(v-if="authStore.isAdmin" @click="teamsStore.deleteTeam(team.id)" type="button" label="Видалити команду" icon="pi pi-trash")
 
-                //- .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
-                //-     h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
-                //-     .admin-dota-form
-                //-         input.dota-input(
-                //-             v-model="dotaMatchId" 
-                //-             type="text" 
-                //-             placeholder="Введіть Dota 2 Match ID (напр. 7600000000)"
-                //-         )
-                //-         button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? 'Шукаємо...' : 'Знайти' }}
-                    
-                //-     .dota-result(v-if="dotaMatchData")
-                //-         .dota-score(:class="dotaMatchData.radiant_win ? 'radiant-win' : 'dire-win'")
-                //-             span.team.radiant Radiant {{ dotaMatchData.radiant_score }}
-                //-             span.vs -
-                //-             span.team.dire {{ dotaMatchData.dire_score }} Dire
-                        
-                //-         .dota-info
-                //-             span.info-item Переможець: {{ dotaMatchData.radiant_win ? 'Radiant' : 'Dire' }}
-                //-             span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
-                    
-                    .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
                 TournamentTeamsTable(
                     v-model:teams="teams"
                     :isAdmin="authStore.isAdmin"
@@ -103,9 +82,16 @@ section.tournament-detail
                     .sidebar__footer
                         .status-info
                             span.label ПОТОЧНИЙ СТАТУС
-                            span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
+                            span.value(v-if="tournamentStatus" :style="{ color: tournamentStatus.color }") {{ tournamentStatus.label }}
                         Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
-                        Button.create-btn(v-if="authStore.isAuthenticated" @click="openTeamModal" type="button" label="Створити команду" icon="pi pi-plus")
+                        Button.create-btn(
+                            v-if="authStore.isAuthenticated" 
+                            @click="openTeamModal" 
+                            type="button" 
+                            label="Створити команду" 
+                            icon="pi pi-plus"
+                            :disabled="!isRegistrationActive && !authStore.isAdmin"
+                        )
         
         //- Bracket View
         .tournament-detail__bracket-view(v-else-if="isOpenBracket")
@@ -113,6 +99,7 @@ section.tournament-detail
                 v-model:rounds="bracketRounds"
                 @matchClick="onMatchClick"
                 @participantClick="onParticipantClick"
+                @resolveMatch="applyDotaResultToMatch"
             )
     
     .error-state(v-else)
@@ -131,6 +118,61 @@ section.tournament-detail
         @close="isTeamOpen = false"
         @success="refreshTeams"
     )
+
+    //- Dota Match Dialog
+    Dialog(
+        v-model:visible="isMatchModalOpen"
+        modal
+        class="dota-match-modal"
+        :style="{ width: '450px' }"
+        :pt="{ mask: { style: 'backdrop-filter: blur(8px); background: rgba(0,0,0,0.4)' } }"
+    )
+        .dota-modal-content
+            p.info Вкажіть ID матчу з OpenDota для автоматичного розрахунку результатів та просування по сітці.
+            
+            .field-group
+                label.field-label MATCH ID
+                InputText#dotaMatchId(
+                    v-model="matchIdInput"
+                    placeholder="Наприклад: 7678123456"
+                    class="dota-input"
+                    :disabled="isMatching"
+                    @keyup.enter="handleMatchConfirm"
+                )
+            
+            .preview-area
+                transition(name="fade" mode="out-in")
+                    .dota-loading(v-if="bracketStore.loading")
+                        i.pi.pi-spin.pi-spinner
+                        span ЗАВАНТАЖЕННЯ ДАНИХ...
+                    
+                    .dota-preview(v-else-if="bracketStore.matchData")
+                        .preview-score
+                            .score-item.radiant(:class="{ 'is-winner': bracketStore.matchData.radiant_win }")
+                                span.team-name RADIANT
+                                span.score-val {{ bracketStore.matchData.radiant_score }}
+                            
+                            .score-vs :
+                            
+                            .score-item.dire(:class="{ 'is-winner': !bracketStore.matchData.radiant_win }")
+                                span.score-val {{ bracketStore.matchData.dire_score }}
+                                span.team-name DIRE
+                        
+                        .preview-meta
+                            span.meta-item ТРИВАЛІСТЬ: {{ Math.floor(bracketStore.matchData.duration / 60) }}:{{ (bracketStore.matchData.duration % 60).toString().padStart(2, '0') }}
+                            span.meta-item.winner ПЕРЕМОЖЕЦЬ: {{ bracketStore.matchData.radiant_win ? 'RADIANT' : 'DIRE' }}
+                    
+                    .dota-empty(v-else)
+                        span ВВЕДІТЬ ID МАТЧУ ДЛЯ ПЕРЕВІРКИ
+            
+            .footer-actions
+                Button.cancel-btn(label="СКАСУВАТИ" @click="isMatchModalOpen = false" :disabled="isMatching")
+                Button.confirm-btn(
+                    label="ПІДТВЕРДИТИ РЕЗУЛЬТАТ" 
+                    @click="handleMatchConfirm" 
+                    :loading="isMatching"
+                    :disabled="!matchIdInput || !bracketStore.matchData"
+                )
 </template>
 
 <script lang="ts" setup>
@@ -143,11 +185,15 @@ import TournamentBracket from '../../components/tournaments/TournamentBracket.vu
 import TournamentTeamsTable from '../../components/tournaments/TournamentTeamsTable.vue'
 import TeamsCreateTeamModal from '../../components/Teams/CreateTeamModal.vue'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
+import { useTournamentBracket } from '../../stores/tournamentBrackets.store'
+
+import { calculateTournamentStatus } from '../../utils/tournament-status'
 
 const route = useRoute()
 const store = useTournamentsStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
+const bracketStore = useTournamentBracket()
 
 
 const tournament = ref<any>(null)
@@ -160,6 +206,28 @@ const isDeleteModalOpen = ref(false)
 const isOpenBracket = ref(false)
 
 const isTeamOpen = ref(false)
+
+const tournamentStatus = computed(() => {
+    if (!tournament.value) return null
+    return calculateTournamentStatus(tournament.value, bracketRounds.value)
+})
+
+const isRegistrationActive = computed(() => {
+    return tournamentStatus.value?.code === 'registration'
+})
+
+// State for Dota Match Modal
+const isMatchModalOpen = ref(false)
+const currentMatchId = ref<string | null>(null)
+const matchIdInput = ref('')
+const isMatching = ref(false)
+
+// Persistence
+watch(bracketRounds, (newVal) => {
+    if (newVal && newVal.length > 0) {
+        localStorage.setItem(`bracket_${route.params.id}`, JSON.stringify(newVal))
+    }
+}, { deep: true })
 
 function openTeamModal() {
     isTeamOpen.value = true
@@ -183,6 +251,19 @@ const roundsStatDisplay = computed(() => {
 
 function initRoundsFromTournament() {
     if (!tournament.value) return
+    
+    // Пріоритет - збережена в локалстореджі сітка для цього турніру
+    const saved = localStorage.getItem(`bracket_${route.params.id}`)
+    if (saved) {
+        try {
+            bracketRounds.value = JSON.parse(saved)
+            configuredRoundsCount.value = bracketRounds.value.length
+            return
+        } catch (e) {
+            console.error('Failed to parse saved bracket')
+        }
+    }
+
     const r = tournament.value.rounds
     if (typeof r === 'number') {
         configuredRoundsCount.value = r
@@ -202,7 +283,32 @@ const shouldHideTeams = computed(() => {
 
 
 const onMatchClick = (match: any) => {
-    console.log('Match clicked:', match)
+    if (!authStore.isAdmin) return
+    currentMatchId.value = String(match.id || match)
+    matchIdInput.value = ''
+    bracketStore.reset()
+    isMatchModalOpen.value = true
+}
+
+watch(matchIdInput, async (newId) => {
+    if (newId.length > 8) {
+        await bracketStore.fetchMatchData(newId)
+    } else {
+        bracketStore.reset()
+    }
+})
+
+async function handleMatchConfirm() {
+    if (!currentMatchId.value || !matchIdInput.value) return
+    isMatching.value = true
+    try {
+        await applyDotaResultToMatch(currentMatchId.value, matchIdInput.value)
+        isMatchModalOpen.value = false
+    } catch (e) {
+        // Error already handled in applyDotaResultToMatch
+    } finally {
+        isMatching.value = false
+    }
 }
 
 const onParticipantClick = (participant: any) => {
@@ -314,26 +420,88 @@ const generateBracket = () => {
     bracketRounds.value = generatedRounds
 }
 
-const dotaMatchId = ref('')
-const dotaMatchLoading = ref(false)
-const dotaMatchData = ref<any>(null)
-const dotaMatchError = ref('')
+function getMatchRef(matchId: string) {
+    for (let ri = 0; ri < bracketRounds.value.length; ri++) {
+        const round = bracketRounds.value[ri]
+        for (let mi = 0; mi < (round?.matchs?.length || 0); mi++) {
+            const match = round.matchs[mi]
+            if (String(match.id) === String(matchId)) {
+                return { match, roundIdx: ri, matchIdx: mi }
+            }
+        }
+    }
+    return null
+}
 
-const fetchDotaMatch = async () => {
-    if (!dotaMatchId.value) return
-    dotaMatchLoading.value = true
-    dotaMatchError.value = ''
-    dotaMatchData.value = null
+function propagateWinner(roundIdx: number, matchIdx: number, winnerTeam: any) {
+    const nextRound = bracketRounds.value[roundIdx + 1]
+    if (!nextRound?.matchs?.length || !winnerTeam) return
+
+    const nextMatchIdx = Math.floor(matchIdx / 2)
+    const slot = matchIdx % 2 === 0 ? 'team1' : 'team2'
+    const nextMatch = nextRound.matchs[nextMatchIdx]
+    if (!nextMatch) return
+
+    nextMatch[slot] = {
+        id: winnerTeam.id,
+        name: winnerTeam.name,
+        score: null,
+        side: null,
+    }
+}
+
+function resolveScoreBySide(team: any, fallback: number, radiantScore: number, direScore: number) {
+    if (team?.side === 'radiant') return radiantScore
+    if (team?.side === 'dire') return direScore
+    return fallback
+}
+
+async function applyDotaResultToMatch(matchId: string, dotaId: string) {
+    const found = getMatchRef(matchId)
+    if (!found) return
+
     try {
-        const response = await fetch(`https://api.opendota.com/api/matches/${dotaMatchId.value}`)
-        if (!response.ok) throw new Error('Матч не знайдено або помилка API')
-        const data = await response.json()
-        if (data.error) throw new Error(data.error)
-        dotaMatchData.value = data
+        const data = await bracketStore.fetchMatchData(dotaId)
+        if (!data) return
+
+        const { match, roundIdx, matchIdx } = found
+
+        const radiantScore = Number(data.radiant_score) || 0
+        const direScore = Number(data.dire_score) || 0
+
+        // Визначаємо рахунок для кожної команди на основі їх сторін (якщо задано)
+        // Якщо сторони не задані, t1 = radiant, t2 = dire за замовчуванням
+        const t1Score = resolveScoreBySide(match.team1, radiantScore, radiantScore, direScore)
+        const t2Score = resolveScoreBySide(match.team2, direScore, radiantScore, direScore)
+
+        match.team1 = { ...match.team1, score: t1Score }
+        match.team2 = { ...match.team2, score: t2Score }
+
+        // Переможець
+        let winnerTeam = null
+        if (t1Score > t2Score) {
+            winnerTeam = match.team1
+        } else if (t2Score > t1Score) {
+            winnerTeam = match.team2
+        } else {
+            // Якщо нічия в Dota (буває в теорії або помилка), дивимось radiant_win
+            if (match.team1?.side === 'radiant' && data.radiant_win) winnerTeam = match.team1
+            else if (match.team2?.side === 'radiant' && data.radiant_win) winnerTeam = match.team2
+            else if (match.team1?.side === 'dire' && !data.radiant_win) winnerTeam = match.team1
+            else if (match.team2?.side === 'dire' && !data.radiant_win) winnerTeam = match.team2
+            else winnerTeam = data.radiant_win ? match.team1 : match.team2 // Fallback
+        }
+
+        match.winner = winnerTeam?.id ?? null
+        match.dotaMatchId = dotaId
+
+        propagateWinner(roundIdx, matchIdx, winnerTeam)
+        
+        // Deep clone to trigger reactivity
+        bracketRounds.value = JSON.parse(JSON.stringify(bracketRounds.value))
     } catch (e: any) {
-        dotaMatchError.value = e.message || 'Помилка завантаження'
-    } finally {
-        dotaMatchLoading.value = false
+        // Error already toast-messaged in store
+        throw e
     }
 }
 </script>
@@ -637,45 +805,27 @@ const fetchDotaMatch = async () => {
 :deep(.create-btn) {
     margin-top: 16px;
     width: 100%;
-    background: linear-gradient(135deg, var(--color-primary), #ff4d4d);
-    border: none;
+    background: var(--color-primary);
+    border: 2px solid var(--color-primary);
     color: white;
     font-family: var(--font-display);
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
     padding: 18px;
     border-radius: 0;
     letter-spacing: 2px;
     text-transform: uppercase;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    box-shadow: 0 4px 15px rgba(228, 35, 19, 0.2);
+    transition: all 0.2s;
     cursor: pointer;
-    overflow: hidden;
-    position: relative;
 
-    &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        transition: 0.5s;
-    }
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 24px rgba(228, 35, 19, 0.3);
-        filter: brightness(1.1);
-
-        &::after {
-            left: 100%;
-        }
+    &:hover:not(:disabled) {
+        background: #000000;
+        border-color: #000000;
+        box-shadow: 0 8px 24px rgba(228, 35, 19, 0.2);
     }
 
     &:active {
-        transform: translateY(0);
+        background: #000000;
     }
 }
 
@@ -691,6 +841,219 @@ const fetchDotaMatch = async () => {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.dota-match-modal {
+    border-radius: 0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    border: none;
+    
+    :deep(.p-dialog-header) {
+        background: #ffffff !important;
+        border-bottom: 2px solid var(--color-text);
+        padding: 24px;
+        border-radius: 0;
+        
+        .p-dialog-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+    }
+
+    :deep(.p-dialog-content) {
+        background: #ffffff !important;
+        padding: 24px;
+        border-radius: 0;
+        overflow-y: visible;
+    }
+
+    :deep(.p-dialog-footer) {
+        display: none;
+    }
+}
+
+.dota-modal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 24px;
+    background: #ffffff;
+
+    .info {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--color-text-muted);
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+
+        .field-label {
+            font-family: var(--font-display);
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--color-text-muted);
+        }
+
+        .dota-input {
+            width: 100%;
+            border: 1px solid var(--color-border);
+            border-radius: 0;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: #f9fafb;
+            
+            &:focus {
+                border-color: var(--color-primary);
+                background: white;
+                outline: none;
+            }
+        }
+    }
+
+    .preview-area {
+        min-height: 140px;
+        background: #fdfdfd;
+        border: 1px solid var(--color-border);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .dota-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: var(--color-text-muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        
+        i { font-size: 20px; color: var(--color-primary); }
+    }
+
+    .dota-empty {
+        text-align: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--color-border);
+        letter-spacing: 1px;
+    }
+
+    .dota-preview {
+        .preview-score {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 20px;
+
+            .score-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+
+                .team-name {
+                    font-size: 10px;
+                    font-weight: 700;
+                    color: var(--color-text-muted);
+                    letter-spacing: 1px;
+                }
+                .score-val {
+                    font-family: var(--font-display);
+                    font-size: 32px;
+                    font-weight: 700;
+                }
+
+                &.radiant.is-winner .score-val { color: #22c55e; }
+                &.dire.is-winner .score-val { color: #ef4444; }
+                &.is-winner .team-name { color: var(--color-text); }
+            }
+
+            .score-vs {
+                font-family: var(--font-display);
+                font-size: 18px;
+                font-weight: 900;
+                opacity: 0.2;
+            }
+        }
+
+        .preview-meta {
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--color-border);
+            padding-top: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--color-text-muted);
+            letter-spacing: 1px;
+
+            .winner {
+                color: var(--color-primary);
+            }
+        }
+    }
+}
+
+.footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.cancel-btn {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 12px 24px;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #f3f4f6;
+        border-color: var(--color-text);
+    }
+}
+
+.confirm-btn {
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    color: white;
+    border-radius: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 12px 24px;
+    letter-spacing: 1px;
+    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(228, 35, 19, 0.2);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0);
+    }
+}
+
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
 }
 
 .loading-overlay {
@@ -713,90 +1076,6 @@ const fetchDotaMatch = async () => {
     stroke: var(--color-primary) !important;
 }
 
-.admin-dota-section {
-    background: var(--color-surface);
-    border: 1px dashed var(--color-primary);
-    padding: 24px;
-    margin-top: 32px;
-
-    .admin-dota-form {
-        display: flex;
-        gap: 16px;
-        margin-top: 16px;
-
-        .dota-input {
-            flex: 1;
-            padding: 12px 16px;
-            border: 1px solid var(--color-border);
-            font-family: var(--font-sans);
-            font-size: 14px;
-            background: var(--color-bg);
-            color: var(--color-text);
-
-            &:focus {
-                outline: none;
-                border-color: var(--color-primary);
-            }
-        }
-
-        .dota-btn {
-            padding: 0 24px;
-            background: var(--color-text);
-            color: var(--color-bg);
-            border: none;
-            font-family: var(--font-display);
-            font-weight: 600;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: opacity 0.2s;
-
-            &:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-        }
-    }
-
-    .dota-result {
-        margin-top: 24px;
-        padding-top: 24px;
-        border-top: 1px solid var(--color-border);
-
-        .dota-score {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            font-family: var(--font-display);
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 16px;
-
-            .team {
-                &.radiant { color: #10b981; } /* Emerald */
-                &.dire { color: #ef4444; }    /* Red */
-            }
-
-            .vs {
-                color: var(--color-text-muted);
-            }
-        }
-
-        .dota-info {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            font-size: 14px;
-            color: var(--color-text-muted);
-        }
-    }
-
-    .error-text {
-        color: var(--color-error, #ef4444);
-        margin-top: 16px;
-        font-size: 14px;
-    }
-}
 
 
 </style>

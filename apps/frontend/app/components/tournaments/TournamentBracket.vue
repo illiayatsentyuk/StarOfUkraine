@@ -14,6 +14,45 @@
                 @onMatchClick="$emit('matchClick', $event)"
                 @onParticipantClick="$emit('participantClick', $event)"
             )
+
+    .side-config(v-if="isAdmin")
+        h4.side-config__title СТОРОНИ КОМАНД У МАТЧАХ
+        .side-config__round(v-for="(round, ri) in localRounds" :key="`round-${ri}`")
+            .side-config__round-title Раунд {{ ri + 1 }}
+            .side-config__match(v-for="(match, mi) in round.matchs" :key="match.id || `match-${ri}-${mi}`")
+                .side-config__match-title Матч {{ match.title || `${ri + 1}-${mi + 1}` }}
+                .side-config__row(v-if="match.team1?.name")
+                    span.side-config__team {{ match.team1.name }}
+                    select.side-config__select(
+                        :value="match.team1?.side || ''"
+                        @change="onSideChange(match.id, 'team1', $event)"
+                    )
+                        option(value="") Авто
+                        option(value="radiant") Radiant
+                        option(value="dire") Dire
+                .side-config__row(v-if="match.team2?.name")
+                    span.side-config__team {{ match.team2.name }}
+                    select.side-config__select(
+                        :value="match.team2?.side || ''"
+                        @change="onSideChange(match.id, 'team2', $event)"
+                    )
+                        option(value="") Авто
+                        option(value="radiant") Radiant
+                        option(value="dire") Dire
+                .side-config__row.side-config__row--id
+                    label.side-config__label Match ID
+                    .side-config__id-group
+                        input.side-config__input(
+                            :value="match.dotaMatchId || ''"
+                            placeholder="ID матчу"
+                            @change="onMatchIdChange(match.id, $event)"
+                        )
+                        button.side-config__resolve-btn(
+                            v-if="match.dotaMatchId"
+                            @click="$emit('resolveMatch', match.id, match.dotaMatchId)"
+                            title="Розрахувати результат"
+                        )
+                            i.pi.pi-check-circle
 </template>
 
 <script lang="ts" setup>
@@ -150,6 +189,35 @@ function swapTeams(loc1: TeamLocation, loc2: TeamLocation) {
         nextTick(() => setTimeout(initDnD, 200))
     }
 }
+
+function setTeamSide(matchId: string, slot: 'team1' | 'team2', side: string) {
+    for (const round of localRounds.value) {
+        const match = round?.matchs?.find((m: any) => String(m.id) === String(matchId))
+        if (!match || !match[slot]) continue
+        match[slot].side = side || null
+        emit('update:rounds', JSON.parse(JSON.stringify(localRounds.value)))
+        return
+    }
+}
+
+function onSideChange(matchId: string, slot: 'team1' | 'team2', event: Event) {
+    const target = event.target as HTMLSelectElement | null
+    setTeamSide(matchId, slot, target?.value || '')
+}
+
+function onMatchIdChange(matchId: string, event: Event) {
+    const target = event.target as HTMLInputElement | null
+    const val = target?.value || ''
+    
+    for (const round of localRounds.value) {
+        const match = round?.matchs?.find((m: any) => String(m.id) === String(matchId))
+        if (!match) continue
+        match.dotaMatchId = val
+        emit('update:rounds', JSON.parse(JSON.stringify(localRounds.value)))
+        return
+    }
+}
+
 </script>
 
 <style lang="scss" scoped>
@@ -221,6 +289,111 @@ function swapTeams(loc1: TeamLocation, loc2: TeamLocation) {
                     background-color: var(--color-bg) !important;
                 }
             }
+        }
+    }
+
+    .side-config {
+        margin-top: 20px;
+        padding: 16px;
+        border: 1px solid var(--color-border);
+        background: var(--color-bg);
+
+        &__title {
+            margin: 0 0 12px 0;
+            font-family: var(--font-display);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        &__round {
+            margin-bottom: 14px;
+        }
+
+        &__round-title {
+            font-size: 12px;
+            color: var(--color-text-muted);
+            margin-bottom: 8px;
+        }
+
+        &__match {
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+
+        &__match-title {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-bottom: 8px;
+        }
+
+        &__row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        &__team {
+            font-size: 13px;
+        }
+
+        &__select {
+            min-width: 110px;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg);
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        &__label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-text-muted);
+            margin-bottom: 4px;
+        }
+
+        &__input {
+            width: 100%;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg);
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: var(--font-sans);
+
+            &:focus {
+                border-color: var(--color-primary);
+                outline: none;
+            }
+        }
+
+        &__id-group {
+            display: flex;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        &__resolve-btn {
+            background: var(--color-primary);
+            color: white;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: var(--color-text);
+                transform: scale(1.05);
+            }
+
+            i { font-size: 14px; }
         }
     }
 }

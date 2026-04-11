@@ -1,6 +1,9 @@
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
 import type { Team } from '~/types/teams.interface'
 import { useToast } from "vue-toastification";
 import { useApi } from '~/composables/useApi';
+
 
 const LIMIT = 16
 type CreateTeamPayload = {
@@ -117,7 +120,7 @@ export const useTeamsStore = defineStore('teams', () => {
         }
     }
 
-    const fetchTeamById = async (teamId: string) => { // ⚠️ перейменовано параметр з `id` на `teamId`
+    const fetchTeamById = async (teamId: string) => { 
         if (loading.value) return
         loading.value = true
         error.value = null
@@ -128,7 +131,7 @@ export const useTeamsStore = defineStore('teams', () => {
 
             if (!response.data) throw new Error('Не вдалося завантажити команду')
 
-            currentTeam.value = response.data as Team // ⚠️ зберігаємо весь об'єкт, не тільки id
+            currentTeam.value = response.data as Team 
 
             return currentTeam.value
         } catch (err: any) {

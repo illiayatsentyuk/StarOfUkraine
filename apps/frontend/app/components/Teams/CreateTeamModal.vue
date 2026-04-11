@@ -11,7 +11,7 @@ const emit = defineEmits<{
 
 const store = useTeamsStore()
 
-const initialState = {
+const initialValues = {
     name: '',
     captainName: '',
     city: '',
@@ -19,8 +19,6 @@ const initialState = {
     telegram: '',
     discord: '',
 }
-
-const form = reactive({ ...initialState })
 
 const isLoading = ref(false)
 const memberQuery = ref('')
@@ -78,17 +76,14 @@ watch(() => props.isTeamOpen, (opened) => {
 })
 
 
-async function submitForm() {
+async function onSubmit(values: any) {
     try {
         isLoading.value = true
         const payload = {
-            ...form,
+            ...values,
             members: selectedMembers.value,
         }
-        // Бекенд create-team поки не приймає memberEmails/members.
-        // Вибрані користувачі лишаються в UI для майбутнього кроку.
         await store.createTeam(payload)
-        Object.assign(form, initialState)
         emit('success')
         emit('close')
     } catch (e) {
@@ -102,274 +97,254 @@ function closeModal() { emit('close') }
 </script>
 
 <template lang="pug">
-Dialog(
-    :visible="isTeamOpen"
-    @update:visible="closeModal"
-    modal
-    :closable="true"
-    :draggable="false"
-    header="Створити команду"
-    class="create-team-modal"
-    :style="{ width: '600px' }"
-    :pt="{ mask: { style: 'backdrop-filter: blur(8px); background: rgba(0,0,0,0.6)' } }"
-)
-    form.modal-form(@submit.prevent="submitForm")
+.modal-wrapper(v-if="isTeamOpen")
+    .modal-overlay(@click="closeModal")
+    .modal-content
+        .modal-header
+            h2.modal-title СТВОРИТИ КОМАНДУ
+            button.icon-btn(@click="closeModal" type="button")
+                i.pi.pi-times
+        
+        VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
+            .form-group
+                label.form-label НАЗВА КОМАНДИ *
+                VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
+                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву команди" :class="{ 'is-invalid': errorMessage }")
+                    span.error-text(v-if="errorMessage") {{ errorMessage }}
 
-        .form-group
-            label.form-label Назва команди
-            InputText.form-input(
-                v-model="form.name"
-                placeholder="Введіть назву команди"
-                required
-            )
+            .form-group
+                label.form-label ІМ'Я КАПІТАНА
+                VeeField(name="captainName" v-slot="{ field }")
+                    input.form-input(type="text" v-bind="field" placeholder="Введіть ім'я капітана")
 
-        .form-group
-            label.form-label Ім'я капітана
-            InputText.form-input(
-                v-model="form.captainName"
-                placeholder="Введіть ім'я капітана"
-            )
+            .form-group
+                label.form-label МІСТО
+                VeeField(name="city" v-slot="{ field }")
+                    input.form-input(type="text" v-bind="field" placeholder="Місто")
 
-        .form-group
-            label.form-label Місто
-            InputText.form-input(
-                v-model="form.city"
-                placeholder="Місто"
-            )
+            .form-group
+                label.form-label ПОШУК ГРАВЦІВ
+                .members-tags(v-if="selectedMembers.length")
+                    span.member-tag(v-for="email in selectedMembers" :key="email")
+                        | {{ email }}
+                        button.tag-remove(type="button" @click="removeMember(email)") ×
 
-        .form-group
-            label.form-label Пошук гравців
-
-            .members-tags(v-if="selectedMembers.length")
-                span.member-tag(
-                    v-for="email in selectedMembers"
-                    :key="email"
-                )
-                    | {{ email }}
-                    button.tag-remove(
-                        type="button"
-                        @click="removeMember(email)"
-                        aria-label="Видалити гравця"
-                    ) ×
-
-            .members-input-wrapper
-                InputText.form-input(
-                    :value="memberQuery"
-                    @input="onMemberInput($event.target.value)"
-                    @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
-                    @blur="onBlur"
-                    placeholder="Пошук за email або nameId..."
-                    autocomplete="off"
-                )
-
-                .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
-                    span Шукаємо...
-
-                .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
-                    .dropdown-item(
-                        v-for="user in filteredSearchResults"
-                        :key="user.id || user.email"
-                        @mousedown.prevent="selectMember(user.email)"
+                .members-input-wrapper
+                    input.form-input(
+                        :value="memberQuery"
+                        @input="onMemberInput($event.target.value)"
+                        @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
+                        @blur="onBlur"
+                        placeholder="Пошук за email або nameId..."
+                        autocomplete="off"
                     )
-                        span.user-email {{ user.email }}
-                        span.user-name(v-if="user.name || user.nameId")
-                            | — {{ user.name || user.nameId }}
 
-                .members-dropdown.dropdown--empty(
-                    v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2"
-                )
-                    .dropdown-empty Нікого не знайдено
+                    .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
+                        span Шукаємо...
 
-        //- ────────────────────────────────────────────────────────────────
+                    .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
+                        .dropdown-item(
+                            v-for="user in filteredSearchResults"
+                            :key="user.id || user.email"
+                            @mousedown.prevent="selectMember(user.email)"
+                        )
+                            span.user-email {{ user.email }}
+                            span.user-name(v-if="user.name || user.nameId") — {{ user.name || user.nameId }}
 
-        .form-row
+                    .members-dropdown.dropdown--empty(v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2")
+                        .dropdown-empty Нікого не знайдено
+
+            .form-row
+                .form-group
+                    label.form-label ОРГАНІЗАЦІЯ
+                    VeeField(name="organization" v-slot="{ field }")
+                        input.form-input(v-bind="field" placeholder="Організація")
+                .form-group
+                    label.form-label TELEGRAM
+                    VeeField(name="telegram" v-slot="{ field }")
+                        input.form-input(v-bind="field" placeholder="@telegram")
+
             .form-group
-                label.form-label Організація
-                InputText.form-input(
-                    v-model="form.organization"
-                    placeholder="Організація"
-                )
-            .form-group
-                label.form-label Telegram
-                InputText.form-input(
-                    v-model="form.telegram"
-                    placeholder="@telegram"
-                )
+                label.form-label DISCORD
+                VeeField(name="discord" v-slot="{ field }")
+                    input.form-input(v-bind="field" placeholder="@discord")
 
-        .form-group
-            label.form-label Discord
-            InputText.form-input(
-                v-model="form.discord"
-                placeholder="@discord"
-            )
-
-        .modal-footer
-            Button.cancel-btn(
-                type="button"
-                label="Скасувати"
-                @click="closeModal"
-            )
-            Button.submit-btn(
-                type="submit"
-                :label="isLoading ? 'Створення...' : 'Створити команду'"
-                :loading="isLoading"
-                :disabled="isLoading"
-            )
+            .modal-footer
+                button.cancel-btn(type="button" @click="closeModal") СКАСУВАТИ
+                button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ КОМАНДУ' }}
 </template>
 
-<style lang="scss">
-// ─── Modal shell ───────────────────────────────────────────────────────────────
-
-.create-team-modal {
-    background: #ffffff !important;
-    border: 2px solid var(--color-text);
-    border-radius: 0;
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
-
-    .p-dialog-header {
-        background: #ffffff !important;
-        border-bottom: 2px solid var(--color-text);
-        padding: 24px 40px;
-        border-radius: 0;
-        color: var(--color-text);
-
-        .p-dialog-title {
-            font-family: var(--font-display);
-            font-size: 24px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: -0.5px;
-            color: var(--color-text);
-        }
-
-        .p-dialog-header-icon {
-            color: var(--color-text);
-            width: 32px;
-            height: 32px;
-            transition: all 0.3s ease;
-
-            &:hover {
-                background: var(--color-surface);
-                transform: rotate(90deg);
-                color: var(--color-primary);
-            }
-
-            .p-icon {
-                width: 14px;
-                height: 14px;
-            }
-        }
-    }
-
-    .p-dialog-content {
-        background: var(--color-bg);
-        padding: 32px 40px;
-        border-radius: 0;
-    }
+<style lang="scss" scoped>
+.modal-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-// ─── Form layout ───────────────────────────────────────────────────────────────
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: grayscale(1);
+}
+
+.modal-content {
+    position: relative;
+    width: 600px;
+    max-width: 95vw;
+    background: #ffffff;
+    border: 1px solid #000000;
+    padding: 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    max-height: 95vh;
+    overflow-y: auto;
+    border-radius: 0;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid var(--color-primary);
+    padding-bottom: 16px;
+}
+
+.modal-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: #000000;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.icon-btn {
+    background: transparent;
+    border: none;
+    color: #000000;
+    font-size: 20px;
+    padding: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: rotate(90deg);
+    }
+}
 
 .modal-form {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 24px;
 }
 
 .form-row {
     display: flex;
     gap: 24px;
+    
+    .form-group {
+        flex: 1;
+    }
 
     @media (max-width: 640px) {
         flex-direction: column;
         gap: 24px;
-    }
-
-    .form-group {
-        flex: 1;
     }
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .form-label {
     font-family: var(--font-display);
     font-size: 11px;
-    font-weight: 800;
-    color: var(--color-text);
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 1px;
     text-transform: uppercase;
-    letter-spacing: 1.2px;
-    opacity: 0.8;
 }
 
-// ─── Inputs ────────────────────────────────────────────────────────────────────
-
 .form-input {
-    &.p-inputtext,
-    .p-inputtext {
-        width: 100%;
-        padding: 16px;
-        border: 1px solid var(--color-border);
-        background: var(--color-surface);
-        border-radius: 0;
-        font-family: var(--font-sans);
-        font-size: 15px;
-        color: var(--color-text);
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 100%;
+    padding: 14px;
+    border: 1px solid #e0e0e0;
+    background: #ffffff;
+    border-radius: 0;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: #000000;
+    outline: none;
+    transition: all 0.2s;
 
-        &::placeholder {
-            color: var(--color-text-muted);
-            opacity: 0.5;
-        }
+    &::placeholder {
+        color: #aaaaaa;
+    }
 
-        &:focus {
-            border-color: var(--color-text);
-            background: white;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-            transform: translateY(-1px);
-        }
+    &:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 2px rgba(228, 35, 19, 0.1);
+        transform: translateY(-1px);
+    }
+
+    &.is-invalid {
+        border-color: var(--color-primary);
+        background: rgba(228, 35, 19, 0.05);
     }
 }
 
-// ─── Members — теги ────────────────────────────────────────────────────────────
+.error-text {
+    font-size: 11px;
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-top: 4px;
+}
 
 .members-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    padding: 4px 0;
+    padding-bottom: 8px;
 }
 
 .member-tag {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    padding: 5px 10px 5px 12px;
+    gap: 8px;
+    background: #f0f0f0;
+    border: 1px solid #000000;
+    padding: 6px 12px;
     font-size: 13px;
-    font-family: var(--font-sans);
-    color: var(--color-text);
-    line-height: 1.4;
+    font-weight: 600;
+    color: #000000;
 
     .tag-remove {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
         background: none;
         border: none;
         cursor: pointer;
-        font-size: 16px;
-        line-height: 1;
-        color: var(--color-text-muted);
+        font-size: 18px;
+        color: #666;
         padding: 0;
-        transition: color 0.15s;
+        display: flex;
+        align-items: center;
 
         &:hover {
             color: var(--color-primary);
@@ -377,139 +352,97 @@ Dialog(
     }
 }
 
-// ─── Members — dropdown ────────────────────────────────────────────────────────
-
 .members-input-wrapper {
     position: relative;
 }
 
 .members-dropdown {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     right: 0;
     background: #ffffff;
-    border: 1px solid var(--color-border);
+    border: 2px solid #000000;
     border-top: none;
-    z-index: 200;
-    max-height: 220px;
+    z-index: 100;
+    max-height: 200px;
     overflow-y: auto;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-
-    // Тонкий скролбар
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-border) transparent;
-
-    &--empty {
-        border-top: 1px solid var(--color-border);
-    }
 }
 
 .dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
     padding: 12px 16px;
     cursor: pointer;
-    transition: background 0.15s;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 
     &:last-child {
         border-bottom: none;
     }
 
     &:hover {
-        background: var(--color-surface);
+        background: #f8f8f8;
     }
 
     .user-email {
+        font-weight: 600;
         font-size: 14px;
-        color: var(--color-text);
-        font-family: var(--font-sans);
     }
-
     .user-name {
+        color: #666;
         font-size: 12px;
-        color: var(--color-text-muted);
-        font-family: var(--font-sans);
     }
 }
 
-.dropdown-empty {
-    padding: 14px 16px;
-    font-size: 13px;
-    color: var(--color-text-muted);
-    text-align: center;
-    font-family: var(--font-sans);
-}
-
-.members-searching {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
+.dropdown-empty, .members-searching {
     padding: 12px 16px;
-    background: #ffffff;
-    border: 1px solid var(--color-border);
+    color: #666;
     font-size: 13px;
-    color: var(--color-text-muted);
-    font-family: var(--font-sans);
-    z-index: 200;
+    text-align: center;
 }
-
-// ─── Footer ────────────────────────────────────────────────────────────────────
 
 .modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 16px;
-    margin-top: 12px;
+    margin-top: 16px;
     padding-top: 32px;
-    border-top: 1px solid var(--color-border);
+    border-top: 2px solid #000000;
 }
 
 .cancel-btn {
     background: transparent;
-    border: 1px solid var(--color-border);
-    color: var(--color-text-muted);
+    border: 2px solid #000000;
+    color: #000000;
     padding: 14px 28px;
     font-family: var(--font-display);
     font-weight: 700;
+    cursor: pointer;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    border-radius: 0;
+    letter-spacing: 1px;
     transition: all 0.2s;
-    font-size: 13px;
 
     &:hover {
-        border-color: var(--color-text);
-        color: var(--color-text);
-        background: var(--color-surface);
+        background: #f0f0f0;
     }
 }
 
 .submit-btn {
-    background: var(--color-primary, #e42313);
-    border: 1px solid var(--color-primary, #e42313);
-    color: white;
+    background-color: var(--color-primary);
+    color: #ffffff;
+    border: 2px solid var(--color-primary);
     padding: 14px 36px;
     font-family: var(--font-display);
     font-weight: 800;
+    cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 2px;
-    border-radius: 0;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    font-size: 13px;
+    transition: all 0.2s;
 
     &:hover:not(:disabled) {
-        background: var(--color-text);
-        border-color: var(--color-text);
-        transform: translateY(-3px);
-        box-shadow: 0 12px 24px rgba(228, 35, 19, 0.3);
-    }
-
-    &:active {
-        transform: translateY(0);
+        background-color: #000000;
+        border-color: #000000;
     }
 
     &:disabled {
