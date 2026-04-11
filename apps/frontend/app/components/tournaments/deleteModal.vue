@@ -41,7 +41,7 @@ Dialog(
 
 <script lang="ts" setup>
 import { ref, computed, watch } from 'vue'
-import { useTournamentsStore } from '../stores/tournaments.store'
+import { useTournamentsStore } from '../../stores/tournaments.store'
 
 const store = useTournamentsStore()
 const props = defineProps({

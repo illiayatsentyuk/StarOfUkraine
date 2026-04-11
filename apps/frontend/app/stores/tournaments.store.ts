@@ -1,20 +1,22 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import { useToast } from "vue-toastification";
-import { useApi } from '~/composables/useApi';
-import type { Tournament } from '~/types';
+import { useToast } from 'vue-toastification'
+import { useApi } from '~/composables/useApi'
+import type { Tournament } from '~/types'
 
 const LIMIT = 5
 
 export const useTournamentsStore = defineStore('tournaments', () => {
-    const toast = useToast();
+    const toast = useToast()
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
     const loading = ref(false)
     const error = ref<string | null>(null)
     const search = ref('')
+    const sortBy = ref('createdAt')
+    const sortOrder = ref('DESC')
 
     const hasMore = computed(() => page.value <= totalPages.value)
 
@@ -27,7 +29,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     const loadFromDatabase = async (resetData = false) => {
         if (loading.value) return
-        
+
         loading.value = true
         error.value = null
 
@@ -37,14 +39,13 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         try {
             const api = useApi()
-            const response = await api.post(
-                `/tournaments/list`,
-                { 
-                    page: page.value, 
-                    limit: LIMIT,
-                    name: search.value.trim() || undefined
-                },
-            )
+            const response = await api.post(`/tournaments/list`, {
+                page: page.value,
+                limit: LIMIT,
+                name: search.value.trim() || undefined,
+                sortBy: sortBy.value,
+                sortOrder: sortOrder.value,
+            })
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')
 
@@ -61,10 +62,12 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             }
 
             return data
-        } catch (error: any) {
-            console.error('Помилка API при завантаженні турнірів:', error)
-            error.value = error.message || 'Помилка завантаження'
-            throw error
+        } catch (err: unknown) {
+            console.error('Помилка API при завантаженні турнірів:', err)
+            const message =
+                err instanceof Error ? err.message : 'Помилка завантаження'
+            error.value = message
+            throw err
         } finally {
             loading.value = false
         }
@@ -78,12 +81,12 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             if (!response.data) throw new Error('Не вдалося створити турнір')
 
             const createdTournament = response.data
-            tournaments.value.unshift(createdTournament) 
-            toast.success("Турнір успішно створено");
+            tournaments.value.unshift(createdTournament)
+            toast.success('Турнір успішно створено')
             return createdTournament
-        } catch (error) {
+        } catch (error: unknown) {
             console.error('Помилка API при додаванні турніру:', error)
-            toast.error("Помилка API при додаванні турніру");
+            toast.error('Помилка API при додаванні турніру')
             throw error
         }
     }
@@ -107,11 +110,11 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const api = useApi()
             await api.delete(`/tournaments/${id}`)
-            tournaments.value = tournaments.value.filter(t => t.id !== id)
-            toast.success("Турнір успішно видалено");
+            tournaments.value = tournaments.value.filter((t) => t.id !== id)
+            toast.success('Турнір успішно видалено')
         } catch (error) {
             console.error('Помилка API при видаленні турніру:', error)
-            toast.error("Помилка API при видаленні турніру");
+            toast.error('Помилка API при видаленні турніру')
             throw error
         }
     }
@@ -127,11 +130,13 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         loading,
         error,
         hasMore,
-        search,      
+        search,
+        sortBy,
+        sortOrder,
         reset,
         loadFromDatabase,
         fetchTournamentById,
         addTournament,
-        deleteTournament
+        deleteTournament,
     }
 })

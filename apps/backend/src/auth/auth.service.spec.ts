@@ -136,6 +136,7 @@ describe('AuthService', () => {
           email: 'user@example.com',
           hash: 'hashed-password',
           name: 'Ivan Petrenko',
+          nameId: expect.stringMatching(/^ivan-petrenko-\d{1,4}$/),
         },
       });
 
@@ -372,6 +373,7 @@ describe('AuthService', () => {
         data: {
           email: 'oauth@example.com',
           name: 'OAuth User',
+          nameId: expect.stringMatching(/^oauth-user-\d{1,4}$/),
         },
       });
       expect(mockPrisma.account.create).toHaveBeenCalledWith({

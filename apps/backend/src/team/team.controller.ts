@@ -20,10 +20,10 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
-import { Public } from '../common/decorators';
-import { FindQueryDto } from '../common/dto/find-query.dto';
+import { GetCurrentUser, Public } from '../common/decorators';
 import { authExamples, teamExamples } from '../examples';
 import { CreateTeamDto } from './dto/create-team.dto';
+import { FindTeamQueryDto } from './dto/find-team-query.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { TeamService } from './team.service';
 
@@ -33,7 +33,7 @@ export class TeamController {
   constructor(private readonly teamService: TeamService) {}
 
   @Post()
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiOperation({ summary: 'Create a new team' })
@@ -55,22 +55,47 @@ export class TeamController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
-  create(@Body() data: CreateTeamDto) {
-    return this.teamService.create(data);
+  create(@Body() data: CreateTeamDto, @GetCurrentUser('email') email: string) {
+    return this.teamService.create(data, email);
+  }
+
+  @Post(':id/join')
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Team ID' })
+  @ApiOperation({ summary: 'Join a team (current user)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Joined team',
+    schema: { example: teamExamples.response },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 400, description: 'User is already a team member' })
+  @ApiResponse({ status: 404, description: 'Team or user not found' })
+  join(
+    @Param('id') id: string,
+    @GetCurrentUser('email') email: string,
+  ) {
+    return this.teamService.join(id, email);
   }
 
   @Public()
   @Post('list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all teams' })
-  @ApiBody({ type: FindQueryDto })
+  @ApiBody({ type: FindTeamQueryDto })
   @ApiResponse({
     status: 200,
     description: 'List of teams returned',
     schema: { example: teamExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
-  findAll(@Body() body: FindQueryDto) {
+  findAll(@Body() body: FindTeamQueryDto) {
     return this.teamService.findAll(body);
   }
 
@@ -89,7 +114,7 @@ export class TeamController {
   }
 
   @Patch(':id')
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })
@@ -121,7 +146,7 @@ export class TeamController {
   }
 
   @Delete(':id')
-  @Roles(Role.USER)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
   @ApiParam({ name: 'id', description: 'Team ID' })

@@ -8,6 +8,7 @@ export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
     const toast = useToast()
     const user = ref<any>(null)
+    const authenticated = ref(false)
     const isAdmin = ref(false)
     const loading = ref(false)
 
@@ -30,6 +31,7 @@ export const useLoginStore = defineStore('login', () => {
         } finally {
             loading.value = false
             navigateTo('/')
+            authenticated.value = true
             window.location.reload()
         }
     }
@@ -49,6 +51,7 @@ export const useLoginStore = defineStore('login', () => {
         } finally {
             loading.value = false
             navigateTo('/')
+            authenticated.value = true
             window.location.reload()
         }
     }
@@ -83,6 +86,7 @@ export const useLoginStore = defineStore('login', () => {
         } finally {
             user.value = null
             isAdmin.value = false
+            authenticated.value = false
             window.location.reload()
         }
     }

@@ -1,26 +1,33 @@
 <script lang="ts" setup>
 const { t, locale } = useI18n()
+import { calculateTournamentStatus } from '~/utils/tournament-status'
+
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
 const filters = [
-    { key: 'all',               label: 'tournaments.filters.all' },
-    { key: 'byDate',            label: 'tournaments.filters.byDate' },
-    { key: 'byName',            label: 'tournaments.filters.byName' },
-    { key: 'byMaxTeams',        label: 'tournaments.filters.byMaxTeams' },
-    { key: 'byTeamSizeMin',     label: 'tournaments.filters.byTeamSizeMin' },
-    { key: 'byTeamSizeMax',     label: 'tournaments.filters.byTeamSizeMax' },
-    { key: 'byRounds',          label: 'tournaments.filters.byRounds' },
-    { key: 'byRegistrationStart', label: 'tournaments.filters.byRegistrationStart' },
-    { key: 'byRegistrationEnd', label: 'tournaments.filters.byRegistrationEnd' },
+    { key: 'all', label: 'Всі' },
+    { key: 'byDate', label: 'За датою' },
+    { key: 'byName', label: 'За назвою' },
+    { key: 'byMaxTeams', label: 'К-ть команд' },
+    { key: 'byTeamSizeMin', label: 'Мін. склад' },
+    { key: 'byTeamSizeMax', label: 'Макс. склад' },
+    { key: 'byRounds', label: 'Раунди' },
+    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
+    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
 ]
 
 const formatDate = (dateString: string) => {
-    if (!dateString) return ""
-    return new Date(dateString).toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US')
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('uk-UA')
 }
+
+const getTournamentStatus = (tournament: any) => {
+    return calculateTournamentStatus(tournament)
+}
+
 onMounted(() => {
-    store.loadFromDatabase()
+    store.loadFromDatabase(true)
 })
 </script>
 
@@ -39,40 +46,70 @@ section.tournaments-list
         ) 
             span {{ $t(f.label) }}
             .filter-icon(v-if="filtersStore.activeFilter === f.key && f.key !== 'all'")
-                svg(v-if="!filtersStore.isMinimum" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round")
+                svg(
+                    v-if="!filtersStore.isMinimum"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                )
                     polyline(points="6 9 12 15 18 9")
-                svg(v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round")
+                svg(
+                    v-else
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                )
                     polyline(points="18 15 12 9 6 15")
-    
+
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
         Loader
 
     .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
-        NuxtLink.tournament-card(v-for="tournament in filtersStore.filteredTournaments" :key="tournament.id || tournament.name" :to="`/tournaments/${tournament.id}`")
-            .tournament-card__status(v-if="tournament.status")
-                span {{ tournament.status }}
-            
+        NuxtLink.tournament-card(
+            v-for="tournament in store.tournaments"
+            :key="tournament.id || tournament.name"
+            :to="`/tournaments/${tournament.id}`"
+        )
+            .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
+                span {{ getTournamentStatus(tournament).label }}
+
             h3.tournament-card__title {{ tournament.name }}
-            
+
             .tournament-card__details
                 .detail-group
-                    span.detail-label 
+                    span.detail-label
                         i.pi.pi-calendar.mr-2
                         | {{ $t('tournaments.details.dates.start_date') }}
                     span.detail-value {{ formatDate(tournament.startDate) }}
                 .detail-group
-                    span.detail-label 
+                    span.detail-label
                         i.pi.pi-users.mr-2
                         | {{ $t('tournaments.details.stats.max_teams') }}
                     span.detail-value {{ tournament.maxTeams }}
-            
+
             p.tournament-card__description {{ tournament.description }}
 
     .no-data(v-else-if="!store.loading")
         p {{ $t('tournaments.no_tournaments') }}
 
     .tournaments-list__footer(v-if="store.tournaments.length > 0")
-        button.load-more(@click="store.loadFromDatabase()" :disabled="!store.hasMore || store.loading" type="button")
+        button.load-more(
+            @click="store.loadFromDatabase()"
+            :disabled="!store.hasMore || store.loading"
+            type="button"
+        )
             .btn-content
                 span {{ store.loading ? $t('tournaments.loading') : $t('tournaments.load_more') }}
 </template>

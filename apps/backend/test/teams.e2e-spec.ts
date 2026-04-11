@@ -9,16 +9,43 @@ import { signE2eAccessToken } from './helpers/sign-e2e-access-token';
 describe('Teams (e2e)', () => {
   let app: INestApplication;
 
+  const dateStr = '2025-01-01T00:00:00.000Z';
+
+  const memberOlena = {
+    id: 'user-olena',
+    email: 'olena@example.com',
+    name: 'Olena Kovalenko',
+    nameId: 'olena-1',
+    image: null,
+    role: Role.USER,
+    createdAt: dateStr,
+    updatedAt: dateStr,
+  };
+
+  const memberTaras = {
+    id: 'user-taras',
+    email: 'taras@example.com',
+    name: 'Taras Shevchenko',
+    nameId: 'taras-1',
+    image: null,
+    role: Role.USER,
+    createdAt: dateStr,
+    updatedAt: dateStr,
+  };
+
   const teamMock = {
     id: 'team-1',
     name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',
     captainEmail: 'olena@example.com',
-    members: ['Olena Kovalenko', 'Taras Shevchenko'],
+    members: [memberOlena, memberTaras],
+    captain: memberOlena,
     city: 'Kyiv',
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
+    createdAt: dateStr,
+    updatedAt: dateStr,
   };
 
   const mockPrisma = {
@@ -43,6 +70,7 @@ describe('Teams (e2e)', () => {
     user: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn(),
     },
   };
 
@@ -97,6 +125,7 @@ describe('Teams (e2e)', () => {
 
   it('POST /teams creates team', async () => {
     mockPrisma.team.findFirst.mockResolvedValue(null);
+    mockPrisma.user.findUnique.mockResolvedValue({ id: 'u1' });
     mockPrisma.team.create.mockResolvedValue(teamMock);
 
     const response = await request(app.getHttpServer())
@@ -105,11 +134,39 @@ describe('Teams (e2e)', () => {
       .send({
         name: teamMock.name,
         captainName: teamMock.captainName,
-        captainEmail: teamMock.captainEmail,
-        members: teamMock.members,
       })
       .expect(201);
 
     expect(response.body).toEqual(teamMock);
+  });
+
+  it('POST /teams/:id/join joins current user to team', async () => {
+    const joiner = {
+      id: 'user-joiner',
+      email: 'e2e@example.com',
+      name: 'Joiner',
+      nameId: 'joiner-1',
+      image: null,
+      role: Role.USER,
+      createdAt: dateStr,
+      updatedAt: dateStr,
+    };
+
+    mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+    mockPrisma.user.findUnique.mockResolvedValue({ id: joiner.id });
+    mockPrisma.team.update.mockResolvedValue({
+      ...teamMock,
+      members: [...teamMock.members, joiner],
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/teams/team-1/join')
+      .set('Authorization', `Bearer ${signE2eAccessToken(Role.USER)}`)
+      .expect(201);
+
+    expect(response.body).toMatchObject({
+      id: 'team-1',
+    });
+    expect(response.body.members).toHaveLength(3);
   });
 });
