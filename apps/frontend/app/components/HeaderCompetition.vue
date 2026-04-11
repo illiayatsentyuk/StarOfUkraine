@@ -12,6 +12,7 @@ function openModal(){
 function closeModal(){
     isOpen.value=false
 }
+
 </script>
 
 <template lang="pug">
