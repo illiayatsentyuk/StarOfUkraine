@@ -1,35 +1,32 @@
 <template lang="pug">
 .welcome-page
   .welcome-page__hero
-    h1.welcome-page__title Star Of Ukraine
-    p.welcome-page__subtitle The ultimate platform for organizing, managing, and hosting competitive tournaments with ease.
+    h1.welcome-page__title {{ $t('welcome.title') }}
+    p.welcome-page__subtitle {{ $t('welcome.subtitle') }}
     .welcome-page__actions
-      Button(label="View Tournaments" severity="danger" size="large" @click="goToHome")
+      Button(:label="$t('welcome.actions.view_tournaments')" severity="danger" size="large" @click="goToHome")
 
-  .welcome-page__features(ref="featuresSection")
+  .welcome-page__features
     .welcome-page__feature
       .welcome-page__feature-icon 🔍
-      h3.welcome-page__feature-title Discover Events
-      p.welcome-page__feature-text Browse our list of active and upcoming tournaments. Find detailed event info and the perfect competition to showcase your skills.
+      h3.welcome-page__feature-title {{ $t('welcome.features.discover.title') }}
+      p.welcome-page__feature-text {{ $t('welcome.features.discover.text') }}
     
     .welcome-page__feature
       .welcome-page__feature-icon 🛠️
-      h3.welcome-page__feature-title Host Tournaments
-      p.welcome-page__feature-text Easily create and manage your own events. Set up tournament details, rules, and gather participants in just a few clicks.
+      h3.welcome-page__feature-title {{ $t('welcome.features.host.title') }}
+      p.welcome-page__feature-text {{ $t('welcome.features.host.text') }}
 
     .welcome-page__feature
       .welcome-page__feature-icon 👥
-      h3.welcome-page__feature-title Form Teams
-      p.welcome-page__feature-text Build and manage your very own squads. Create custom teams and enter team-based tournaments together with your friends.
+      h3.welcome-page__feature-title {{ $t('welcome.features.form_teams.title') }}
+      p.welcome-page__feature-text {{ $t('welcome.features.form_teams.text') }}
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
-
-function goToHome() {
-  router.push('/')
+async function goToHome() {
+  await navigateTo('/')
 }
-
 </script>
 
 <style scoped lang="scss">

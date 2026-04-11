@@ -2,7 +2,7 @@
 .profile-page
   Card.profile-card
     template(#title)
-      h1.profile-card__title Мій профіль
+      h1.profile-card__title {{ $t('profile.title') }}
 
     template(#content)
       .profile-content(v-if="loginStore.user")
@@ -22,24 +22,24 @@
         
         .profile-content__info-grid
           .info-group
-            span.info-label Ім'я
-            span.info-value {{ loginStore.user.name || 'Не вказано' }}
+            span.info-label {{ $t('profile.name') }}
+            span.info-value {{ loginStore.user.name || $t('profile.not_specified') }}
           
           .info-group
-            span.info-label Електронна пошта
+            span.info-label {{ $t('profile.email') }}
             span.info-value {{ loginStore.user.email }}
           
           .info-group
-            span.info-label Роль
+            span.info-label {{ $t('profile.role') }}
             span.info-value {{ roleDisplayName }}
 
       .profile-content--empty(v-else)
-        p.empty-text Інформація про користувача недоступна. Будь ласка, увійдіть в систему.
+        p.empty-text {{ $t('profile.empty_text') }}
 
     template(#footer)
       .profile-card__footer(v-if="loginStore.user")
         Button(
-          label="Вийти"
+          :label="$t('profile.logout')"
           icon="pi pi-sign-out"
           severity="danger"
           @click="handleLogout"
@@ -48,6 +48,8 @@
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+
+const { t } = useI18n()
 
 const loginStore = useLoginStore()
 
@@ -60,11 +62,11 @@ onMounted(() => {
 
 
 const roleDisplayName = computed(() => {
-  if (!loginStore.user?.role) return 'Користувач'
+  if (!loginStore.user?.role) return t('profile.roles.user')
   const roles: Record<string, string> = {
-    ADMIN: 'Адміністратор',
-    USER: 'Користувач',
-    JURY: 'Журі'
+    ADMIN: t('profile.roles.admin'),
+    USER: t('profile.roles.user'),
+    JURY: t('profile.roles.jury')
   }
   return roles[loginStore.user.role] || loginStore.user.role
 })
@@ -98,13 +100,14 @@ const handleLogout = async () => {
     font-size: var(--font-size-xl, 1.5rem);
     font-weight: var(--font-weight-semibold, 600);
     color: var(--color-text, #1f2937);
-    margin: 0;
+    margin-top: 3px;
     text-align: center;
   }
   
   &__footer {
     display: flex;
     justify-content: center;
+    margin-bottom: 10px;
     padding-top: var(--space-4);
   }
 }

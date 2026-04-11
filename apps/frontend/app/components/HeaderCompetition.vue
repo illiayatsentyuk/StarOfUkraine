@@ -24,15 +24,16 @@ header.header-competition
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
-        Button.create-btn(@click="openModal" type="button" label="Створити турнір")
+        LanguageSwitcher
+        Button.create-btn(@click="openModal" type="button" :label="$t('header.create_tournament')")
         
         .auth-section
             template(v-if="loginStore.user")
                 .user-info
                     NuxtLink(to="/profile" style="text-decoration: none; color: inherit;").user-name {{ loginStore.user.name || loginStore.user.email }}
-                    Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" label="Вийти" text)
+                    Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" :label="$t('profile.logout')" text)
             template(v-else)
-                NuxtLink(to="/auth").login-btn(icon="pi pi-google" label="Увійти" severity="secondary" style="text-decoration: none; color: inherit;") Увійти
+                NuxtLink(to="/auth").login-btn(icon="pi pi-google" :label="$t('auth.login')" severity="secondary" style="text-decoration: none; color: inherit;") {{ $t('auth.login') }}
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 </template>

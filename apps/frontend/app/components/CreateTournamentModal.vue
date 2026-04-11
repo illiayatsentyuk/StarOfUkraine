@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+const { t } = useI18n()
 const props = defineProps<{
   isOpen: boolean
 }>()
@@ -8,8 +9,6 @@ const emit = defineEmits<{
 }>()
 
 const store = useTournamentsStore()
-
-// Redundant load removed to avoid double fetching
 
 
 const initialState = {
@@ -44,7 +43,7 @@ async function submitForm() {
         Object.assign(form, initialState)
         emit("close")
     } catch (e) {
-        console.error("Виникла помилка під час створення турніру.", e)
+        console.error(t('modals.create.error_creating'), e)
     } finally {
         isLoading.value = false
     }
@@ -54,7 +53,7 @@ function closeModal() {
   emit("close")
 }
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("uk-UA")
+  return new Date(date).toLocaleDateString()
 }
 </script>
 
@@ -63,51 +62,51 @@ function formatDate(date: string) {
     .modal-overlay(@click="closeModal")
     .modal-content
         .modal-header
-            h2.modal-title Створити турнір
+            h2.modal-title {{ $t('modals.create.title') }}
             button.icon-btn(@click="closeModal" type="button")
                 i.pi.pi-times
         form.modal-form(@submit.prevent="submitForm")
             .form-group
-                label.form-label Назва турніру
-                input.form-input(type="text" v-model="form.name" placeholder="Введіть назву турніру" required)
+                label.form-label {{ $t('modals.create.name_label') }}
+                input.form-input(type="text" v-model="form.name" :placeholder="$t('modals.create.name_placeholder')" required)
             
             .form-group
-                label.form-label Опис та Правила
-                input.form-input(type="text" v-model="form.description" placeholder="Введіть опис та правила")
+                label.form-label {{ $t('modals.create.desc_label') }}
+                input.form-input(type="text" v-model="form.description" :placeholder="$t('modals.create.desc_placeholder')")
             
             .form-row
                 .form-group
-                    label.form-label Дата старту турніру
+                    label.form-label {{ $t('modals.create.start_date') }}
                     input.form-input(type="date" v-model="form.startDate")
                 .form-group
-                    label.form-label Початок реєстрації
+                    label.form-label {{ $t('modals.create.reg_start') }}
                     input.form-input(type="date" v-model="form.registrationStart")
             
             .form-row
                 .form-group
-                    label.form-label Кількість раундів
-                    input.form-input(type="number" v-model.number="form.rounds" placeholder="Раунди")
+                    label.form-label {{ $t('modals.create.rounds_label') }}
+                    input.form-input(type="number" v-model.number="form.rounds" :placeholder="$t('modals.create.rounds_placeholder')")
                 .form-group
-                    label.form-label Макс.команд (опційно)
-                    input.form-input(type="number" v-model.number="form.maxTeams" placeholder="Команди")
+                    label.form-label {{ $t('modals.create.max_teams_label') }}
+                    input.form-input(type="number" v-model.number="form.maxTeams" :placeholder="$t('modals.create.max_teams_placeholder')")
             
             .form-row
                 .form-group
-                    label.form-label Мін. гравців
-                    input.form-input(type="number" v-model.number="form.teamSizeMin" placeholder="Мін.")
+                    label.form-label {{ $t('modals.create.min_players') }}
+                    input.form-input(type="number" v-model.number="form.teamSizeMin" :placeholder="$t('modals.create.min_placeholder')")
                 .form-group
-                    label.form-label Макс. гравців
-                    input.form-input(type="number" v-model.number="form.teamSizeMax" placeholder="Макс.")
+                    label.form-label {{ $t('modals.create.max_players') }}
+                    input.form-input(type="number" v-model.number="form.teamSizeMax" :placeholder="$t('modals.create.max_placeholder')")
             
             .form-group
-                label.form-label Кінець реєстрації
+                label.form-label {{ $t('modals.create.reg_end') }}
                 input.form-input(type="date" v-model="form.registrationEnd")
             
             .checkbox-group
                 input(type="checkbox" v-model="form.hideTeamsUntilRegistrationEnds" id="hideTeams")
-                label.form-label.checkbox-label(for="hideTeams") Сховати команди до кінця реєстрації
+                label.form-label.checkbox-label(for="hideTeams") {{ $t('modals.create.hide_teams') }}
             
-            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'Створення...' : 'Створити турнір' }}
+            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? $t('modals.create.creating') : $t('modals.create.create_btn') }}
 </template>
 
 <style lang="scss" scoped>

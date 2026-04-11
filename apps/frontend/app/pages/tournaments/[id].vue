@@ -3,83 +3,83 @@ section.tournament-detail
     // Loading State
     .loading-overlay(v-if="store.loading")
         ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s" aria-label="Loading")
-        span.loading-text ЗАВАНТАЖЕННЯ
+        span.loading-text {{ $t('tournaments.loading') }}
 
     // Content State
     template(v-else-if="tournament")
         .tournament-detail__nav
             NuxtLink.back-link(to="/")
                 span.icon ←
-                span.text НАЗАД ДО СПИСКУ
+                span.text {{ $t('navigation.back_to_list') }}
 
         header.tournament-detail__hero
-            .status-badge {{ (tournament.status || 'РЕЄСТРАЦІЯ ВІДКРИТА').toUpperCase() }}
+            .status-badge {{ (tournament.status || $t('tournaments.status_registration_open')).toUpperCase() }}
             h1.title {{ tournament.name }}
         
         .tournament-detail__layout
             main.main-content
                 .content-section
-                    h3.section-label ПРО ТУРНІР
+                    h3.section-label {{ $t('tournaments.details.about') }}
                     p.description {{ tournament.description }}
                 
                 .content-section.stats-section
                     .stat-box
-                        span.label РАУНДІВ
+                        span.label {{ $t('tournaments.details.stats.rounds') }}
                         span.value {{ tournament.rounds }}
                     .stat-box
-                        span.label ГРАВЦІВ У КОМАНДІ
+                        span.label {{ $t('tournaments.details.stats.team_size') }}
                         span.value {{ tournament.teamSizeMin }} — {{ tournament.teamSizeMax }}
                     .stat-box
-                        span.label МАКС. КОМАНД
+                        span.label {{ $t('tournaments.details.stats.max_teams') }}
                         span.value {{ tournament.maxTeams }}
 
                 .content-section(v-if="authStore.isAdmin" class="admin-dota-section")
-                    h3.section-label ПЕРЕВІРКА МАТЧУ (АДМІН)
+                    h3.section-label {{ $t('tournaments.details.admin.title') }}
                     .admin-dota-form
                         input.dota-input(
                             v-model="dotaMatchId" 
                             type="text" 
-                            placeholder="Введіть Dota 2 Match ID (напр. 7600000000)"
+                            :placeholder="$t('tournaments.details.admin.dota_placeholder')"
                         )
-                        button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? 'Шукаємо...' : 'Знайти' }}
+                        button.dota-btn(@click="fetchDotaMatch" :disabled="!dotaMatchId || dotaMatchLoading") {{ dotaMatchLoading ? $t('tournaments.details.admin.searching') : $t('tournaments.details.admin.find_btn') }}
                     
                     .dota-result(v-if="dotaMatchData")
                         .dota-score(:class="dotaMatchData.radiant_win ? 'radiant-win' : 'dire-win'")
-                            span.team.radiant Radiant {{ dotaMatchData.radiant_score }}
+                            span.team.radiant {{ $t('tournaments.details.admin.radiant') }} {{ dotaMatchData.radiant_score }}
                             span.vs -
-                            span.team.dire {{ dotaMatchData.dire_score }} Dire
+                            span.team.dire {{ dotaMatchData.dire_score }} {{ $t('tournaments.details.admin.dire') }}
                         
                         .dota-info
-                            span.info-item Переможець: {{ dotaMatchData.radiant_win ? 'Radiant' : 'Dire' }}
-                            span.info-item Тривалість: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
+                            span.info-item {{ $t('tournaments.details.admin.winner') }}: {{ dotaMatchData.radiant_win ? $t('tournaments.details.admin.radiant') : $t('tournaments.details.admin.dire') }}
+                            span.info-item {{ $t('tournaments.details.admin.duration') }}: {{ Math.floor(dotaMatchData.duration / 60) }}:{{ (dotaMatchData.duration % 60).toString().padStart(2, '0') }}
                     
                     .error-text(v-if="dotaMatchError") {{ dotaMatchError }}
 
             aside.sidebar
                 .sidebar__card
-                    h3.section-label КЛЮЧОВІ ДАТИ
+                    h3.section-label {{ $t('tournaments.details.dates.title') }}
                     .date-list
                         .date-entry
-                            span.label РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ
+                            span.label {{ $t('tournaments.details.dates.reg_start') }}
                             span.value {{ formatDate(tournament.registrationStart) }}
                         .date-entry
-                            span.label РЕЄСТРАЦІЯ ЗАКІНЧУЄТЬСЯ
+                            span.label {{ $t('tournaments.details.dates.reg_end') }}
                             span.value {{ formatDate(tournament.registrationEnd) }}
                         .date-entry.highlight
-                            span.label ДАТА СТАРТУ
+                            span.label {{ $t('tournaments.details.dates.start_date') }}
                             span.value {{ formatDate(tournament.startDate) }}
                     
                     .divider
                     
                     .sidebar__footer
                         .status-info
-                            span.label ПОТОЧНИЙ СТАТУС
-                            span.value {{ (tournament.status || 'ВІДКРИТИЙ').toUpperCase() }}
-                        Button.delete-btn(@click="handleDelete" type="button" label="Видалити турнір")
+                            span.label {{ $t('tournaments.details.dates.current_status') || 'ПОТОЧНИЙ СТАТУС' }}
+                            span.value {{ (tournament.status || $t('tournaments.status_open')).toUpperCase() }}
+                        Button.delete-btn(@click="handleDelete" type="button" :label="$t('tournaments.details.delete_tournament')")
     
     .error-state(v-else)
-        p Турнір не знайдено.
-        NuxtLink(to="/") Повернутися до списку
+        p {{ $t('tournaments.details.not_found') }}
+        NuxtLink(to="/") {{ $t('navigation.back_to_list') }}
     
     DeleteModal(
         v-if="tournament"
@@ -97,6 +97,7 @@ import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
 import DeleteModal from '../../components/deleteModal.vue'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const store = useTournamentsStore()
 const authStore = useLoginStore()
@@ -106,7 +107,7 @@ const isDeleteModalOpen = ref(false)
 const formatDate = (dateString: string) => {
     if (!dateString) return "ТВА"
     const date = new Date(dateString)
-    return date.toLocaleDateString("uk-UA", {
+    return date.toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
@@ -141,12 +142,12 @@ const fetchDotaMatch = async () => {
     dotaMatchData.value = null
     try {
         const response = await fetch(`https://api.opendota.com/api/matches/${dotaMatchId.value}`)
-        if (!response.ok) throw new Error('Матч не знайдено або помилка API')
+        if (!response.ok) throw new Error(t('tournaments.details.admin.match_not_found'))
         const data = await response.json()
         if (data.error) throw new Error(data.error)
         dotaMatchData.value = data
     } catch (e: any) {
-        dotaMatchError.value = e.message || 'Помилка завантаження'
+        dotaMatchError.value = e.message || t('tournaments.details.admin.loading_error') || 'Error'
     } finally {
         dotaMatchLoading.value = false
     }

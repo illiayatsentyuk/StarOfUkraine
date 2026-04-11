@@ -2,7 +2,7 @@
 .loader
     .loader__spinner
         ProgressSpinner(style="width: 50px; height: 50px" strokeWidth="4" fill="transparent" animationDuration=".5s" aria-label="Loading")
-        span.loading-text ЗАВАНТАЖЕННЯ
+        span.loading-text {{ $t('tournaments.loading') }}
 </template>
 
 <script lang="ts" setup>

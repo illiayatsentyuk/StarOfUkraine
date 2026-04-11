@@ -5,8 +5,8 @@ section.tournament-info
 
     template(v-else)
         .tournament-info__header
-            h1.tournament-info__title НАЙБЛИЖЧІ ТУРНІРИ
-            .status-badge(v-if="store.tournaments.length") РЕЄСТРАЦІЯ ВІДКРИТА
+            h1.tournament-info__title {{ $t('tournaments.listing_title') }}
+            .status-badge(v-if="store.tournaments.length") {{ $t('tournaments.status_registration_open') }}
         
         .tournament-info__grid(v-if="store.tournaments.length")
             .tournament-card(v-for="tournament in store.tournaments" :key="tournament.id || tournament.name")
@@ -15,27 +15,28 @@ section.tournament-info
                     
                     .tournament-card__details
                         .detail-item
-                            span.label ДАТА СТАРТУ
+                            span.label {{ $t('tournaments.details.dates.start_date') }}
                             span.value {{ formatDate(tournament.startDate) }}
                         .detail-item
-                            span.label МАКС. КОМАНД
+                            span.label {{ $t('tournaments.details.stats.max_teams') }}
                             span.value {{ tournament.maxTeams }}
                         .detail-item
-                            span.label РАУНДІВ
+                            span.label {{ $t('tournaments.details.stats.rounds') }}
                             span.value {{ tournament.rounds }}
                     
                     p.tournament-card__description {{ tournament.description }}
         
         .no-data(v-else)
-            p Турнірів поки немає.
+            p {{ $t('tournaments.no_tournaments') }}
 </template>
 
 <script lang="ts" setup>
+const { locale } = useI18n()
 const store = useTournamentsStore()
 
 const formatDate = (dateString: string) => {
     if (!dateString) return ""
-    return new Date(dateString).toLocaleDateString("uk-UA", {
+    return new Date(dateString).toLocaleDateString(locale.value === 'uk' ? 'uk-UA' : 'en-US', {
         day: 'numeric',
         month: 'long',
     }).toUpperCase()

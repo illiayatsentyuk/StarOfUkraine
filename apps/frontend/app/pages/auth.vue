@@ -2,12 +2,12 @@
 .registration-page
   .auth-card
     .header-section
-      h1.main-title Tournament Hub
-      p.subtitle {{ isLogin ? 'Увійдіть до свого профілю' : 'Створіть свій особистий профіль' }}
+      h1.main-title {{ $t('auth.title') }}
+      p.subtitle {{ isLogin ? $t('auth.login_subtitle') : $t('auth.signup_subtitle') }}
 
     .card-header
-      h2 {{ isLogin ? 'Вхід' : 'Реєстрація' }}
-      p {{ isLogin ? 'Швидкий вхід за допомогою соцмереж або пошти' : 'Швидкий вхід або заповнення даних' }}
+      h2 {{ isLogin ? $t('auth.login') : $t('auth.signup') }}
+      p {{ isLogin ? $t('auth.login_description') : $t('auth.signup_description') }}
     
     .social-grid
       button.social-btn(type="button" @click="loginStore.loginByGoogle()")
@@ -15,7 +15,7 @@
         | Google
 
     .divider
-      span або пошта
+      span {{ $t('auth.or_email') }}
     
     VeeForm.form-content(@submit="handleRegister")
       VeeField(
@@ -27,7 +27,7 @@
           :model-value="value"
           @update:model-value="handleChange"
           type="email"
-          label="Електронна пошта *"
+          :label="$t('auth.email')"
           placeholder="example@mail.com"
         )
         .error-message(v-if="errorMessage") {{ errorMessage }}
@@ -42,7 +42,7 @@
             :model-value="value"
             @update:model-value="handleChange"
             type="text"
-            label="Пароль *"
+            :label="$t('auth.password')"
             placeholder="........"
             is-password-field
           )
@@ -57,7 +57,7 @@
             :model-value="value"
             @update:model-value="handleChange"
             type="password"
-            label="Повтор пароля *"
+            :label="$t('auth.confirm_password')"
             placeholder="........"
           )
           .error-message(v-if="errorMessage") {{ errorMessage }}
@@ -66,7 +66,7 @@
       .personal-info-box(v-if="!isLogin")
         .box-title
           i.pi.pi-user.icon-user
-          h3 Особисті дані
+          h3 {{ $t('auth.personal_data') }}
         
         VeeField(
           v-slot="{ value, errorMessage, handleChange }"
@@ -77,7 +77,7 @@
             :model-value="value"
             @update:model-value="handleChange"
             type="text"
-            placeholder="Повне ім'я *"
+            :placeholder="$t('auth.full_name')"
           )
           .error-message(v-if="errorMessage") {{ errorMessage }}
         
@@ -90,7 +90,7 @@
               :model-value="value"
               @update:model-value="handleChange"
               type="date"
-              label="Дата народження"
+              :label="$t('auth.birth_date')"
               is-mini
             )
             .error-message(v-if="errorMessage") {{ errorMessage }}
@@ -103,12 +103,12 @@
               :model-value="value"
               @update:model-value="handleChange"
               type="select"
-              label="Стать"
+              :label="$t('auth.gender')"
               is-mini
             )
-              option(value="" disabled selected) Оберіть
-              option(value="male") Чоловіча
-              option(value="female") Жіноча
+              option(value="" disabled selected) {{ $t('auth.gender_select') }}
+              option(value="male") {{ $t('auth.gender_male') }}
+              option(value="female") {{ $t('auth.gender_female') }}
             .error-message(v-if="errorMessage") {{ errorMessage }}
       
       .terms-check
@@ -124,20 +124,20 @@
             type="checkbox"
           )
           label(for="terms")
-            | Я приймаю 
-            a(href="#") Умови використання
-            |  та надаю згоду на обробку даних.
+            | {{ $t('auth.terms_accept') }} 
+            a(href="#") {{ $t('auth.terms_link') }}
+            |  {{ $t('auth.terms_consent') }}
           .error-message(v-if="errorMessage") {{ errorMessage }}
       
-      button.submit-btn(type="submit" :disabled="loginStore.loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
+      button.submit-btn(type="submit" :disabled="loginStore.loading") {{ isLogin ? $t('auth.login_btn') : $t('auth.signup_btn') }}
     
     .card-footer
       template(v-if="isLogin")
-        | Немає акаунта? 
-        a(href="#" @click.prevent="isLogin = false") Зареєструватися
+        | {{ $t('auth.no_account') }} 
+        a(href="#" @click.prevent="isLogin = false") {{ $t('auth.switch_to_signup') }}
       template(v-else)
-        | Вже є акаунт? 
-        a(href="#" @click.prevent="isLogin = true") Увійти
+        | {{ $t('auth.have_account') }} 
+        a(href="#" @click.prevent="isLogin = true") {{ $t('auth.switch_to_login') }}
 </template>
 
 <script setup lang="ts">

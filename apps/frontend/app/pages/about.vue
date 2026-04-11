@@ -1,12 +1,7 @@
 <template lang="pug">
-  .about
-    h1.about__title About
-    p.about__text
-      | This route is defined by
-      code.about__code app/pages/about.vue
-      | . Add more files under
-      code.about__code app/pages/
-      |  to create new URLs.
+.about
+  h1.about__title {{ $t('about_page.title') }}
+  p.about__text {{ $t('about_page.description') }}
 </template>
 
 <style scoped lang="scss">

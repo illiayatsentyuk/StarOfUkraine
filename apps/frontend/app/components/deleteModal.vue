@@ -5,19 +5,19 @@ Dialog(
     modal 
     :closable="true" 
     :draggable="false"
-    header="Видалення турніру"
+    :header="$t('modals.delete.title')"
     class="delete-modal"
     :style="{ background: '#ffffff', border: '1px solid var(--color-border)' }"
     :pt="{ mask: { style: 'backdrop-filter: blur(4px); background: rgba(0,0,0,0.3)' } }"
 )
     .delete-content
-        p.warning Ви намагаєтесь видалити турнір #[strong {{ tournament?.name }}]. Ця дія є незворотною!
+        p.warning {{ $t('modals.delete.warning_prefix') }} #[strong {{ tournament?.name }}]{{ $t('modals.delete.warning_suffix') }}
         
         .form-field
-            label(for="confirmInput") Щоб підтвердити, введіть назву турніру ПОВНІСТЮ ВЕЛИКИМИ ЛІТЕРАМИ:
+            label(for="confirmInput") {{ $t('modals.delete.confirmation_label') }}
             InputText#confirmInput(
                 v-model="inputText" 
-                :placeholder="tournament?.name?.toUpperCase() || 'НАЗВА ТУРНІРУ'" 
+                :placeholder="tournament?.name?.toUpperCase() || $t('modals.delete.placeholder')" 
                 class="w-full"
                 autocomplete="off"
             )
@@ -26,12 +26,12 @@ Dialog(
         .footer-actions
             Button.cancel-btn(
                 type="button" 
-                label="СКАСУВАТИ" 
+                :label="$t('modals.delete.cancel')" 
                 @click="closeModal"
             )
             Button.delete-btn-confirm(
                 type="button" 
-                label="ВИДАЛИТИ" 
+                :label="$t('modals.delete.delete_btn')" 
                 icon="pi pi-trash"
                 :disabled="!isConfirmed"
                 @click="handleDelete"

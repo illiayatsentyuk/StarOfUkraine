@@ -1,0 +1,169 @@
+export default {
+  header: {
+    create_tournament: "Створити турнір"
+  },
+  navigation: {
+    home: "Головна",
+    about: "Про нас",
+    back_to_list: "НАЗАД ДО СПИСКУ",
+    tournaments: "Турніри"
+  },
+  auth: {
+    title: "Tournament Hub",
+    login_subtitle: "Увійдіть до свого профілю",
+    signup_subtitle: "Створіть свій особистий профіль",
+    login: "Вхід",
+    signup: "Реєстрація",
+    login_description: "Швидкий вхід за допомогою соцмереж або пошти",
+    signup_description: "Швидкий вхід або заповнення даних",
+    or_email: "або пошта",
+    email: "Електронна пошта *",
+    password: "Пароль *",
+    confirm_password: "Повтор пароля *",
+    personal_data: "Особисті дані",
+    full_name: "Повне ім'я *",
+    birth_date: "Дата народження",
+    gender: "Стать",
+    gender_select: "Оберіть",
+    gender_male: "Чоловіча",
+    gender_female: "Жіноча",
+    terms_accept: "Я приймаю",
+    terms_link: "Умови використання",
+    terms_consent: "та надаю згоду на обробку даних.",
+    login_btn: "УВІЙТИ",
+    signup_btn: "ЗАРЕЄСТРУВАТИСЯ",
+    no_account: "Немає акаунта?",
+    have_account: "Вже є акаунт?",
+    switch_to_signup: "Зареєструватися",
+    switch_to_login: "Увійти"
+  },
+  profile: {
+    title: "Мій профіль",
+    name: "Ім'я",
+    email: "Електронна пошта",
+    role: "Роль",
+    not_specified: "Не вказано",
+    empty_text: "Інформація про користувача недоступна. Будь ласка, увійдіть в систему.",
+    logout: "Вийти",
+    roles: {
+      user: "Користувач",
+      admin: "Адміністратор",
+      jury: "Журі"
+    }
+  },
+  welcome: {
+    title: "Star Of Ukraine",
+    subtitle: "Найкраща платформа для організації, управління та проведення змагальних турнірів з легкістю.",
+    actions: {
+      view_tournaments: "Переглянути турніри"
+    },
+    features: {
+      discover: {
+        title: "Відкрийте для себе події",
+        text: "Перегляньте наш список активних і майбутніх турнірів. Знайдіть детальну інформацію про події та ідеальне змагання, щоб продемонструвати свої навички."
+      },
+      host: {
+        title: "Організувати турніри",
+        text: "Легко створюйте та керуйте власними подіями. Налаштуйте деталі турніру, правила та зберіть учасників лише за кілька кліків."
+      },
+      form_teams: {
+        title: "Сформуйте команди",
+        text: "Створюйте та керуйте власними загонами. Створюйте власні команди та беріть участь у командних турнірах разом зі своїми друзями."
+      }
+    }
+  },
+  tournaments: {
+    listing_title: "НАЙБЛИЖЧІ ТУРНІРИ",
+    no_tournaments: "Турнірів поки немає.",
+    load_more: "ЗАВАНТАЖИТИ ЩЕ",
+    loading: "ЗАВАНТАЖЕННЯ...",
+    status_registration_open: "РЕЄСТРАЦІЯ ВІДКРИТА",
+    status_draft: "ЧЕРНЕТКА",
+    status_open: "ВІДКРИТИЙ",
+    details: {
+      about: "ПРО ТУРНІР",
+      stats: {
+        rounds: "РАУНДІВ",
+        team_size: "ГРАВЦІВ У КОМАНДІ",
+        max_teams: "МАКС. КОМАНД"
+      },
+      dates: {
+        title: "КЛЮЧОВІ ДАТИ",
+        reg_start: "РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ",
+        reg_end: "РЕЄСТРАЦІЯ ЗАКІНЧУЄТЬСЯ",
+        start_date: "ДАТА СТАРТУ",
+        current_status: "ПОТОЧНИЙ СТАТУС"
+      },
+      admin: {
+        title: "ПЕРЕВІРКА МАТЧУ (АДМІН)",
+        dota_placeholder: "Введіть Dota 2 Match ID (напр. 7600000000)",
+        find_btn: "Знайти",
+        searching: "Шукаємо...",
+        winner: "Переможець",
+        duration: "Тривалість",
+        match_not_found: "Матч не знайдено або помилка API",
+        radiant_win: "Перемога Radiant",
+        dire_win: "Перемога Dire",
+        radiant: "Radiant",
+        dire: "Dire"
+      },
+      delete_tournament: "Видалити турнір",
+      not_found: "Турнір не знайдено."
+    },
+    filters: {
+      all: "Всі",
+      byDate: "За датою",
+      byName: "За назвою",
+      byMaxTeams: "К-ть команд",
+      byTeamSizeMin: "Мін. склад",
+      byTeamSizeMax: "Макс. склад",
+      byRounds: "Раунди",
+      byRegistrationStart: "Поч. реєстрації",
+      byRegistrationEnd: "Кін. реєстрації"
+    }
+  },
+  modals: {
+    create: {
+      title: "Створити турнір",
+      name_label: "Назва турніру",
+      name_placeholder: "Введіть назву турніру",
+      desc_label: "Опис та Правила",
+      desc_placeholder: "Введіть опис та правила",
+      start_date: "Дата старту турніру",
+      reg_start: "Початок реєстрації",
+      reg_end: "Кінець реєстрації",
+      rounds_label: "Кількість раундів",
+      rounds_placeholder: "Раунди",
+      max_teams_label: "Макс.команд (опційно)",
+      max_teams_placeholder: "Команди",
+      min_players: "Мін. гравців",
+      max_players: "Макс. гравців",
+      min_placeholder: "Мін.",
+      max_placeholder: "Макс.",
+      hide_teams: "Сховати команди до кінця реєстрації",
+      creating: "Створення...",
+      create_btn: "Створити турнір",
+      error_creating: "Виникла помилка під час створення турніру."
+    },
+    delete: {
+      title: "Видалення турніру",
+      warning_prefix: "Ви намагаєтесь видалити турнір",
+      warning_suffix: ". Ця дія є незворотною!",
+      confirmation_label: "Щоб підтвердити, введіть назву турніру ПОВНІСТЮ ВЕЛИКИМИ ЛІТЕРАМИ:",
+      placeholder: "НАЗВА ТУРНІРУ",
+      cancel: "СКАСУВАТИ",
+      delete_btn: "ВИДАЛИТИ",
+      deleting: "Видалення..."
+    }
+  },
+  about_page: {
+    title: "Про проект",
+    description: "Star Of Ukraine — це сучасна платформа для проведення кіберспортивних змагань, яка об'єднує гравців, організаторів та журі в єдину екосистему."
+  },
+  common: {
+    language: "Мова",
+    english: "Англійська",
+    ukrainian: "Українська",
+    search_placeholder: "Пошук турнірів..."
+  }
+}
