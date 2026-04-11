@@ -336,7 +336,7 @@ describe('AuthService', () => {
 
   describe('findOrCreateFromGoogle', () => {
     const googleProfile = {
-      sub: 'google-sub-1',
+      id: 'google-sub-1',
       email: 'oauth@example.com',
       name: 'OAuth User',
     };
@@ -392,7 +392,7 @@ describe('AuthService', () => {
       mockPrisma.account.create.mockResolvedValue({});
 
       const profileSameEmail = {
-        sub: 'google-sub-new',
+        id: 'google-sub-new',
         email: 'user@example.com',
         name: 'Linked',
       };
