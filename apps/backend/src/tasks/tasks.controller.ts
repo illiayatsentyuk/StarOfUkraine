@@ -12,6 +12,9 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiCookieAuth,
+  ApiCreatedResponse,
+  ApiExtraModels,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -25,13 +28,18 @@ import { authExamples, tasksExamples } from '../examples';
 import {
   CreateTournamentTasksDto,
   SubmissionListItemDto,
+  SubmissionTeamSummaryDto,
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
 import { TasksService } from './tasks.service';
 
-/** Повні шляхи в декораторах: `POST /tournaments/:id/tasks`, `PATCH /tasks/:id`. */
+/**
+ * Task-scoped routes use full paths on `@Controller()`:
+ * `POST /tournaments/:id/tasks`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
+ */
 @ApiTags('Tournaments', 'Tasks')
+@ApiExtraModels(SubmissionListItemDto, SubmissionTeamSummaryDto)
 @Controller()
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
@@ -50,8 +58,7 @@ export class TasksController {
       tasks: { value: tasksExamples.createTasksRequest },
     },
   })
-  @ApiResponse({
-    status: 201,
+  @ApiCreatedResponse({
     description: 'Tasks created',
     schema: {
       example: [tasksExamples.taskResponse],
@@ -85,8 +92,7 @@ export class TasksController {
       update: { value: tasksExamples.updateTaskRequest },
     },
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Task updated',
     schema: { example: tasksExamples.taskResponse },
   })
@@ -119,8 +125,7 @@ export class TasksController {
       submit: { value: tasksExamples.submitTaskRequest },
     },
   })
-  @ApiResponse({
-    status: 200,
+  @ApiOkResponse({
     description: 'Submission created or updated',
     schema: { example: tasksExamples.submissionResponse },
   })
@@ -153,7 +158,7 @@ export class TasksController {
   @ApiOkResponse({
     type: SubmissionListItemDto,
     isArray: true,
-    description: 'Submissions with team info',
+    description: 'Submissions with team summary (serialized)',
     schema: { example: tasksExamples.submissionsListResponse },
   })
   @ApiResponse({
@@ -161,7 +166,9 @@ export class TasksController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires JURY or ADMIN' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — requires JURY or ADMIN',
+  })
   @ApiResponse({ status: 404, description: 'Task not found' })
   getSubmissions(@Param('id') id: string) {
     return this.tasksService.getSubmissionsForTask(id);
