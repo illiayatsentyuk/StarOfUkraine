@@ -28,4 +28,35 @@ export const tasksExamples = {
       rubric: [{ id: 'code', label: 'Якість коду', maxPoints: 15 }],
     },
   },
+  submitTaskRequest: {
+    teamId: 'clx_team_abc',
+    githubUrl: 'https://github.com/org/project',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+  },
+  submissionResponse: {
+    id: 'clx_submission_123',
+    taskId: 'clx_task_123',
+    teamId: 'clx_team_abc',
+    githubUrl: 'https://github.com/org/project',
+    videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    status: 'PENDING',
+  },
+  submissionsListResponse: [
+    {
+      id: 'clx_submission_123',
+      taskId: 'clx_task_123',
+      teamId: 'clx_team_abc',
+      githubUrl: 'https://github.com/org/project',
+      videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      status: 'PENDING',
+      team: {
+        id: 'clx_team_abc',
+        name: 'Team Alpha',
+        captainName: 'Olena Kovalenko',
+        captainEmail: 'olena@example.com',
+        city: 'Kyiv',
+        organization: 'UA Esports',
+      },
+    },
+  ],
 } as const;

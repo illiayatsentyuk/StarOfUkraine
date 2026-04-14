@@ -1,8 +1,18 @@
-import { Body, Controller, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiCookieAuth,
+  ApiOkResponse,
   ApiOperation,
   ApiParam,
   ApiResponse,
@@ -10,8 +20,14 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
+import { Serialize } from '../interceptors/serialize.interceptor';
 import { authExamples, tasksExamples } from '../examples';
-import { CreateTournamentTasksDto, UpdateTaskDto } from './dto';
+import {
+  CreateTournamentTasksDto,
+  SubmissionListItemDto,
+  SubmitTaskDto,
+  UpdateTaskDto,
+} from './dto';
 import { TasksService } from './tasks.service';
 
 /** Повні шляхи в декораторах: `POST /tournaments/:id/tasks`, `PATCH /tasks/:id`. */
@@ -55,7 +71,7 @@ export class TasksController {
     return this.tasksService.createTasks(id, data);
   }
 
-  @Patch('tournaments/:id/tasks/:id')
+  @Patch('tasks/:id')
   @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
@@ -86,5 +102,68 @@ export class TasksController {
   @ApiResponse({ status: 404, description: 'Task not found' })
   update(@Param('id') id: string, @Body() data: UpdateTaskDto) {
     return this.tasksService.updateTask(id, data);
+  }
+
+  @Post('tasks/:id/submit')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiOperation({
+    summary: 'Submit GitHub and video links for a task (team submission)',
+  })
+  @ApiBody({
+    type: SubmitTaskDto,
+    examples: {
+      submit: { value: tasksExamples.submitTaskRequest },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Submission created or updated',
+    schema: { example: tasksExamples.submissionResponse },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Team not in tournament, or submission already evaluated',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  submit(
+    @Param('id') id: string,
+    @Body() data: SubmitTaskDto,
+  ) {
+    return this.tasksService.submitTask(id, data);
+  }
+
+  @Get('tasks/:id/submissions')
+  @Serialize(SubmissionListItemDto)
+  @Roles(Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiOperation({
+    summary: 'List submissions for a task (jury review)',
+  })
+  @ApiOkResponse({
+    type: SubmissionListItemDto,
+    isArray: true,
+    description: 'Submissions with team info',
+    schema: { example: tasksExamples.submissionsListResponse },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden — requires JURY or ADMIN' })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  getSubmissions(@Param('id') id: string) {
+    return this.tasksService.getSubmissionsForTask(id);
   }
 }

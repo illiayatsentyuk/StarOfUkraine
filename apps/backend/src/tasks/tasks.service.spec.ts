@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TournamentStatus } from '@prisma/client';
+import { SubmissionStatus, TournamentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from './tasks.service';
 
@@ -22,6 +22,14 @@ describe('TasksService', () => {
     ) as jest.MockedFunction<
       (ops: Promise<unknown>[]) => Promise<unknown[]>
     >,
+    team: {
+      findFirst: jest.fn(),
+    },
+    submission: {
+      findUnique: jest.fn(),
+      findMany: jest.fn(),
+      upsert: jest.fn(),
+    },
   };
 
   const tournamentMock = {
@@ -168,6 +176,135 @@ describe('TasksService', () => {
         service.updateTask('task-1', { order: 2 }),
       ).rejects.toThrow(
         new BadRequestException('Task order already used in this tournament'),
+      );
+    });
+  });
+
+  describe('submitTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      name: 'Round 1',
+      description: '# Desc',
+      order: 1,
+      criteria: { rubric: [] },
+    };
+
+    const submitDto = {
+      teamId: 'team-1',
+      githubUrl: 'https://github.com/o/r',
+      videoUrl: 'https://youtu.be/x',
+    };
+
+    it('upserts submission when task and team in tournament exist', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.team.findFirst.mockResolvedValue({ id: 'team-1' });
+      mockPrisma.submission.findUnique.mockResolvedValue(null);
+      mockPrisma.submission.upsert.mockResolvedValue({
+        id: 'sub-1',
+        taskId: 'task-1',
+        teamId: 'team-1',
+        ...submitDto,
+        status: SubmissionStatus.PENDING,
+      });
+
+      const result = await service.submitTask('task-1', submitDto);
+
+      expect(result.id).toBe('sub-1');
+      expect(mockPrisma.submission.upsert).toHaveBeenCalled();
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.submitTask('missing', submitDto)).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+
+    it('throws when team not in tournament', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.team.findFirst.mockResolvedValue(null);
+
+      await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
+        new BadRequestException(
+          'Team is not registered for this tournament',
+        ),
+      );
+    });
+
+    it('throws when submission already evaluated', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.team.findFirst.mockResolvedValue({ id: 'team-1' });
+      mockPrisma.submission.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        status: SubmissionStatus.EVALUATED,
+      });
+
+      await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
+        new BadRequestException('Submission already evaluated'),
+      );
+    });
+  });
+
+  describe('getSubmissionsForTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      name: 'Round 1',
+      description: '# Desc',
+      order: 1,
+      criteria: { rubric: [] },
+    };
+
+    it('returns submissions with teams when task exists', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      const rows = [
+        {
+          id: 'sub-1',
+          taskId: 'task-1',
+          teamId: 'team-1',
+          githubUrl: 'https://github.com/a/b',
+          videoUrl: 'https://youtu.be/x',
+          status: SubmissionStatus.PENDING,
+          team: {
+            id: 'team-1',
+            name: 'Team A',
+            captainName: 'Cap',
+            captainEmail: 'c@x.com',
+            city: 'Kyiv',
+            organization: null,
+          },
+        },
+      ];
+      mockPrisma.submission.findMany.mockResolvedValue(rows);
+
+      const result = await service.getSubmissionsForTask('task-1');
+
+      expect(result).toEqual(rows);
+      expect(mockPrisma.submission.findMany).toHaveBeenCalledWith({
+        where: { taskId: 'task-1' },
+        orderBy: { id: 'asc' },
+        include: {
+          team: {
+            select: {
+              id: true,
+              name: true,
+              captainName: true,
+              captainEmail: true,
+              city: true,
+              organization: true,
+            },
+          },
+        },
+      });
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.getSubmissionsForTask('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
       );
     });
   });

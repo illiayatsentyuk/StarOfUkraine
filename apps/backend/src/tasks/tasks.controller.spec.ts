@@ -9,6 +9,8 @@ describe('TasksController', () => {
   const mockTasksService = {
     createTasks: jest.fn(),
     updateTask: jest.fn(),
+    submitTask: jest.fn(),
+    getSubmissionsForTask: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -59,5 +61,27 @@ describe('TasksController', () => {
       name: 'Updated',
     });
     expect(mockTasksService.updateTask).toHaveBeenCalledWith('task-1', dto);
+  });
+
+  it('submit delegates to service', async () => {
+    const dto = {
+      teamId: 'team-1',
+      githubUrl: 'https://github.com/a/b',
+      videoUrl: 'https://youtu.be/x',
+    };
+    mockTasksService.submitTask.mockResolvedValue({ id: 'sub-1' });
+    await expect(controller.submit('task-1', dto)).resolves.toEqual({
+      id: 'sub-1',
+    });
+    expect(mockTasksService.submitTask).toHaveBeenCalledWith('task-1', dto);
+  });
+
+  it('getSubmissions delegates to service', async () => {
+    const list = [{ id: 'sub-1', team: { name: 'T' } }];
+    mockTasksService.getSubmissionsForTask.mockResolvedValue(list);
+    await expect(controller.getSubmissions('task-1')).resolves.toEqual(list);
+    expect(mockTasksService.getSubmissionsForTask).toHaveBeenCalledWith(
+      'task-1',
+    );
   });
 });
