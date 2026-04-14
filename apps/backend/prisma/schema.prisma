@@ -57,12 +57,12 @@ model Account {
 
 /// Jury-specific profile; one row per user with role JURY when those fields are used.
 model Jury {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournaments      Tournament[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Team {
@@ -95,6 +95,7 @@ model Tournament {
   status                        TournamentStatus @default(DRAFT)
   hideTeamsUntilRegistrationEnds Boolean         @default(false)
   teams                         Team[]           @relation("TournamentTeams")
+  jurors                        Jury[]
   createdAt                     DateTime        @default(now())
   updatedAt                     DateTime        @updatedAt
 }
