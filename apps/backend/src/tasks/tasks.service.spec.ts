@@ -1,0 +1,174 @@
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { TournamentStatus } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
+import { TasksService } from './tasks.service';
+
+describe('TasksService', () => {
+  let service: TasksService;
+
+  const mockPrisma = {
+    tournament: {
+      findUnique: jest.fn(),
+    },
+    task: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
+    $transaction: jest.fn(
+      (ops: Promise<unknown>[]) => Promise.all(ops),
+    ) as jest.MockedFunction<
+      (ops: Promise<unknown>[]) => Promise<unknown[]>
+    >,
+  };
+
+  const tournamentMock = {
+    id: 'tournament-1',
+    name: 'Star of Ukraine Cup 2026',
+    description: 'Open tournament for teams across Ukraine.',
+    startDate: new Date('2026-04-01T12:00:00.000Z'),
+    registrationStart: new Date('2026-03-20T00:00:00.000Z'),
+    registrationEnd: new Date('2026-03-30T23:59:59.000Z'),
+    maxTeams: 64,
+    rounds: 6,
+    teamSizeMin: 5,
+    teamSizeMax: 7,
+    status: TournamentStatus.DRAFT,
+    hideTeamsUntilRegistrationEnds: true,
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        TasksService,
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
+      ],
+    }).compile();
+
+    service = module.get<TasksService>(TasksService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('createTasks', () => {
+    const dto = {
+      tasks: [
+        {
+          name: 'Round 1',
+          description: '# Desc',
+          order: 1,
+          criteria: { rubric: [] },
+        },
+      ],
+    };
+
+    it('creates tasks when tournament exists', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.task.create.mockResolvedValue({
+        id: 'task-1',
+        tournamentId: tournamentMock.id,
+        name: 'Round 1',
+        description: '# Desc',
+        order: 1,
+        criteria: { rubric: [] },
+      });
+
+      const result = await service.createTasks(tournamentMock.id, dto);
+
+      expect(result).toHaveLength(1);
+      expect(mockPrisma.tournament.findUnique).toHaveBeenCalledWith({
+        where: { id: tournamentMock.id },
+      });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.createTasks('missing', dto)).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
+    });
+
+    it('throws when order values duplicate', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+
+      await expect(
+        service.createTasks(tournamentMock.id, {
+          tasks: [
+            { ...dto.tasks[0], order: 1 },
+            { ...dto.tasks[0], name: 'Round 2', order: 1 },
+          ],
+        }),
+      ).rejects.toThrow(
+        new BadRequestException('Task order values must be unique'),
+      );
+    });
+  });
+
+  describe('updateTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      name: 'Round 1',
+      description: '# Desc',
+      order: 1,
+      criteria: { rubric: [] },
+    };
+
+    it('updates when task exists', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.task.findFirst.mockResolvedValue(null);
+      mockPrisma.task.update.mockResolvedValue({
+        ...taskRow,
+        name: 'Updated',
+      });
+
+      const result = await service.updateTask('task-1', { name: 'Updated' });
+
+      expect(result.name).toBe('Updated');
+      expect(mockPrisma.task.update).toHaveBeenCalled();
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.updateTask('missing', { name: 'X' })).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+
+    it('throws when body empty', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+
+      await expect(service.updateTask('task-1', {})).rejects.toThrow(
+        new BadRequestException('At least one field must be provided'),
+      );
+    });
+
+    it('throws when order conflicts in tournament', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.task.findFirst.mockResolvedValue({
+        id: 'other-task',
+        order: 2,
+      });
+
+      await expect(
+        service.updateTask('task-1', { order: 2 }),
+      ).rejects.toThrow(
+        new BadRequestException('Task order already used in this tournament'),
+      );
+    });
+  });
+});

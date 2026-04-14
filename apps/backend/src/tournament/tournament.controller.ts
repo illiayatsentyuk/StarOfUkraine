@@ -22,11 +22,13 @@ import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';
-import { CreateTournamentDto } from './dto/create-tournament.dto';
-import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
-import { UpdateTournamentDto } from './dto/update-tournament.dto';
+import {
+  CreateTournamentDto,
+  FindTournamentQueryDto,
+  JoinTournamentDto,
+  UpdateTournamentDto,
+} from './dto';
 import { TournamentService } from './tournament.service';
-import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')

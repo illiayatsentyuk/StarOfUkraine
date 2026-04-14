@@ -9,7 +9,12 @@ import { Prisma } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTournamentDto, FindTournamentQueryDto, JoinTournamentDto, UpdateTournamentDto } from './dto';
+import {
+  CreateTournamentDto,
+  FindTournamentQueryDto,
+  JoinTournamentDto,
+  UpdateTournamentDto,
+} from './dto';
 
 @Injectable()
 export class TournamentService {
