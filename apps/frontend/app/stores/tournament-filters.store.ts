@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { useTournamentsStore } from './tournaments.store'
 
-export const useFiltersTournamentsStore = defineStore('filtersTournaments', () => {
+export const useTournamentFiltersStore = defineStore('tournamentFilters', () => {
     const tournamentsStore = useTournamentsStore()
     const activeFilter = ref('all')
     const isMinimum = ref(false)

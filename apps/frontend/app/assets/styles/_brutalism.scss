@@ -1,0 +1,51 @@
+// Brutalist Mixins & Variables
+@mixin brutal-border($width: 3px, $color: var(--color-text)) {
+  border: $width solid $color !important;
+  border-radius: 0 !important;
+}
+
+@mixin brutal-shadow($color: var(--color-primary), $offset: 8px) {
+  box-shadow: $offset $offset 0 $color !important;
+}
+
+@mixin brutal-hover-lift($offset: -4px, $shadow-color: var(--color-primary), $shadow-offset: 10px) {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+
+  &:hover {
+    transform: translate($offset, $offset);
+    @include brutal-shadow($shadow-color, $shadow-offset);
+  }
+}
+
+@mixin brutal-input {
+  @include brutal-border(3px);
+  background: white !important;
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 16px !important;
+  transition: all 0.2s;
+
+  &:focus {
+    @include brutal-border(3px, var(--color-primary));
+    @include brutal-shadow(var(--color-primary), 6px);
+    transform: translate(-3px, -3px);
+    outline: none;
+  }
+}
+
+@mixin brutal-button-primary {
+  @include brutal-border(3px);
+  background: var(--color-primary) !important;
+  color: var(--color-text) !important;
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  @include brutal-hover-lift(-6px, var(--color-text), 10px);
+  
+  &:hover {
+    background: var(--color-text) !important;
+    color: var(--color-primary) !important;
+  }
+}

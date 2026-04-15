@@ -2,7 +2,7 @@
 import { calculateTournamentStatus } from '~/utils/tournament-status'
 
 const store = useTournamentsStore()
-const filtersStore = useFiltersTournamentsStore()
+const filtersStore = useTournamentFiltersStore()
 
 const filters = [
     { key: 'all', label: 'Всі' },
@@ -27,6 +27,9 @@ const getTournamentStatus = (tournament: any) => {
 
 onMounted(() => {
     store.loadFromDatabase(true)
+})
+const activeTournaments = computed(() => {
+    return store.tournaments.filter(t => getTournamentStatus(t).code !== 'finished')
 })
 </script>
 
@@ -72,12 +75,12 @@ section.tournaments-list
                 )
                     polyline(points="18 15 12 9 6 15")
 
-    .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
+    .loading-overlay(v-if="store.loading && activeTournaments.length === 0")
         Loader
 
-    .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
+    .tournaments-list__grid(v-else-if="activeTournaments.length > 0 ")
         NuxtLink.tournament-card(
-            v-for="tournament in store.tournaments"
+            v-for="tournament in activeTournaments"
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )
@@ -103,7 +106,7 @@ section.tournaments-list
     .no-data(v-else-if="!store.loading")
         p Турнірів поки немає.
 
-    .tournaments-list__footer(v-if="store.tournaments.length > 0")
+    .tournaments-list__footer(v-if="activeTournaments.length > 0")
         button.load-more(
             @click="store.loadFromDatabase()"
             :disabled="!store.hasMore || store.loading"
