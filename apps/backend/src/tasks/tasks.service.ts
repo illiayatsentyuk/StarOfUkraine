@@ -179,17 +179,23 @@ export class TasksService {
       throw new NotFoundException('Submission not found');
     }
 
-    const rubric = (submission.task.criteria as any)?.rubric as
-      | Array<{ id?: unknown; maxPoints?: unknown }>
-      | undefined;
+    const criteriaUnknown: unknown = submission.task.criteria;
+    const rubric =
+      criteriaUnknown &&
+      typeof criteriaUnknown === 'object' &&
+      'rubric' in criteriaUnknown
+        ? (criteriaUnknown as { rubric?: unknown }).rubric
+        : undefined;
     if (!Array.isArray(rubric) || rubric.length === 0) {
       throw new BadRequestException('Task criteria rubric is missing');
     }
 
     const rubricById = new Map<string, number>();
     for (const item of rubric) {
-      const id = typeof item?.id === 'string' ? item.id : null;
-      const maxPoints = typeof item?.maxPoints === 'number' ? item.maxPoints : null;
+      const obj =
+        item && typeof item === 'object' ? (item as Record<string, unknown>) : null;
+      const id = typeof obj?.id === 'string' ? obj.id : null;
+      const maxPoints = typeof obj?.maxPoints === 'number' ? obj.maxPoints : null;
       if (!id || maxPoints === null) continue;
       rubricById.set(id, maxPoints);
     }
