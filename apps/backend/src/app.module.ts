@@ -11,6 +11,7 @@ import googleConfig from './config/google.config';
 import jwtConfig from './config/jwt.config';
 import paginationConfig from './config/pagination.config';
 import { GatewayModule } from './gateway/gateway.module';
+import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
@@ -26,6 +27,7 @@ import { UsersModule } from './users/users.module';
     }),
     GatewayModule,
     UsersModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [

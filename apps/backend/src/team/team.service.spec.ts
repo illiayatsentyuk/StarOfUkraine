@@ -57,6 +57,7 @@ describe('TeamService', () => {
     organization: 'UA Esports',
     telegram: '@starofukraine',
     discord: 'starofukraine#1234',
+    isAcceptNewMembers: true,
     createdAt: new Date('2025-01-01'),
     updatedAt: new Date('2025-01-01'),
   };
@@ -123,18 +124,18 @@ describe('TeamService', () => {
       mockPrisma.team.findFirst.mockResolvedValue(null);
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.create(createPayload, 'olena@example.com')).rejects.toThrow(
-        new NotFoundException('User not found'),
-      );
+      await expect(
+        service.create(createPayload, 'olena@example.com'),
+      ).rejects.toThrow(new NotFoundException('User not found'));
       expect(mockPrisma.team.create).not.toHaveBeenCalled();
     });
 
     it('throws when team with same name exists', async () => {
       mockPrisma.team.findFirst.mockResolvedValue(teamMock);
 
-      await expect(service.create(createPayload, 'olena@example.com')).rejects.toThrow(
-        new BadRequestException('Team already exists'),
-      );
+      await expect(
+        service.create(createPayload, 'olena@example.com'),
+      ).rejects.toThrow(new BadRequestException('Team already exists'));
     });
   });
 
@@ -334,6 +335,38 @@ describe('TeamService', () => {
       expect(result).toEqual(teamMock);
       expect(mockPrisma.team.delete).toHaveBeenCalledWith({
         where: { id: 'team-1' },
+        include: expect.any(Object),
+      });
+    });
+  });
+
+  describe('join', () => {
+    it('throws when team is not accepting new members', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue({
+        ...teamMock,
+        isAcceptNewMembers: false,
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-new' });
+
+      await expect(service.join('team-1', 'new@example.com')).rejects.toThrow(
+        new BadRequestException('Team is not accepting new members'),
+      );
+    });
+
+    it('joins a team when user is not yet a member', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue(teamMock);
+      mockPrisma.user.findUnique.mockResolvedValue({ id: 'user-new' });
+      mockPrisma.team.update.mockResolvedValue(teamMock);
+
+      await service.join('team-1', 'new@example.com');
+
+      expect(mockPrisma.team.update).toHaveBeenCalledWith({
+        where: { id: 'team-1' },
+        data: {
+          members: {
+            connect: { email: 'new@example.com' },
+          },
+        },
         include: expect.any(Object),
       });
     });

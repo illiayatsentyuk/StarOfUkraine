@@ -24,6 +24,11 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum SubmissionStatus {
+  PENDING
+  EVALUATED
+}
+
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
@@ -39,6 +44,7 @@ model User {
   accounts       Account[]
   teamsAsCaptain Team[]    @relation("TeamCaptain")
   teamsAsMember  Team[]    @relation("TeamMembers")
+  jury           Jury?
 }
 
 model Account {
@@ -54,20 +60,33 @@ model Account {
   @@index([userId])
 }
 
+/// Jury-specific profile; one row per user with role JURY when those fields are used.
+model Jury {
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournaments      Tournament[]
+  evaluations      Evaluation[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model Team {
-  id           String   @id @default(cuid())
-  name     String   @unique
-  captainName  String
-  captainEmail String
-  captain      User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
-  members      User[]   @relation("TeamMembers")
-  tournaments  Tournament[] @relation("TournamentTeams")
-  city         String?
-  organization String?
-  telegram     String?
-  discord      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  captainName         String
+  captainEmail        String
+  captain             User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
+  members             User[]   @relation("TeamMembers")
+  tournaments         Tournament[] @relation("TournamentTeams")
+  submissions         Submission[]
+  city                String?
+  organization        String?
+  telegram            String?
+  discord             String?
+  isAcceptNewMembers  Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Tournament {
@@ -84,7 +103,52 @@ model Tournament {
   status                        TournamentStatus @default(DRAFT)
   hideTeamsUntilRegistrationEnds Boolean         @default(false)
   teams                         Team[]           @relation("TournamentTeams")
+  jurors                        Jury[]
+  tasks                         Task[]
   createdAt                     DateTime        @default(now())
   updatedAt                     DateTime        @updatedAt
 }
+
+model Task {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  name          String
+  description   String     @db.Text
+  order         Int
+  criteria      Json
+  submissions   Submission[]
+
+  @@index([tournamentId])
+}
+
+model Submission {
+  id          String            @id @default(cuid())
+  taskId      String
+  task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  githubUrl   String
+  videoUrl    String
+  status      SubmissionStatus  @default(PENDING)
+  evaluations Evaluation[]
+
+  @@unique([taskId, teamId])
+  @@index([teamId])
+}
+
+model Evaluation {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  juryId       String
+  jury         Jury       @relation(fields: [juryId], references: [id], onDelete: Cascade)
+  scores       Json
+  totalScore   Int
+  comment      String     @db.Text
+
+  @@unique([submissionId, juryId])
+  @@index([juryId])
+}
+
 

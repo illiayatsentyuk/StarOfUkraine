@@ -177,7 +177,9 @@ export class TeamService {
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.captainName !== undefined && { captainName: data.captainName }),
+        ...(data.captainName !== undefined && {
+          captainName: data.captainName,
+        }),
         ...(data.captainEmail !== undefined && {
           captain: { connect: { email: captainEmail } },
         }),
@@ -196,6 +198,11 @@ export class TeamService {
     const team = await this.findOne(teamId);
     const email = this.normalizeEmail(userEmail);
     await this.assertUserExistsByEmail(email);
+
+    // Treat missing field in mocks/legacy rows as "true"; block only when explicitly false.
+    if (team.isAcceptNewMembers === false) {
+      throw new BadRequestException('Team is not accepting new members');
+    }
 
     const alreadyMember = team.members.some((m) => m.email === email);
     if (alreadyMember) {

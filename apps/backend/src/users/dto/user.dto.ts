@@ -1,22 +1,22 @@
-import { Expose } from "class-transformer";
-import { Role } from "../../enum";
+import { Expose } from 'class-transformer';
+import { Role } from '../../enum';
 
 export class UserDto {
-    @Expose()
-    id: string;
+  @Expose()
+  id: string;
 
-    @Expose()
-    email: string;
+  @Expose()
+  email: string;
 
-    @Expose()
-    name: string;
+  @Expose()
+  name: string;
 
-    @Expose()
-    nameId: string;
+  @Expose()
+  nameId: string;
 
-    @Expose()
-    image: string;
+  @Expose()
+  image: string;
 
-    @Expose()
-    role: Role;
+  @Expose()
+  role: Role;
 }

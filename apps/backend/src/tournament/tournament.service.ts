@@ -9,7 +9,12 @@ import { Prisma } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTournamentDto, FindTournamentQueryDto, JoinTournamentDto, UpdateTournamentDto } from './dto';
+import {
+  CreateTournamentDto,
+  FindTournamentQueryDto,
+  JoinTournamentDto,
+  UpdateTournamentDto,
+} from './dto';
 
 @Injectable()
 export class TournamentService {
@@ -146,7 +151,9 @@ export class TournamentService {
         break;
       default: {
         const _exhaustive: never = sortBy;
-        throw new Error(`Unhandled tournaments sortBy: ${_exhaustive as string}`);
+        throw new Error(
+          `Unhandled tournaments sortBy: ${_exhaustive as string}`,
+        );
       }
     }
     return [primary, { id: 'asc' }];
@@ -211,5 +218,73 @@ export class TournamentService {
   async remove(id: string) {
     await this.findOne(id);
     return this.prisma.tournament.delete({ where: { id } });
+  }
+
+  async getLeaderboard(tournamentId: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      select: {
+        id: true,
+        tasks: { select: { id: true, order: true }, orderBy: { order: 'asc' } },
+      },
+    });
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    const taskIds = tournament.tasks.map((t) => t.id);
+
+    const teams = await this.prisma.team.findMany({
+      where: { tournaments: { some: { id: tournamentId } } },
+      select: {
+        id: true,
+        name: true,
+        submissions: {
+          where: taskIds.length
+            ? { taskId: { in: taskIds } }
+            : { task: { tournamentId } },
+          select: {
+            taskId: true,
+            evaluations: { select: { totalScore: true } },
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    const rows = teams.map((team) => {
+      const submissionsByTaskId = new Map<
+        string,
+        { evaluations: Array<{ totalScore: number }> }
+      >();
+      for (const s of team.submissions) {
+        submissionsByTaskId.set(s.taskId, { evaluations: s.evaluations });
+      }
+
+      const tasks = taskIds.map((taskId) => {
+        const submission = submissionsByTaskId.get(taskId);
+        const evals = submission?.evaluations ?? [];
+        const avg =
+          evals.length === 0
+            ? 0
+            : evals.reduce((sum, e) => sum + e.totalScore, 0) / evals.length;
+        return { taskId, avgScore: avg };
+      });
+
+      const totalScore = tasks.reduce((sum, t) => sum + t.avgScore, 0);
+
+      return {
+        team: { id: team.id, name: team.name },
+        totalScore,
+        tasks,
+      };
+    });
+
+    rows.sort((a, b) => {
+      if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+      return a.team.name.localeCompare(b.team.name, 'uk');
+    });
+
+    return rows;
   }
 }

@@ -10,4 +10,3 @@ export class FindUsersDto {
   @MinLength(1)
   query: string;
 }
-

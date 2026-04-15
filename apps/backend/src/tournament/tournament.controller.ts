@@ -22,11 +22,14 @@ import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';
-import { CreateTournamentDto } from './dto/create-tournament.dto';
-import { FindTournamentQueryDto } from './dto/find-tournament-query.dto';
-import { UpdateTournamentDto } from './dto/update-tournament.dto';
+import {
+  CreateTournamentDto,
+  FindTournamentQueryDto,
+  JoinTournamentDto,
+  LeaderboardRowDto,
+  UpdateTournamentDto,
+} from './dto';
 import { TournamentService } from './tournament.service';
-import { JoinTournamentDto } from './dto/join-tournament.dto';
 
 @ApiTags('Tournaments')
 @Controller('tournaments')
@@ -89,7 +92,26 @@ export class TournamentController {
     return this.tournamentService.findOne(id);
   }
 
-  @Patch("join/:id")
+  @Public()
+  @Get(':id/leaderboard')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({
+    summary:
+      'Leaderboard: sum of jury average scores across all rounds per team',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leaderboard returned',
+    type: LeaderboardRowDto,
+    isArray: true,
+    schema: { example: tournamentExamples.leaderboardResponse },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
+  leaderboard(@Param('id') id: string) {
+    return this.tournamentService.getLeaderboard(id);
+  }
+
+  @Patch('join/:id')
   @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')
