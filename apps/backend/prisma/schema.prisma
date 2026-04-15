@@ -72,20 +72,21 @@ model Jury {
 }
 
 model Team {
-  id           String   @id @default(cuid())
-  name     String   @unique
-  captainName  String
-  captainEmail String
-  captain      User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
-  members      User[]   @relation("TeamMembers")
-  tournaments  Tournament[] @relation("TournamentTeams")
-  submissions  Submission[]
-  city         String?
-  organization String?
-  telegram     String?
-  discord      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  captainName         String
+  captainEmail        String
+  captain             User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
+  members             User[]   @relation("TeamMembers")
+  tournaments         Tournament[] @relation("TournamentTeams")
+  submissions         Submission[]
+  city                String?
+  organization        String?
+  telegram            String?
+  discord             String?
+  isAcceptNewMembers  Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Tournament {

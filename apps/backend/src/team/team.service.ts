@@ -197,6 +197,10 @@ export class TeamService {
     const email = this.normalizeEmail(userEmail);
     await this.assertUserExistsByEmail(email);
 
+    if (!team.isAcceptNewMembers) {
+      throw new BadRequestException('Team is not accepting new members');
+    }
+
     const alreadyMember = team.members.some((m) => m.email === email);
     if (alreadyMember) {
       throw new BadRequestException('User is already a team member');
