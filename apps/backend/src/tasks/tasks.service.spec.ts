@@ -2,8 +2,8 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionStatus, TournamentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { TasksService } from './tasks.service';
 import type { EvaluateSubmissionDto } from './dto';
+import { TasksService } from './tasks.service';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -342,11 +342,7 @@ describe('TasksService', () => {
         status: SubmissionStatus.EVALUATED,
       });
 
-      const result = await service.evaluateSubmission(
-        'sub-1',
-        userId,
-        dto,
-      );
+      const result = await service.evaluateSubmission('sub-1', userId, dto);
 
       expect(result).toEqual({ id: 'eval-1' });
       expect(mockPrisma.$transaction).toHaveBeenCalled();
