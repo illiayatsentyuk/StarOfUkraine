@@ -59,4 +59,24 @@ export const tasksExamples = {
       },
     },
   ],
+  evaluateSubmissionRequest: {
+    scores: [
+      { id: 'functionality', points: 35 },
+      { id: 'code', points: 25 },
+    ],
+    comment: 'Сильна реалізація. Рекомендую додати тести та обробку помилок.',
+  },
+  evaluationResponse: {
+    id: 'clx_eval_123',
+    submissionId: 'clx_submission_123',
+    juryId: 'clx_jury_123',
+    scores: {
+      rubric: [
+        { id: 'functionality', points: 35 },
+        { id: 'code', points: 25 },
+      ],
+    },
+    totalScore: 60,
+    comment: 'Сильна реалізація. Рекомендую додати тести та обробку помилок.',
+  },
 } as const;

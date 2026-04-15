@@ -26,6 +26,7 @@ import {
   CreateTournamentDto,
   FindTournamentQueryDto,
   JoinTournamentDto,
+  LeaderboardRowDto,
   UpdateTournamentDto,
 } from './dto';
 import { TournamentService } from './tournament.service';
@@ -89,6 +90,25 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   findOne(@Param('id') id: string) {
     return this.tournamentService.findOne(id);
+  }
+
+  @Public()
+  @Get(':id/leaderboard')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({
+    summary:
+      'Leaderboard: sum of jury average scores across all rounds per team',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Leaderboard returned',
+    type: LeaderboardRowDto,
+    isArray: true,
+    schema: { example: tournamentExamples.leaderboardResponse },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
+  leaderboard(@Param('id') id: string) {
+    return this.tournamentService.getLeaderboard(id);
   }
 
   @Patch("join/:id")

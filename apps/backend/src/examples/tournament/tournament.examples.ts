@@ -53,4 +53,14 @@ export const tournamentExamples = {
     totalPages: 3,
     itemsPerPage: 10,
   },
+  leaderboardResponse: [
+    {
+      team: { id: 'clx_team_abc', name: 'Team Alpha' },
+      totalScore: 55.5,
+      tasks: [
+        { taskId: 'clx_task_1', avgScore: 27.5 },
+        { taskId: 'clx_task_2', avgScore: 28.0 },
+      ],
+    },
+  ],
 } as const;

@@ -7,6 +7,7 @@ import { Prisma, SubmissionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   CreateTournamentTasksDto,
+  EvaluateSubmissionDto,
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
@@ -158,5 +159,100 @@ export class TasksService {
         },
       },
     });
+  }
+
+  async evaluateSubmission(
+    submissionId: string,
+    userId: string,
+    dto: EvaluateSubmissionDto,
+  ) {
+    const jury = await this.prisma.jury.findUnique({ where: { userId } });
+    if (!jury) {
+      throw new BadRequestException('Jury profile not found');
+    }
+
+    const submission = await this.prisma.submission.findUnique({
+      where: { id: submissionId },
+      include: { task: { select: { criteria: true } } },
+    });
+    if (!submission) {
+      throw new NotFoundException('Submission not found');
+    }
+
+    const rubric = (submission.task.criteria as any)?.rubric as
+      | Array<{ id?: unknown; maxPoints?: unknown }>
+      | undefined;
+    if (!Array.isArray(rubric) || rubric.length === 0) {
+      throw new BadRequestException('Task criteria rubric is missing');
+    }
+
+    const rubricById = new Map<string, number>();
+    for (const item of rubric) {
+      const id = typeof item?.id === 'string' ? item.id : null;
+      const maxPoints = typeof item?.maxPoints === 'number' ? item.maxPoints : null;
+      if (!id || maxPoints === null) continue;
+      rubricById.set(id, maxPoints);
+    }
+    if (rubricById.size === 0) {
+      throw new BadRequestException('Task criteria rubric is invalid');
+    }
+
+    const incomingIds = dto.scores.map((s) => s.id);
+    if (new Set(incomingIds).size !== incomingIds.length) {
+      throw new BadRequestException('Duplicate rubric item id in scores');
+    }
+
+    const missingIds: string[] = [];
+    for (const id of rubricById.keys()) {
+      if (!incomingIds.includes(id)) missingIds.push(id);
+    }
+    if (missingIds.length > 0) {
+      throw new BadRequestException(
+        `Missing scores for rubric items: ${missingIds.join(', ')}`,
+      );
+    }
+
+    for (const s of dto.scores) {
+      const max = rubricById.get(s.id);
+      if (max === undefined) {
+        throw new BadRequestException(`Unknown rubric item id: ${s.id}`);
+      }
+      if (s.points > max) {
+        throw new BadRequestException(
+          `Points for "${s.id}" exceed maxPoints (${s.points} > ${max})`,
+        );
+      }
+    }
+
+    const totalScore = dto.scores.reduce((sum, s) => sum + s.points, 0);
+    const scoresJson: Prisma.InputJsonValue = {
+      rubric: dto.scores.map((s) => ({ id: s.id, points: s.points })),
+    };
+
+    const [evaluation] = await this.prisma.$transaction([
+      this.prisma.evaluation.upsert({
+        where: {
+          submissionId_juryId: { submissionId, juryId: jury.id },
+        },
+        create: {
+          submissionId,
+          juryId: jury.id,
+          scores: scoresJson,
+          totalScore,
+          comment: dto.comment,
+        },
+        update: {
+          scores: scoresJson,
+          totalScore,
+          comment: dto.comment,
+        },
+      }),
+      this.prisma.submission.update({
+        where: { id: submissionId },
+        data: { status: SubmissionStatus.EVALUATED },
+      }),
+    ]);
+
+    return evaluation;
   }
 }

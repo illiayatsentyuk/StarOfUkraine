@@ -27,12 +27,14 @@ import { Serialize } from '../interceptors/serialize.interceptor';
 import { authExamples, tasksExamples } from '../examples';
 import {
   CreateTournamentTasksDto,
+  EvaluateSubmissionDto,
   SubmissionListItemDto,
   SubmissionTeamSummaryDto,
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
 import { TasksService } from './tasks.service';
+import { GetCurrentUserId } from '../common/decorators/get-current-user-id.decorator';
 
 /**
  * Task-scoped routes use full paths on `@Controller()`:
@@ -172,5 +174,47 @@ export class TasksController {
   @ApiResponse({ status: 404, description: 'Task not found' })
   getSubmissions(@Param('id') id: string) {
     return this.tasksService.getSubmissionsForTask(id);
+  }
+
+  @Post('submissions/:id/evaluate')
+  @HttpCode(HttpStatus.OK)
+  @Roles(Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Submission ID' })
+  @ApiOperation({
+    summary:
+      'Save jury checklist scores for a submission and finalize its status',
+  })
+  @ApiBody({
+    type: EvaluateSubmissionDto,
+    examples: {
+      evaluate: { value: tasksExamples.evaluateSubmissionRequest },
+    },
+  })
+  @ApiOkResponse({
+    description: 'Evaluation saved (upsert) and submission finalized',
+    schema: { example: tasksExamples.evaluationResponse },
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Invalid scores payload, jury profile missing, or submission/task criteria mismatch',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — requires JURY or ADMIN',
+  })
+  @ApiResponse({ status: 404, description: 'Submission not found' })
+  evaluateSubmission(
+    @Param('id') id: string,
+    @Body() dto: EvaluateSubmissionDto,
+    @GetCurrentUserId() userId: string,
+  ) {
+    return this.tasksService.evaluateSubmission(id, userId, dto);
   }
 }
