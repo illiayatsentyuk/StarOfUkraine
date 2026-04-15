@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionStatus, TournamentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { TasksService } from './tasks.service';
+import type { EvaluateSubmissionDto } from './dto';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -17,11 +18,15 @@ describe('TasksService', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
-    $transaction: jest.fn(
-      (ops: Promise<unknown>[]) => Promise.all(ops),
-    ) as jest.MockedFunction<
-      (ops: Promise<unknown>[]) => Promise<unknown[]>
-    >,
+    $transaction: jest.fn((ops: Promise<unknown>[]) =>
+      Promise.all(ops),
+    ) as jest.MockedFunction<(ops: Promise<unknown>[]) => Promise<unknown[]>>,
+    jury: {
+      findUnique: jest.fn(),
+    },
+    evaluation: {
+      upsert: jest.fn(),
+    },
     team: {
       findFirst: jest.fn(),
     },
@@ -29,6 +34,7 @@ describe('TasksService', () => {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       upsert: jest.fn(),
+      update: jest.fn(),
     },
   };
 
@@ -152,9 +158,9 @@ describe('TasksService', () => {
     it('throws when task not found', async () => {
       mockPrisma.task.findUnique.mockResolvedValue(null);
 
-      await expect(service.updateTask('missing', { name: 'X' })).rejects.toThrow(
-        new NotFoundException('Task not found'),
-      );
+      await expect(
+        service.updateTask('missing', { name: 'X' }),
+      ).rejects.toThrow(new NotFoundException('Task not found'));
     });
 
     it('throws when body empty', async () => {
@@ -172,9 +178,7 @@ describe('TasksService', () => {
         order: 2,
       });
 
-      await expect(
-        service.updateTask('task-1', { order: 2 }),
-      ).rejects.toThrow(
+      await expect(service.updateTask('task-1', { order: 2 })).rejects.toThrow(
         new BadRequestException('Task order already used in this tournament'),
       );
     });
@@ -227,9 +231,7 @@ describe('TasksService', () => {
       mockPrisma.team.findFirst.mockResolvedValue(null);
 
       await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
-        new BadRequestException(
-          'Team is not registered for this tournament',
-        ),
+        new BadRequestException('Team is not registered for this tournament'),
       );
     });
 
@@ -305,6 +307,88 @@ describe('TasksService', () => {
 
       await expect(service.getSubmissionsForTask('missing')).rejects.toThrow(
         new NotFoundException('Task not found'),
+      );
+    });
+  });
+
+  describe('evaluateSubmission', () => {
+    const userId = 'user-1';
+    const juryRow = { id: 'jury-1', userId };
+
+    const dto: EvaluateSubmissionDto = {
+      scores: [
+        { id: 'functionality', points: 35 },
+        { id: 'code', points: 25 },
+      ],
+      comment: 'ok',
+    };
+
+    it('upserts evaluation and finalizes submission', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue(juryRow);
+      mockPrisma.submission.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        task: {
+          criteria: {
+            rubric: [
+              { id: 'functionality', maxPoints: 40 },
+              { id: 'code', maxPoints: 30 },
+            ],
+          },
+        },
+      });
+      mockPrisma.evaluation.upsert.mockResolvedValue({ id: 'eval-1' });
+      mockPrisma.submission.update.mockResolvedValue({
+        id: 'sub-1',
+        status: SubmissionStatus.EVALUATED,
+      });
+
+      const result = await service.evaluateSubmission(
+        'sub-1',
+        userId,
+        dto,
+      );
+
+      expect(result).toEqual({ id: 'eval-1' });
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(mockPrisma.evaluation.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            submissionId_juryId: { submissionId: 'sub-1', juryId: 'jury-1' },
+          },
+        }),
+      );
+      expect(mockPrisma.submission.update).toHaveBeenCalledWith({
+        where: { id: 'sub-1' },
+        data: { status: SubmissionStatus.EVALUATED },
+      });
+    });
+
+    it('throws when jury profile not found', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.evaluateSubmission('sub-1', userId, dto),
+      ).rejects.toThrow(new BadRequestException('Jury profile not found'));
+    });
+
+    it('throws when rubric score exceeds maxPoints', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue(juryRow);
+      mockPrisma.submission.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        task: {
+          criteria: {
+            rubric: [{ id: 'code', maxPoints: 10 }],
+          },
+        },
+      });
+
+      await expect(
+        service.evaluateSubmission('sub-1', userId, {
+          scores: [{ id: 'code', points: 11 }],
+          comment: 'x',
+        } satisfies EvaluateSubmissionDto),
+      ).rejects.toThrow(
+        new BadRequestException('Points for "code" exceed maxPoints (11 > 10)'),
       );
     });
   });

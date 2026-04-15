@@ -23,8 +23,9 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
-import { Serialize } from '../interceptors/serialize.interceptor';
+import { GetCurrentUserId } from '../common/decorators/get-current-user-id.decorator';
 import { authExamples, tasksExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
 import {
   CreateTournamentTasksDto,
   EvaluateSubmissionDto,
@@ -34,7 +35,6 @@ import {
   UpdateTaskDto,
 } from './dto';
 import { TasksService } from './tasks.service';
-import { GetCurrentUserId } from '../common/decorators/get-current-user-id.decorator';
 
 /**
  * Task-scoped routes use full paths on `@Controller()`:
@@ -73,10 +73,7 @@ export class TasksController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
-  createTasks(
-    @Param('id') id: string,
-    @Body() data: CreateTournamentTasksDto,
-  ) {
+  createTasks(@Param('id') id: string, @Body() data: CreateTournamentTasksDto) {
     return this.tasksService.createTasks(id, data);
   }
 
@@ -141,10 +138,7 @@ export class TasksController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Task not found' })
-  submit(
-    @Param('id') id: string,
-    @Body() data: SubmitTaskDto,
-  ) {
+  submit(@Param('id') id: string, @Body() data: SubmitTaskDto) {
     return this.tasksService.submitTask(id, data);
   }
 

@@ -111,7 +111,7 @@ export class TournamentController {
     return this.tournamentService.getLeaderboard(id);
   }
 
-  @Patch("join/:id")
+  @Patch('join/:id')
   @Roles(Role.USER, Role.JURY, Role.ADMIN)
   @ApiBearerAuth()
   @ApiCookieAuth('access_token')

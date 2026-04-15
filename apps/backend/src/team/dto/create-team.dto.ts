@@ -1,9 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsOptional,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
 export class CreateTeamDto {
   @ApiProperty({ example: 'Star of Ukraine' })

@@ -19,6 +19,9 @@ describe('TournamentService', () => {
       delete: jest.fn(),
       count: jest.fn(),
     },
+    team: {
+      findMany: jest.fn(),
+    },
   };
 
   const tournamentMock = {
@@ -283,6 +286,68 @@ describe('TournamentService', () => {
       expect(mockPrisma.tournament.delete).toHaveBeenCalledWith({
         where: { id: 'tournament-1' },
       });
+    });
+  });
+
+  describe('getLeaderboard', () => {
+    it('computes sum of jury average scores across tasks and sorts', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        id: 'tournament-1',
+        tasks: [
+          { id: 'task-1', order: 1 },
+          { id: 'task-2', order: 2 },
+        ],
+      });
+
+      mockPrisma.team.findMany.mockResolvedValue([
+        {
+          id: 'team-a',
+          name: 'Alpha',
+          submissions: [
+            {
+              taskId: 'task-1',
+              evaluations: [{ totalScore: 10 }, { totalScore: 20 }],
+            },
+            { taskId: 'task-2', evaluations: [] },
+          ],
+        },
+        {
+          id: 'team-b',
+          name: 'Beta',
+          submissions: [
+            { taskId: 'task-1', evaluations: [{ totalScore: 30 }] },
+            {
+              taskId: 'task-2',
+              evaluations: [{ totalScore: 10 }, { totalScore: 10 }],
+            },
+          ],
+        },
+      ]);
+
+      const result = await service.getLeaderboard('tournament-1');
+
+      expect(result).toHaveLength(2);
+      expect(result[0].team.id).toBe('team-b');
+      expect(result[0].totalScore).toBe(40);
+      expect(result[0].tasks).toEqual([
+        { taskId: 'task-1', avgScore: 30 },
+        { taskId: 'task-2', avgScore: 10 },
+      ]);
+
+      expect(result[1].team.id).toBe('team-a');
+      expect(result[1].totalScore).toBe(15);
+      expect(result[1].tasks).toEqual([
+        { taskId: 'task-1', avgScore: 15 },
+        { taskId: 'task-2', avgScore: 0 },
+      ]);
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.getLeaderboard('missing')).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
     });
   });
 });

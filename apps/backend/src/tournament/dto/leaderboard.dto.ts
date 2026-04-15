@@ -45,4 +45,3 @@ export class LeaderboardRowDto {
   })
   tasks: LeaderboardTaskScoreDto[];
 }
-

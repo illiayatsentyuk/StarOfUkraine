@@ -51,4 +51,3 @@ describe('UsersController', () => {
     expect(mockUsersService.findOne).toHaveBeenCalledWith('u1');
   });
 });
-

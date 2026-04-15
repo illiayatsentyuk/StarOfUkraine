@@ -45,4 +45,3 @@ export class EvaluateSubmissionDto {
   @MinLength(1)
   comment: string;
 }
-

@@ -193,9 +193,12 @@ export class TasksService {
     const rubricById = new Map<string, number>();
     for (const item of rubric) {
       const obj =
-        item && typeof item === 'object' ? (item as Record<string, unknown>) : null;
+        item && typeof item === 'object'
+          ? (item as Record<string, unknown>)
+          : null;
       const id = typeof obj?.id === 'string' ? obj.id : null;
-      const maxPoints = typeof obj?.maxPoints === 'number' ? obj.maxPoints : null;
+      const maxPoints =
+        typeof obj?.maxPoints === 'number' ? obj.maxPoints : null;
       if (!id || maxPoints === null) continue;
       rubricById.set(id, maxPoints);
     }

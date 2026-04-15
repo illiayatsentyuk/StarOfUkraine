@@ -151,7 +151,9 @@ export class TournamentService {
         break;
       default: {
         const _exhaustive: never = sortBy;
-        throw new Error(`Unhandled tournaments sortBy: ${_exhaustive as string}`);
+        throw new Error(
+          `Unhandled tournaments sortBy: ${_exhaustive as string}`,
+        );
       }
     }
     return [primary, { id: 'asc' }];

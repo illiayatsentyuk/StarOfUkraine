@@ -55,7 +55,10 @@ describe('TasksController', () => {
 
   it('update delegates to service', async () => {
     const dto = { name: 'Updated' };
-    mockTasksService.updateTask.mockResolvedValue({ id: 'task-1', name: 'Updated' });
+    mockTasksService.updateTask.mockResolvedValue({
+      id: 'task-1',
+      name: 'Updated',
+    });
     await expect(controller.update('task-1', dto)).resolves.toEqual({
       id: 'task-1',
       name: 'Updated',

@@ -177,7 +177,9 @@ export class TeamService {
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.captainName !== undefined && { captainName: data.captainName }),
+        ...(data.captainName !== undefined && {
+          captainName: data.captainName,
+        }),
         ...(data.captainEmail !== undefined && {
           captain: { connect: { email: captainEmail } },
         }),

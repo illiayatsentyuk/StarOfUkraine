@@ -77,10 +77,7 @@ export class TeamController {
   })
   @ApiResponse({ status: 400, description: 'User is already a team member' })
   @ApiResponse({ status: 404, description: 'Team or user not found' })
-  join(
-    @Param('id') id: string,
-    @GetCurrentUser('email') email: string,
-  ) {
+  join(@Param('id') id: string, @GetCurrentUser('email') email: string) {
     return this.teamService.join(id, email);
   }
 

@@ -78,4 +78,3 @@ describe('Users (e2e)', () => {
     expect(response.body).toEqual([userMock]);
   });
 });
-
