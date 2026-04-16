@@ -35,14 +35,14 @@ export default defineNuxtConfig({
       { code: 'uk', iso: 'uk-UA', file: 'uk.ts', name: 'Ukrainian' }
     ],
     defaultLocale: 'en',
-    langDir: 'locales',
+    langDir: '../app/locales',
     strategy: 'prefix',
     detectBrowserLanguage: {
       useCookie: true,
       cookieKey: 'i18n_redirected',
       redirectOn: 'root',
     },
-    vueI18n: '../i18n.config.ts'
+    vueI18n: './i18n.config.ts'
   },
   runtimeConfig: {
     public: {

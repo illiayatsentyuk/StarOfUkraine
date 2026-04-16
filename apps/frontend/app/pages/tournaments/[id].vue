@@ -186,7 +186,7 @@ import TournamentTeamsTable from '../../components/tournaments/TournamentTeamsTa
 import TeamsCreateTeamModal from '../../components/Teams/CreateTeamModal.vue'
 import DeleteModal from '../../components/tournaments/deleteModal.vue'
 import { useTournamentBracket } from '../../stores/tournamentBrackets.store'
-import { useLocale } from '~/composables/useLocale'
+const { locale } = useI18n()
 
 import { calculateTournamentStatus } from '../../utils/tournament-status'
 
@@ -196,7 +196,6 @@ const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
 const bracketStore = useTournamentBracket()
 
-const locale = useLocale()
 
 const tournament = ref<any>(null)
 const teams = ref<any[]>([])

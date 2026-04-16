@@ -1,6 +1,11 @@
 <script lang="ts" setup>
-const { t, locale } = useI18n()
+import { onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useTournamentsStore } from '../../stores/tournaments.store'
+import { useFiltersTournamentsStore } from '../../stores/filtersTournaments.store'
 import { calculateTournamentStatus } from '~/utils/tournament-status'
+
+const { t, locale } = useI18n()
 
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
