@@ -42,6 +42,9 @@ export default {
     name: "Name",
     email: "Email",
     role: "Role",
+    member_since: "Member Since",
+    my_teams: "My Teams",
+    no_teams: "You are not a member of any team yet.",
     not_specified: "Not specified",
     empty_text: "User information unavailable. Please log in.",
     logout: "Log Out",
@@ -49,6 +52,30 @@ export default {
       user: "User",
       admin: "Administrator",
       jury: "Jury"
+    },
+    change_photo: "Change Photo"
+  },
+  privacy: {
+    title: "Privacy Policy",
+    last_updated: "Last updated: {date}",
+    meta_description: "Privacy policy and data usage terms for Star of Ukraine platform.",
+    sections: {
+      data_collection: {
+        title: "1. Data Collection",
+        text: "We collect minimal personal information necessary to facilitate your use of the Star of Ukraine platform. This includes information provided during registration such as your name, email address, and optional profile data like your profile picture."
+      },
+      data_usage: {
+        title: "2. How We Use Your Data",
+        text: "Your data is used exclusively to provide you with the tournament organization and participation services. We do not sell, rent, or distribute your personal information to third parties."
+      },
+      cookies: {
+        title: "3. Cookies and Tracking",
+        text: "We use essential cookies to maintain your active session (such as keeping you logged in) and to remember your language preferences. We do not use intrusive tracking or marketing cookies."
+      },
+      contact: {
+        title: "4. Contact Us",
+        text: "If you have any questions or concerns regarding our privacy practices, you can contact the administrative team through the support channels provided in the platform."
+      }
     }
   },
   welcome: {

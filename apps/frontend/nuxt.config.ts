@@ -70,6 +70,9 @@ export default defineNuxtConfig({
       pathPrefix: false,
     },
   ],
+  routeRules: {
+    '/auth': { redirect: '/en/auth' },
+  },
   devServer: {
     port: 4040,
   },

@@ -62,8 +62,15 @@ export const useLoginStore = defineStore('login', () => {
         try {
             const response = await useApi().post('/auth/me')
             if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
+                const userData = response.data.user
+                // Load local image override if exists
+                const localImage = localStorage.getItem(`user_image_${userData.id}`)
+                if (localImage) {
+                    userData.image = localImage
+                }
+                
+                user.value = userData
+                isAdmin.value = userData.role === 'ADMIN'
             }
         } catch {
             user.value = null
@@ -71,6 +78,13 @@ export const useLoginStore = defineStore('login', () => {
         } finally {
             loading.value = false
         }
+    }
+
+    const setLocalProfileImage = (imageUrl: string) => {
+        if (!user.value?.id) return
+        
+        user.value.image = imageUrl
+        localStorage.setItem(`user_image_${user.value.id}`, imageUrl)
     }
 
     // Ініціалізація при старті
@@ -93,5 +107,17 @@ export const useLoginStore = defineStore('login', () => {
 
     const isAuthenticated = computed(() => !!user.value)
 
-    return { user, isAdmin, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
+    return { 
+        user, 
+        isAdmin, 
+        isAuthenticated, 
+        loading, 
+        loginByGoogle, 
+        fetchUser, 
+        init, 
+        logout, 
+        signupByEmail, 
+        loginByEmail,
+        setLocalProfileImage 
+    }
 })
