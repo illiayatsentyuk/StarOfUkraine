@@ -3,14 +3,10 @@
     h3.section-label(v-if="isAdmin") ПОСІВ КОМАНД
     h3.section-label(v-else) СПИСОК КОМАНД
     
-    p.tournament-teams-panel__hint(v-if="isAdmin") Перетягніть рядки, щоб змінити порядок. Натисніть «Згенерувати сітку» — сітка з’явиться нижче на сторінці.
+    p.tournament-teams-panel__hint(v-if="isAdmin") Перетягніть рядки, щоб змінити порядок.
 
     .tournament-teams-panel__card
         .tournament-teams-panel__actions(v-if="isAdmin")
-            button.tournament-teams-panel__btn.tournament-teams-panel__btn--primary(
-                type="button"
-                @click="$emit('generate')"
-            ) Згенерувати сітку
             button.tournament-teams-panel__btn(
                 type="button"
                 @click="$emit('shuffle')"
@@ -55,7 +51,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:teams', value: any[]): void
-    (e: 'generate'): void
     (e: 'shuffle'): void
 }>()
 
