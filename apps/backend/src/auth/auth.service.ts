@@ -174,7 +174,7 @@ export class AuthService {
       where: {
         provider_providerAccountId: {
           provider: AuthProvider.GOOGLE,
-          providerAccountId: profile.sub,
+          providerAccountId: profile.id,
         },
       },
       include: { user: true },
@@ -207,7 +207,7 @@ export class AuthService {
       data: {
         userId: user.id,
         provider: AuthProvider.GOOGLE,
-        providerAccountId: profile.sub,
+        providerAccountId: profile.id,
       },
     });
 

@@ -1,0 +1,257 @@
+﻿
+> backend@0.0.1 test C:\StarOfUkraine\apps\backend
+> jest
+
+node.exe : PASS 
+src/app.controller.spec.ts
+At C:\Users\ilyap\AppData\
+Roaming\npm\pnpm.ps1:24 
+char:5
++     & "node$exe"  "$base
+dir/node_modules/pnpm/bin/
+pnpm.cjs" $args
++     ~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (P  
+  ASS src/app.controlle   
+ r.spec.ts:String) [],    
+ RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+FAIL src/tournament/tourna
+ment.service.spec.ts
+  ΓùÅ Test suite failed 
+to run
+
+    Cannot find module 
+'.prisma/client/default' 
+from '../../../node_module
+s/.pnpm/@prisma+client@7.5
+.0_prisma@7.5.0_@types+rea
+ct@19.2.14_magicast@0.5.2_
+react-dom@19.2.4_react@_vp
+3qgva3wn3cwdepun33i5ffky/n
+ode_modules/@prisma/client
+/default.js'
+
+    Require stack:
+      C:/StarOfUkraine/nod
+e_modules/.pnpm/@prisma+cl
+ient@7.5.0_prisma@7.5.0_@t
+ypes+react@19.2.14_magicas
+t@0.5.2_react-dom@19.2.4_r
+eact@_vp3qgva3wn3cwdepun33
+i5ffky/node_modules/@prism
+a/client/default.js
+      tournament/tournamen
+t.service.spec.ts
+
+    [0m [90m 1 |[39m 
+[36mimport[39m { [33mBa
+dRequestException[39m[33
+m,[39m [33mNotFoundExcep
+tion[39m } 
+[36mfrom[39m [32m'@nest
+js/common'[39m[33m;[39m
+     [90m 2 |[39m 
+[36mimport[39m { 
+[33mTest[39m[33m,[39m 
+[33mTestingModule[39m } 
+[36mfrom[39m [32m'@nest
+js/testing'[39m[33m;[39
+m
+    
+[31m[1m>[22m[39m[90m 
+3 |[39m [36mimport[39m 
+{ [33mTournamentStatus[3
+9m } [36mfrom[39m [32m'
+@prisma/client'[39m[33m;
+[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 4 |[39m 
+[36mimport[39m 
+paginationConfig 
+[36mfrom[39m [32m'../co
+nfig/pagination.config'[3
+9m[33m;[39m
+     [90m 5 |[39m 
+[36mimport[39m { [33mSo
+rtBy[39m[33m,[39m 
+[33mSortOrder[39m } 
+[36mfrom[39m [32m'../en
+um'[39m[33m;[39m
+     [90m 6 |[39m 
+[36mimport[39m { 
+[33mPrismaService[39m } 
+[36mfrom[39m [32m'../pr
+isma/prisma.service'[39m
+[33m;[39m[0m
+
+      at Resolver._throwMo
+dNotFoundError (../../../n
+ode_modules/.pnpm/jest-res
+olve@30.2.0/node_modules/j
+est-resolve/build/index.js
+:863:11)
+      at 
+Object.<anonymous> (../../
+../node_modules/.pnpm/@pri
+sma+client@7.5.0_prisma@7.
+5.0_@types+react@19.2.14_m
+agicast@0.5.2_react-dom@19
+.2.4_react@_vp3qgva3wn3cwd
+epun33i5ffky/node_modules/
+@prisma/client/default.js:
+2:6)
+      at 
+Object.<anonymous> (tourna
+ment/tournament.service.sp
+ec.ts:3:1)
+
+FAIL src/team/team.service
+.spec.ts
+  ΓùÅ Test suite failed 
+to run
+
+    Cannot find module 
+'.prisma/client/default' 
+from '../../../node_module
+s/.pnpm/@prisma+client@7.5
+.0_prisma@7.5.0_@types+rea
+ct@19.2.14_magicast@0.5.2_
+react-dom@19.2.4_react@_vp
+3qgva3wn3cwdepun33i5ffky/n
+ode_modules/@prisma/client
+/default.js'
+
+    Require stack:
+      C:/StarOfUkraine/nod
+e_modules/.pnpm/@prisma+cl
+ient@7.5.0_prisma@7.5.0_@t
+ypes+react@19.2.14_magicas
+t@0.5.2_react-dom@19.2.4_r
+eact@_vp3qgva3wn3cwdepun33
+i5ffky/node_modules/@prism
+a/client/default.js
+      
+enum/providers.enum.ts
+      enum/index.ts
+      
+team/team.service.spec.ts
+
+    [0m[31m[1m>[22m[3
+9m[90m 1 |[39m 
+[36mexport[39m { 
+[33mAuthProvider[39m } 
+[36mfrom[39m [32m'@pris
+ma/client'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 2 |[39m[0m
+
+      at Resolver._throwMo
+dNotFoundError (../../../n
+ode_modules/.pnpm/jest-res
+olve@30.2.0/node_modules/j
+est-resolve/build/index.js
+:863:11)
+      at 
+Object.<anonymous> (../../
+../node_modules/.pnpm/@pri
+sma+client@7.5.0_prisma@7.
+5.0_@types+react@19.2.14_m
+agicast@0.5.2_react-dom@19
+.2.4_react@_vp3qgva3wn3cwd
+epun33i5ffky/node_modules/
+@prisma/client/default.js:
+2:6)
+      at 
+Object.<anonymous> (enum/p
+roviders.enum.ts:1:1)
+      at 
+Object.<anonymous> 
+(enum/index.ts:1:1)
+      at 
+Object.<anonymous> (team/t
+eam.service.spec.ts:4:1)
+
+FAIL src/auth/auth.service
+.spec.ts
+  ΓùÅ Test suite failed 
+to run
+
+    Cannot find module 
+'.prisma/client/default' 
+from '../../../node_module
+s/.pnpm/@prisma+client@7.5
+.0_prisma@7.5.0_@types+rea
+ct@19.2.14_magicast@0.5.2_
+react-dom@19.2.4_react@_vp
+3qgva3wn3cwdepun33i5ffky/n
+ode_modules/@prisma/client
+/default.js'
+
+    Require stack:
+      C:/StarOfUkraine/nod
+e_modules/.pnpm/@prisma+cl
+ient@7.5.0_prisma@7.5.0_@t
+ypes+react@19.2.14_magicas
+t@0.5.2_react-dom@19.2.4_r
+eact@_vp3qgva3wn3cwdepun33
+i5ffky/node_modules/@prism
+a/client/default.js
+      
+enum/providers.enum.ts
+      enum/index.ts
+      
+auth/auth.service.spec.ts
+
+    [0m[31m[1m>[22m[3
+9m[90m 1 |[39m 
+[36mexport[39m { 
+[33mAuthProvider[39m } 
+[36mfrom[39m [32m'@pris
+ma/client'[39m[33m;[39m
+     [90m   |[39m 
+[31m[1m^[22m[39m
+     [90m 2 |[39m[0m
+
+      at Resolver._throwMo
+dNotFoundError (../../../n
+ode_modules/.pnpm/jest-res
+olve@30.2.0/node_modules/j
+est-resolve/build/index.js
+:863:11)
+      at 
+Object.<anonymous> (../../
+../node_modules/.pnpm/@pri
+sma+client@7.5.0_prisma@7.
+5.0_@types+react@19.2.14_m
+agicast@0.5.2_react-dom@19
+.2.4_react@_vp3qgva3wn3cwd
+epun33i5ffky/node_modules/
+@prisma/client/default.js:
+2:6)
+      at 
+Object.<anonymous> (enum/p
+roviders.enum.ts:1:1)
+      at 
+Object.<anonymous> 
+(enum/index.ts:1:1)
+      at 
+Object.<anonymous> (auth/a
+uth.service.spec.ts:10:1)
+
+Test Suites: 3 failed, 1 
+passed, 4 total
+Tests:       1 passed, 1 
+total
+Snapshots:   0 total
+Time:        1.448 s
+Ran all test suites.
+ΓÇëELIFECYCLEΓÇë Test failed. See above for more details.
