@@ -1,40 +1,33 @@
 <template lang="pug">
 section.tournament-detail
-    // Loading State
     .loading-overlay(v-if="store.loading")
         Loader
 
-    // Content State
     template(v-else-if="tournament")
         .tournament-detail__nav
             NuxtLink.back-link(to="/")
                 span.icon ←
                 span.text НАЗАД ДО СПИСКУ
 
-        header.tournament-detail__hero
-            .status-badge(v-if="tournamentStatus" :style="{ backgroundColor: tournamentStatus.color }") {{ tournamentStatus.label }}
-            h1.title {{ tournament.name }}
-            .tournament-detail__hero__actions
-                //- Button.home-btn.active-tab( type="button" label="Опис турніру")
-                NuxtLink(:to="`/tournaments/${route.params.id}/tasks`" style="text-decoration: none;")
-                    Button.task-btn(type="button" label="Завдання")
-        
+        TournamentHero(
+            :name="tournament.name"
+            :tournamentId="route.params.id as string"
+            :status="tournamentStatus"
+        )
+
         .tournament-detail__layout
             main.main-content
                 .content-section
                     h3.section-label ПРО ТУРНІР
                     p.description {{ tournament.description }}
-                
-                .content-section.stats-section
-                    .stat-box
-                        span.label РАУНДІВ
-                        span.value {{ roundsStatDisplay }}
-                    .stat-box
-                        span.label ГРАВЦІВ У КОМАНДІ
-                        span.value {{ tournament.teamSizeMin }} — {{ tournament.teamSizeMax }}
-                    .stat-box
-                        span.label МАКС. КОМАНД
-                        span.value {{ tournament.maxTeams }}
+
+                .content-section
+                    TournamentStats(
+                        :rounds="tournament.rounds"
+                        :teamSizeMin="tournament.teamSizeMin"
+                        :teamSizeMax="tournament.teamSizeMax"
+                        :maxTeams="tournament.maxTeams"
+                    )
 
                 .content-section
                     h3.section-label КОМАНДИ
@@ -43,21 +36,13 @@ section.tournament-detail
                         p.description(v-if="teamsStore.loading") Завантаження команд...
                         p.description(v-else-if="!teams.length") Команди поки не додані.
                         .teams-grid(v-else)
-                            .team-card(v-for="team in teams" :key="team.id")
-                                h4.team-card__name {{ team.name || team.teamName }}
-                                p.team-card__meta
-                                    | Капітан:
-                                    span  {{ team.captainName }}
-                                p.team-card__meta(v-if="team.city")
-                                    | Місто:
-                                    span  {{ team.city }}
-                                Button.team-card__delete.delete-btn(
-                                    v-if="authStore.isAdmin"
-                                    type="button"
-                                    label="Видалити команду"
-                                    icon="pi pi-trash"
-                                    @click="teamsStore.deleteTeam(team.id)"
-                                )
+                            TeamCard(
+                                v-for="team in teams"
+                                :key="team.id"
+                                :team="team"
+                                :isAdmin="authStore.isAdmin"
+                                @delete="teamsStore.deleteTeam($event)"
+                            )
 
                 TournamentTeamsTable(
                     v-model:teams="teams"
@@ -66,52 +51,25 @@ section.tournament-detail
                     @shuffle="shuffleTeams"
                 )
 
+            TournamentSidebar(
+                :tournament="tournament"
+                :status="tournamentStatus"
+                :isAdmin="authStore.isAdmin"
+                :isAuthenticated="authStore.isAuthenticated"
+                :isRegistrationActive="isRegistrationActive"
+                @delete="handleDelete"
+                @createTeam="openTeamModal"
+            )
 
-            aside.sidebar
-                .sidebar__card
-                    h3.section-label КЛЮЧОВІ ДАТИ
-                    .date-list
-                        .date-entry
-                            span.label РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ
-                            span.value {{ formatDate(tournament.registrationStart) }}
-                        .date-entry
-                            span.label РЕЄСТРАЦІЯ ЗАКІНЧУЄТЬСЯ
-                            span.value {{ formatDate(tournament.registrationEnd) }}
-                        .date-entry.highlight
-                            span.label ДАТА СТАРТУ
-                            span.value {{ formatDate(tournament.startDate) }}
-                    
-                    .divider
-                    
-                    .sidebar__footer
-                        .status-info 
-                            span.label ПОТОЧНИЙ СТАТУС
-                            span.value(v-if="tournamentStatus" :style="{ color: tournamentStatus.color }") {{ tournamentStatus.label }}
-                        Button.sidebar__delete.delete-btn(
-                            v-if="authStore.isAdmin"
-                            type="button"
-                            label="Видалити турнір"
-                            @click="handleDelete"
-                        )
-                        Button.sidebar__create.create-btn(
-                            v-if="authStore.isAuthenticated"
-                            type="button"
-                            label="Створити команду"
-                            icon="pi pi-plus"
-                            @click="openTeamModal"
-                            :disabled="!isRegistrationActive && !authStore.isAdmin"
-                        )
-        
-        //- Removed Bracket View
-    
     .error-state(v-else)
         p Турнір не знайдено.
         NuxtLink(to="/") Повернутися до списку
+
     DeleteModal(
         v-if="tournament && authStore.isAdmin"
-        :isOpen="isDeleteModalOpen" 
-        :tournament="tournament" 
-        @close="isDeleteModalOpen = false" 
+        :isOpen="isDeleteModalOpen"
+        :tournament="tournament"
+        @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
     TeamsCreateTeamModal(
@@ -120,20 +78,10 @@ section.tournament-detail
         @close="isTeamOpen = false"
         @success="refreshTeams"
     )
-
-    //- Removed Dota Match Dialog
 </template>
 
-<script lang="ts" setup>
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, navigateTo } from '#app'
-import { useTournamentsStore } from '../../../stores/tournaments.store'
-import { useLoginStore } from '../../../stores/auth.store'
-import { useTeamsStore } from '../../../stores/teams.store'
-import TeamsCreateTeamModal from '../../../components/Teams/CreateTeamModal.vue'
-import DeleteModal from '../../../components/tournaments/deleteModal.vue'
-
-import { calculateTournamentStatus } from '../../../utils/tournament-status'
+<script setup lang="ts">
+import { calculateTournamentStatus } from '~/utils/tournament-status'
 
 const route = useRoute()
 const store = useTournamentsStore()
@@ -142,7 +90,6 @@ const teamsStore = useTeamsStore()
 
 const tournament = ref<any>(null)
 const teams = ref<any[]>([])
-
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 
@@ -155,14 +102,6 @@ const isRegistrationActive = computed(() => {
     return tournamentStatus.value?.code === 'registration'
 })
 
-function openTeamModal() {
-    isTeamOpen.value = true
-}
-
-const roundsStatDisplay = computed(() => {
-    return tournament.value?.rounds || '—'
-})
-
 const shouldHideTeams = computed(() => {
     if (authStore.isAdmin) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
@@ -170,15 +109,8 @@ const shouldHideTeams = computed(() => {
     return new Date(tournament.value.registrationEnd) > new Date()
 })
 
-
-const formatDate = (dateString: string) => {
-    if (!dateString) return "ТВА"
-    const date = new Date(dateString)
-    return date.toLocaleDateString("uk-UA", {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-    }).replace('р.', '').toUpperCase()
+function openTeamModal() {
+    isTeamOpen.value = true
 }
 
 async function refreshTeams() {
@@ -186,7 +118,7 @@ async function refreshTeams() {
     try {
         const teamsResponse = await teamsStore.loadFromDatabase(true)
         teams.value = teamsResponse?.data || []
-    } catch (e) {
+    } catch {
         console.error('Failed to refresh teams')
     }
 }
@@ -195,20 +127,20 @@ onMounted(async () => {
     try {
         tournament.value = await store.fetchTournamentById(route.params.id as string)
         await refreshTeams()
-    } catch (e) {
+    } catch {
         console.error('Failed to load tournament detail')
     }
 })
 
-const handleDelete = () => {
+function handleDelete() {
     isDeleteModalOpen.value = true
 }
 
-const onTournamentDeleted = async () => {
+async function onTournamentDeleted() {
     await navigateTo('/')
 }
 
-const shuffleTeams = () => {
+function shuffleTeams() {
     teams.value = [...teams.value].sort(() => Math.random() - 0.5)
 }
 </script>
@@ -219,14 +151,15 @@ const shuffleTeams = () => {
     animation: fadeIn 0.4s ease-out;
     max-width: 1440px;
     margin: 0 auto;
-    padding: 60px 48px 60px 48px;
+    padding: 60px 48px;
 
     @media (max-width: 768px) {
-        padding: 0 24px 40px 24px;
+        padding: 0 24px 40px;
     }
 
     &__nav {
         margin-bottom: 48px;
+
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -245,131 +178,6 @@ const shuffleTeams = () => {
         }
     }
 
-    &__hero {
-        margin-bottom: 64px;
-        border-bottom: 2px solid var(--color-text);
-        padding-bottom: 48px;
-
-        .status-badge {
-            display: inline-block;
-            background: var(--color-primary);
-            color: white;
-            padding: 6px 14px;
-            font-weight: 700;
-            font-size: 11px;
-            letter-spacing: 1.5px;
-            margin-bottom: 24px;
-        }
-
-        .title {
-            font-family: var(--font-display);
-            font-size: 84px;
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -2px;
-            margin: 0;
-            color: var(--color-text);
-
-            @media (max-width: 768px) {
-                font-size: 48px;
-            }
-        }
-
-        &__actions {
-            display: flex;
-            gap: 16px;
-            margin-top: 40px;
-
-            $hero-tab-ease: cubic-bezier(0.16, 1, 0.3, 1);
-
-            :deep(.home-btn.p-button) {
-                min-width: 200px;
-                height: 52px;
-                border-radius: 0;
-                font-family: var(--font-display);
-                font-weight: 700;
-                font-size: 13px;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                transition:
-                    background 0.3s $hero-tab-ease,
-                    border-color 0.3s $hero-tab-ease,
-                    color 0.3s $hero-tab-ease,
-                    transform 0.3s $hero-tab-ease,
-                    box-shadow 0.3s $hero-tab-ease;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                background: transparent !important;
-                border: 1px solid var(--color-text) !important;
-                color: var(--color-text) !important;
-
-                &:not(:disabled):hover {
-                    background: var(--color-text) !important;
-                    border-color: var(--color-text) !important;
-                    color: #fff !important;
-                }
-
-                &.active-tab {
-                    background: var(--color-text) !important;
-                    border-color: var(--color-text) !important;
-                    color: #fff !important;
-                    cursor: default;
-                }
-
-                &.active-tab:not(:disabled):hover {
-                    background: var(--color-text) !important;
-                    border-color: var(--color-text) !important;
-                    color: #fff !important;
-                }
-            }
-
-            :deep(.task-btn.p-button) {
-                min-width: 200px;
-                height: 52px;
-                border-radius: 0;
-                font-family: var(--font-display);
-                font-weight: 700;
-                font-size: 13px;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                transition:
-                    background 0.3s $hero-tab-ease,
-                    border-color 0.3s $hero-tab-ease,
-                    color 0.3s $hero-tab-ease,
-                    transform 0.3s $hero-tab-ease,
-                    box-shadow 0.3s $hero-tab-ease;
-                cursor: pointer;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                background: var(--color-text) !important;
-                border: 1px solid var(--color-text) !important;
-                color: #fff !important;
-
-                &:not(:disabled):hover {
-                    background: var(--color-primary) !important;
-                    border-color: var(--color-primary) !important;
-                    color: #fff !important;
-                    transform: translateY(-2px);
-                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-                }
-
-                &:not(:disabled):active {
-                    transform: translateY(0);
-                }
-
-                &:not(:disabled):hover .p-button-icon,
-                &:not(:disabled):hover .p-button-icon .pi {
-                    color: #fff !important;
-                }
-            }
-        }
-    }
-
     &__layout {
         display: grid;
         grid-template-columns: 1fr 360px;
@@ -379,14 +187,6 @@ const shuffleTeams = () => {
             grid-template-columns: 1fr;
             gap: 48px;
         }
-    }
-
-    &__bracket-view {
-        width: 100%;
-        margin-top: 32px;
-        animation: fadeIn 0.6s ease-out;
-        overflow-x: auto;
-        padding-bottom: 80px;
     }
 }
 
@@ -403,256 +203,6 @@ const shuffleTeams = () => {
             font-weight: 400;
         }
     }
-
-    .stats-section {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 2px;
-        background: var(--color-border);
-        border: 2px solid var(--color-border);
-
-        .stat-box {
-            background: white;
-            padding: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-
-            .label {
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--color-text-muted);
-                letter-spacing: 2px;
-            }
-            .value {
-                font-family: var(--font-display);
-                font-size: 24px;
-                font-weight: 700;
-                color: var(--color-text);
-            }
-        }
-    }
-}
-
-.teams-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-    margin-top: 24px;
-}
-
-.team-card {
-    border: 1px solid var(--color-border);
-    background: var(--color-surface);
-    padding: 16px;
-
-    &__name {
-        margin: 0 0 8px 0;
-        font-size: 18px;
-        font-family: var(--font-display);
-    }
-
-    &__meta {
-        margin: 0;
-        color: var(--color-text-muted);
-        font-size: 14px;
-
-        span {
-            color: var(--color-text);
-            font-weight: 600;
-            margin-left: 6px;
-        }
-    }
-
-    :deep(.team-card__delete.p-button) {
-        margin-top: var(--space-4);
-        width: 100%;
-        justify-content: center;
-        gap: var(--space-2);
-        background: transparent;
-        border: 1px solid var(--color-error);
-        color: var(--color-error);
-        font-family: var(--font-display);
-        font-size: 12px;
-        font-weight: 600;
-        padding: 10px var(--space-3);
-        border-radius: 0;
-        letter-spacing: 0.04em;
-        transition:
-            background 0.2s ease,
-            border-color 0.2s ease,
-            color 0.2s ease;
-
-        &:not(:disabled):hover {
-            background: var(--color-error) !important;
-            border-color: var(--color-error) !important;
-            color: #fff !important;
-        }
-
-        &:not(:disabled):hover .p-button-icon,
-        &:not(:disabled):hover .p-button-icon .pi {
-            color: #fff !important;
-        }
-
-        &:focus-visible {
-            outline: 2px solid var(--color-error);
-            outline-offset: 2px;
-        }
-    }
-}
-
-.sidebar {
-    &__card {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        padding: 40px;
-        position: sticky;
-        top: 40px;
-
-        .date-list {
-            margin-top: 32px;
-            display: flex;
-            flex-direction: column;
-            gap: 32px;
-        }
-
-        .date-entry {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-
-            .label {
-                font-size: 10px;
-                font-weight: 700;
-                color: var(--color-text-muted);
-                letter-spacing: 1.5px;
-            }
-            .value {
-                font-size: 15px;
-                font-weight: 600;
-                color: var(--color-text);
-            }
-
-            &.highlight .value {
-                color: var(--color-primary);
-                font-size: 18px;
-                font-weight: 700;
-            }
-        }
-
-        .divider {
-            height: 1px;
-            background: var(--color-border);
-            margin: 40px 0;
-        }
-
-        .sidebar__footer {
-            display: flex;
-            flex-direction: column;
-            gap: var(--space-4);
-
-            .status-info {
-                display: flex;
-                flex-direction: column;
-                gap: 6px;
-
-                .label {
-                    font-size: 10px;
-                    font-weight: 700;
-                    color: var(--color-text-muted);
-                    letter-spacing: 1.5px;
-                }
-                .value {
-                    font-family: var(--font-display);
-                    font-size: 20px;
-                    font-weight: 700;
-                    color: var(--color-text);
-                }
-            }
-
-            :deep(.sidebar__delete.p-button) {
-                margin-top: 0;
-                width: 100%;
-                justify-content: center;
-                gap: var(--space-2);
-                background: transparent;
-                border: 1px solid var(--color-error);
-                color: var(--color-error);
-                font-family: var(--font-display);
-                font-size: 13px;
-                font-weight: 600;
-                padding: 12px var(--space-4);
-                border-radius: 0;
-                letter-spacing: 1px;
-                transition:
-                    background 0.2s ease,
-                    border-color 0.2s ease,
-                    color 0.2s ease;
-
-                &:not(:disabled):hover {
-                    background: var(--color-error) !important;
-                    border-color: var(--color-error) !important;
-                    color: #fff !important;
-                }
-
-                &:focus-visible {
-                    outline: 2px solid var(--color-error);
-                    outline-offset: 2px;
-                }
-            }
-
-            :deep(.sidebar__create.p-button) {
-                margin-top: 0;
-                width: 100%;
-                justify-content: center;
-                gap: var(--space-2);
-                background: var(--color-primary);
-                border: 2px solid var(--color-primary);
-                color: #fff;
-                font-family: var(--font-display);
-                font-size: 13px;
-                font-weight: 800;
-                padding: 18px var(--space-4);
-                border-radius: 0;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                cursor: pointer;
-                transition:
-                    background 0.2s ease,
-                    border-color 0.2s ease,
-                    color 0.2s ease,
-                    box-shadow 0.2s ease;
-
-                &:not(:disabled):hover {
-                    background: #000 !important;
-                    border-color: #000 !important;
-                    color: #fff !important;
-                    box-shadow: 0 8px 24px rgba(228, 35, 19, 0.2);
-                }
-
-                &:not(:disabled):hover .p-button-icon,
-                &:not(:disabled):hover .p-button-icon .pi {
-                    color: #fff !important;
-                }
-
-                &:not(:disabled):active {
-                    background: #000 !important;
-                    border-color: #000 !important;
-                }
-
-                &:disabled {
-                    opacity: 0.45;
-                    cursor: not-allowed;
-                    box-shadow: none;
-                }
-
-                &:focus-visible:not(:disabled) {
-                    outline: 2px solid var(--color-text);
-                    outline-offset: 2px;
-                }
-            }
-        }
-    }
 }
 
 .section-label {
@@ -664,9 +214,11 @@ const shuffleTeams = () => {
     margin: 0;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+.teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin-top: 24px;
 }
 
 .loading-overlay {
@@ -676,17 +228,24 @@ const shuffleTeams = () => {
     justify-content: center;
     padding: 200px 0;
     gap: 24px;
+}
 
-    .loading-text {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--color-text-muted);
-        letter-spacing: 3px;
-    }
+.error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 0;
+    gap: 16px;
+    color: var(--color-text-muted);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 :deep(.p-progressspinner-circle) {
     stroke: var(--color-primary) !important;
 }
-
 </style>
