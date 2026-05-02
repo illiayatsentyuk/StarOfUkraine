@@ -4,9 +4,13 @@ import { useLoginStore } from './stores/auth.store'
 
 const auth = useLoginStore()
 const loginStore = useLoginStore()
+const route = useRoute()
 
 onMounted(() => {
   loginStore.fetchUser()
+  if (route.query.oauth === 'success') {
+    navigateTo({ path: route.path, query: {} }, { replace: true })
+  }
 })
 await auth.init()
 </script>

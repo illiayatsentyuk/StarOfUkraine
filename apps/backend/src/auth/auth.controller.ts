@@ -216,12 +216,12 @@ export class AuthController {
   @ApiOperation({
     summary: 'Google OAuth callback',
     description:
-      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies, then redirects to FRONTEND_URL/auth?oauth=success (default http://localhost:4040).',
+      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies, then redirects to FRONTEND_URL/?oauth=success. FRONTEND_URL must be the Nuxt origin (e.g. http://localhost:4040), not the API URL.',
   })
   @ApiResponse({
     status: 302,
     description:
-      'Redirects to FRONTEND_URL/auth?oauth=success; HttpOnly cookies set',
+      'Redirects to FRONTEND_URL/?oauth=success; HttpOnly cookies set',
   })
   @ApiResponse({
     status: 401,
@@ -240,8 +240,11 @@ export class AuthController {
     );
 
     this.setAuthCookies(res, tokens.access_token, tokens.refresh_token);
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4040';
-    return res.redirect(302, `${frontendUrl}/auth?oauth=success`);
+    const frontendBase = (process.env.FRONTEND_URL ?? 'http://localhost:4040').replace(
+      /\/+$/,
+      '',
+    );
+    return res.redirect(302, `${frontendBase}/?oauth=success`);
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {
