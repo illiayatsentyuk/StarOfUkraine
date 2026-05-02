@@ -23,6 +23,7 @@ export default defineNuxtPlugin(() => {
   })
 
   configure({
+    validateOnBlur: true,
     generateMessage: (ctx) => {
       const messages: Record<string, string> = {
         required: 'Це поле обов\'язкове',

@@ -91,7 +91,14 @@ const handleCreateTask = async (payload: { title: string, description: string, p
 
 <style lang="scss" scoped>
 .tasks-page {
-    padding-top: 60px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 48px 60px 48px;
+
+    @media (max-width: 768px) {
+        padding: 0 24px 40px 24px;
+    }
+
     padding-bottom: 80px;
     animation: fadeIn 0.4s ease-out;
 

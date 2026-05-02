@@ -17,117 +17,134 @@
     .divider
       span або пошта
     
-    VeeForm.form-content(@submit="handleRegister")
+    VeeForm.form-content(
+      :initial-values="authInitialValues"
+      @submit="handleRegister"
+    )
       VeeField(
-        v-slot="{ value, errorMessage, handleChange }"
+        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
         name="email"
         rules="required|email"
       )
-        AppInput(
-          :model-value="value"
-          @update:model-value="handleChange"
+        AppInput.auth-field-full(
+          :model-value="field.value"
+          :name="field.name"
           type="email"
           label="Електронна пошта *"
           placeholder="example@mail.com"
+          :error-message="fieldErrorText(errorMessage, errors)"
+          @update:model-value="emitFieldValue(field, handleChange, $event)"
+          @blur="emitFieldBlur(field, handleBlur, $event)"
         )
-        .error-message(v-if="errorMessage") {{ errorMessage }}
-      
-      .row
-        VeeField(
-          v-slot="{ value, errorMessage, handleChange }"
-          name="password"
-          rules="required|min:8"
+
+      VeeField(
+        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
+        name="password"
+        rules="required|min:8"
+      )
+        AppInput.auth-field-full(
+          :model-value="field.value"
+          :name="field.name"
+          type="text"
+          label="Пароль *"
+          placeholder="........"
+          is-password-field
+          :error-message="fieldErrorText(errorMessage, errors)"
+          @update:model-value="emitFieldValue(field, handleChange, $event)"
+          @blur="emitFieldBlur(field, handleBlur, $event)"
         )
-          AppInput(
-            :model-value="value"
-            @update:model-value="handleChange"
-            type="text"
-            label="Пароль *"
-            placeholder="........"
-            is-password-field
-          )
-          .error-message(v-if="errorMessage") {{ errorMessage }}
-        
-        VeeField(
-          v-slot="{ value, errorMessage, handleChange }"
-          name="confirmPassword"
-          rules="required|confirmed:@password"
+
+      VeeField(
+        v-if="!isLogin"
+        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
+        name="confirmPassword"
+        rules="required|confirmed:@password"
+      )
+        AppInput.auth-field-full(
+          :model-value="field.value"
+          :name="field.name"
+          type="password"
+          label="Повтор пароля *"
+          placeholder="........"
+          :error-message="fieldErrorText(errorMessage, errors)"
+          @update:model-value="emitFieldValue(field, handleChange, $event)"
+          @blur="emitFieldBlur(field, handleBlur, $event)"
         )
-          AppInput(
-            :model-value="value"
-            @update:model-value="handleChange"
-            type="password"
-            label="Повтор пароля *"
-            placeholder="........"
-          )
-          .error-message(v-if="errorMessage") {{ errorMessage }}
-      
+
       // Секція особистих даних
       .personal-info-box(v-if="!isLogin")
         .box-title
           i.pi.pi-user.icon-user
           h3 Особисті дані
-        
+
         VeeField(
-          v-slot="{ value, errorMessage, handleChange }"
+          v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
           name="fullName"
           rules="required"
         )
           AppInput(
-            :model-value="value"
-            @update:model-value="handleChange"
+            :model-value="field.value"
+            :name="field.name"
             type="text"
-            placeholder="Повне ім'я *"
+            label="Повне ім'я *"
+            placeholder="Іван Іваненко"
+            :error-message="fieldErrorText(errorMessage, errors)"
+            @update:model-value="emitFieldValue(field, handleChange, $event)"
+            @blur="emitFieldBlur(field, handleBlur, $event)"
           )
-          .error-message(v-if="errorMessage") {{ errorMessage }}
-        
+
         .row
           VeeField(
-            v-slot="{ value, errorMessage, handleChange }"
+            v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
             name="birthDate"
           )
             AppInput(
-              :model-value="value"
-              @update:model-value="handleChange"
+              :model-value="field.value"
+              :name="field.name"
               type="date"
               label="Дата народження"
               is-mini
+              :error-message="fieldErrorText(errorMessage, errors)"
+              @update:model-value="emitFieldValue(field, handleChange, $event)"
+              @blur="emitFieldBlur(field, handleBlur, $event)"
             )
-            .error-message(v-if="errorMessage") {{ errorMessage }}
-          
+
           VeeField(
-            v-slot="{ value, errorMessage, handleChange }"
+            v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
             name="gender"
           )
             AppInput(
-              :model-value="value"
-              @update:model-value="handleChange"
+              :model-value="field.value"
+              :name="field.name"
               type="select"
               label="Стать"
               is-mini
+              :error-message="fieldErrorText(errorMessage, errors)"
+              @update:model-value="emitFieldValue(field, handleChange, $event)"
+              @blur="emitFieldBlur(field, handleBlur, $event)"
             )
               option(value="" disabled selected) Оберіть
               option(value="male") Чоловіча
               option(value="female") Жіноча
-            .error-message(v-if="errorMessage") {{ errorMessage }}
-      
-      .terms-check
-        VeeField(
-          v-slot="{ value, errorMessage, handleChange }"
-          name="acceptTerms"
-          rules="required"
-          type="checkbox"
+
+      VeeField(
+        v-if="!isLogin"
+        v-slot="{ field, errors, errorMessage }"
+        name="acceptTerms"
+        rules="required"
+        type="checkbox"
+      )
+        .terms-check(
+          :class="{ 'terms-check--invalid': Boolean(fieldErrorText(errorMessage, errors)) }"
         )
-          input#terms(
-            :checked="value"
-            @change="handleChange($event.target.checked)"
-            type="checkbox"
-          )
-          label(for="terms")
-            | Я приймаю 
-            a(href="#") Умови використання
-            |  та надаю згоду на обробку даних.
-          .error-message(v-if="errorMessage") {{ errorMessage }}
+          label.terms-check__field-label(for="terms") Згода з умовами *
+          .error-message(v-if="fieldErrorText(errorMessage, errors)") {{ fieldErrorText(errorMessage, errors) }}
+          .terms-check__row
+            input#terms(type="checkbox" v-bind="field")
+            label.terms-check__legal(for="terms")
+              | Я приймаю 
+              a(href="#" @click.prevent.stop) Умови використання
+              |  та надаю згоду на обробку даних.
       
       button.submit-btn(type="submit" :disabled="loginStore.loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
     
@@ -143,6 +160,45 @@
 <script setup lang="ts">
 import {useLoginStore} from "~/stores/auth.store"
 import { ref } from 'vue'
+
+const authInitialValues = {
+  email: '',
+  password: '',
+  confirmPassword: '',
+  fullName: '',
+  birthDate: '',
+  gender: '',
+  acceptTerms: false,
+}
+
+function fieldErrorText(
+  errorMessage: string | undefined | null,
+  errors: string[] | undefined | null,
+) {
+  const trimmed = errorMessage && String(errorMessage).trim()
+  if (trimmed) return trimmed
+  const first = errors?.find((e) => Boolean(e && String(e).trim()))
+  return first ? String(first) : ''
+}
+
+/** vee-validate exposes handlers on the slot and/or on `field`; support both. */
+function emitFieldValue(
+  field: { onChange?: (v: unknown) => void },
+  handleChange: ((v: unknown) => void) | undefined,
+  value: unknown,
+) {
+  const fn = handleChange ?? field.onChange
+  if (typeof fn === 'function') fn(value)
+}
+
+function emitFieldBlur(
+  field: { onBlur?: (e: unknown) => void },
+  handleBlur: ((e: unknown) => void) | undefined,
+  event: FocusEvent,
+) {
+  const fn = handleBlur ?? field.onBlur
+  if (typeof fn === 'function') fn(event)
+}
 
 const isLogin = ref(true)
 const loginStore = useLoginStore()
@@ -192,83 +248,90 @@ const handleRegister = async (values: FormData) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
+  background: var(--color-surface);
 }
 
 .auth-card {
   width: min(100%, 520px);
   background: var(--color-bg);
-  border: var(--pencil-border);
-  border-radius: var(--pencil-radius);
-  box-shadow: var(--pencil-shadow);
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  box-shadow: 0 16px 48px rgba(13, 13, 13, 0.08);
   overflow: hidden;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-
 
   .header-section {
-    position: static;
     text-align: center;
     margin: 0;
-    padding: 2rem 1.5rem 1.5rem;
+    padding: var(--space-8) var(--space-6) var(--space-6);
     background: var(--color-bg);
-    border-bottom: var(--pencil-border);
-    border-radius: 0;
+    border-bottom: 2px solid var(--color-text);
 
     .main-title {
       font-family: var(--font-display);
-      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-size: clamp(1.75rem, 4vw, 2.25rem);
       color: var(--color-text);
       font-weight: 700;
-      letter-spacing: -1px;
+      letter-spacing: -0.5px;
       text-transform: uppercase;
-      margin-bottom: 0.2rem;
+      margin-bottom: var(--space-2);
+      line-height: 1.05;
     }
 
     .subtitle {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
       font-family: var(--font-sans);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.45;
     }
   }
 
   .card-header {
-    padding: 1.5rem 1.5rem 0;
-    margin-bottom: 1rem;
+    padding: var(--space-6) var(--space-6) 0;
+    margin-bottom: var(--space-4);
 
     h2 {
-      margin-bottom: 0.25rem;
-      font-size: 1.4rem;
+      margin-bottom: var(--space-2);
+      font-size: 1.125rem;
       font-family: var(--font-display);
-      font-weight: 600;
+      font-weight: 700;
       color: var(--color-text);
       text-transform: uppercase;
+      letter-spacing: 1px;
     }
+
     p {
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
+      font-family: var(--font-sans);
+      line-height: 1.45;
     }
   }
 
   .social-grid {
     display: grid;
-    gap: 0.75rem;
-    padding: 0 1.5rem 1rem;
+    gap: var(--space-3);
+    padding: 0 var(--space-6) var(--space-4);
 
     .social-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      padding: 0.7rem;
-      border-radius: var(--pencil-radius);
-      border: 1px solid black;
-      border-radius: 10px;
+      gap: var(--space-2);
+      padding: 14px var(--space-5);
+      border-radius: 0;
+      border: 1px solid var(--color-text);
       background: var(--color-bg);
-      font-weight: 500;
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
       color: var(--color-text);
-      font-family: var(--font-sans);
       cursor: pointer;
-      transition: var(--pencil-transition);
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+        transform 0.2s ease;
       width: 100%;
 
       i {
@@ -276,7 +339,13 @@ const handleRegister = async (values: FormData) => {
       }
 
       &:hover {
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        background: var(--color-text);
+        color: var(--color-bg);
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
       }
     }
   }
@@ -284,8 +353,12 @@ const handleRegister = async (values: FormData) => {
   .divider {
     text-align: center;
     color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-    margin: 0.5rem 1.5rem 1.5rem;
+    font-size: 10px;
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: var(--space-2) var(--space-6) var(--space-6);
     position: relative;
 
     &::before {
@@ -302,22 +375,79 @@ const handleRegister = async (values: FormData) => {
     span {
       position: relative;
       background: var(--color-bg);
-      padding: 0 0.75rem;
+      padding: 0 var(--space-3);
       z-index: 2;
-      border-radius: 0;
-      border: none;
     }
   }
 
   .form-content {
     display: grid;
-    gap: 1rem;
-    padding: 0 1.5rem 1.5rem;
+    gap: var(--space-4);
+    padding: 0 var(--space-6) var(--space-6);
+
+    :deep(.input-group) {
+      label {
+        font-family: var(--font-sans);
+        font-size: var(--font-size-sm);
+        color: var(--color-text);
+      }
+
+      input,
+      select {
+        border-radius: 0;
+        border: 1px solid var(--color-border);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: var(--color-text);
+          box-shadow: 0 0 0 1px var(--color-text);
+        }
+      }
+
+      .pass-wrapper input {
+        border-radius: 0;
+      }
+    }
+
+    :deep(.input-group--invalid) {
+      input,
+      select {
+        border-color: var(--color-error);
+
+        &:focus {
+          border-color: var(--color-error);
+          box-shadow: 0 0 0 1px var(--color-error);
+        }
+      }
+    }
+
+    :deep(.auth-field-full) {
+      width: 100%;
+
+      input,
+      select {
+        width: 100%;
+        min-height: 48px;
+        box-sizing: border-box;
+      }
+
+      .pass-wrapper {
+        width: 100%;
+
+        input {
+          width: 100%;
+          min-height: 48px;
+        }
+      }
+    }
 
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 1rem;
+      gap: var(--space-4);
 
       @media (max-width: 780px) {
         grid-template-columns: 1fr;
@@ -327,57 +457,82 @@ const handleRegister = async (values: FormData) => {
     .personal-info-box {
       display: flex;
       flex-direction: column;
-      gap: 1.25rem;
-      background: transparent;
-      border: none;
+      gap: var(--space-5);
       padding: 0;
-      margin-top: 0.5rem;
+      margin-top: var(--space-2);
 
       .box-title {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
+        gap: var(--space-2);
+        margin-bottom: var(--space-2);
         border-bottom: 2px solid var(--color-text);
-        padding-bottom: 0.5rem;
+        padding-bottom: var(--space-3);
 
         i.icon-user {
-          font-size: 1.2rem;
+          font-size: 1.125rem;
           color: var(--color-text);
         }
 
         h3 {
           margin: 0;
-          font-size: 1.1rem;
+          font-size: 1rem;
           font-family: var(--font-display);
           font-weight: 700;
           text-transform: uppercase;
           color: var(--color-text);
-          letter-spacing: -0.5px;
+          letter-spacing: 1px;
         }
       }
     }
 
     .terms-check {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.55rem;
       color: var(--color-text-muted);
       font-size: var(--font-size-sm);
-      margin-top: 1rem;
+      font-family: var(--font-sans);
+      margin-top: var(--space-4);
+      line-height: 1.5;
 
-      input[type="checkbox"] {
+      &__field-label {
+        display: block;
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--space-2);
+        cursor: pointer;
+      }
+
+      &__legal {
+        flex: 1;
+        cursor: pointer;
+        color: var(--color-text-muted);
+        line-height: 1.5;
+      }
+
+      &__row {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-2);
+      }
+
+      &--invalid .terms-check__row {
+        padding: var(--space-2);
+        border: 1px solid var(--color-error);
+      }
+
+      input[type='checkbox'] {
         margin-top: 0.2rem;
         accent-color: var(--color-primary);
-        border: var(--pencil-border);
-        border-radius: 0;
+        width: 1rem;
+        height: 1rem;
+        flex-shrink: 0;
       }
 
       a {
         color: var(--color-primary);
         text-decoration: none;
         border-bottom: 1px solid transparent;
-        transition: var(--pencil-transition);
+        transition: border-color 0.2s ease, color 0.2s ease;
 
         &:hover {
           border-bottom-color: var(--color-primary);
@@ -387,23 +542,34 @@ const handleRegister = async (values: FormData) => {
 
     .submit-btn {
       width: 100%;
-      margin-top: 1rem;
-      padding: 1rem;
-      border-radius: var(--pencil-radius);
-      border: 1px solid var(--color-text);
-      background: var(--color-text);
-      color: var(--color-bg);
-      font-weight: 600;
-      font-size: 1rem;
+      margin-top: var(--space-4);
+      padding: 16px var(--space-6);
+      border-radius: 0;
+      border: 1px solid var(--color-primary);
+      background: var(--color-primary);
+      color: white;
       font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
       cursor: pointer;
-      transition: var(--pencil-transition);
+      transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 
-      &:hover {
-        background: var(--color-bg);
-        color: var(--color-text);
+      &:hover:not(:disabled) {
+        background: var(--color-text);
+        border-color: var(--color-text);
+        transform: translateY(-2px);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
       }
     }
   }
@@ -412,19 +578,21 @@ const handleRegister = async (values: FormData) => {
     display: flex;
     justify-content: center;
     align-items: center;
-    border-top: var(--pencil-border-light);
-    padding: 1.5rem;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-6);
     font-size: var(--font-size-sm);
+    font-family: var(--font-sans);
     color: var(--color-text-muted);
-    margin-top: 0;
 
     a {
       color: var(--color-text);
-      font-weight: 600;
+      font-weight: var(--font-weight-semibold);
       text-decoration: none;
-      margin-left: 0.5rem;
+      margin-left: var(--space-1);
       border-bottom: 1px solid var(--color-text);
-      transition: var(--pencil-transition);
+      transition: color 0.2s ease, border-color 0.2s ease;
 
       &:hover {
         color: var(--color-primary);
@@ -435,14 +603,9 @@ const handleRegister = async (values: FormData) => {
 }
 
 .error-message {
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-}
-
-.error-message {
-  color: #dc2626;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-sans);
+  margin-bottom: var(--space-2);
 }
 </style>

@@ -155,7 +155,14 @@ const handleGrade = async (submissionId: string) => {
 
 <style lang="scss" scoped>
 .task-detail {
-    padding-top: 60px;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 48px 60px 48px;
+
+    @media (max-width: 768px) {
+        padding: 0 24px 40px 24px;
+    }
+
     padding-bottom: 80px;
     animation: fadeIn 0.4s ease-out;
 

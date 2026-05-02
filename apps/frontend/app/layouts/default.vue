@@ -2,7 +2,6 @@
 .layout
   HeaderCompetition
   main.layout__main
-    .layout__content
       slot
 </template>
 

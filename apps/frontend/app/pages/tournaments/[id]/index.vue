@@ -204,9 +204,15 @@ const shuffleTeams = () => {
 
 <style lang="scss" scoped>
 .tournament-detail {
-    padding-top: 60px;
     min-height: 80vh;
     animation: fadeIn 0.4s ease-out;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 60px 48px 60px 48px;
+
+    @media (max-width: 768px) {
+        padding: 0 24px 40px 24px;
+    }
 
     &__nav {
         margin-bottom: 48px;

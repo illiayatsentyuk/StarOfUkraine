@@ -9,6 +9,7 @@
   --color-bg: #FFFFFF;
   --color-border: #E8E8E8;
   --color-surface: #FAFAFA;
+  --color-error: #ef4444;
 
   /* Typography */
   --font-sans: 'Inter', sans-serif;
