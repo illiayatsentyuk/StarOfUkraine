@@ -34,7 +34,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiURL: process.env.API_URL || 'http://localhost:3000',
+      apiURL: process.env.API_URL || 'https://starofukraine.onrender.com',
       devAdminEmail: process.env.DEV_ADMIN_EMAIL,
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
