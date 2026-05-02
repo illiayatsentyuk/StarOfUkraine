@@ -72,7 +72,7 @@ section.tournament-detail
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
-    TeamsCreateTeamModal(
+    CreateTeamModal(
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
