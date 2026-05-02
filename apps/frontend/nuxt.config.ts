@@ -45,7 +45,7 @@ export default defineNuxtConfig({
       },
     },
     optimizeDeps: {
-      include: ['socket.io-client'],
+      include: ['socket.io-client', '@vueuse/core', 'vue-toastification', 'axios', 'vue-draggable-next'],
     },
   },
   components: [
