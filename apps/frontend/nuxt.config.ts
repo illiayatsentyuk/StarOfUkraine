@@ -3,6 +3,10 @@ export default defineNuxtConfig({
   srcDir: 'app/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  nitro: {
+    // Vercel sets VERCEL=1 during CI builds; Nitro emits the correct serverless bundle.
+    preset: process.env.VERCEL ? 'vercel' : undefined,
+  },
   modules: [
     '@nuxt/image',
     '@nuxt/fonts',
