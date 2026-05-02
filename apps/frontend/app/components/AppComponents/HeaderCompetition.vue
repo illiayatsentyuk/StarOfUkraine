@@ -37,7 +37,8 @@ header.header-competition
         .auth-section
             template(v-if="loginStore.user")
                 .user-info
-                    span.user-name {{ loginStore.user.name || loginStore.user.email }}
+                    NuxtLink.user-name-link(to="/profile")
+                        span.user-name {{ loginStore.user.name || loginStore.user.email }}
                     Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" label="Вийти" text)
             template(v-else)
                 NuxtLink(to="/auth").login-btn(icon="pi pi-google" label="Увійти" severity="secondary" style="text-decoration: none; color: inherit;") Увійти
@@ -89,11 +90,33 @@ CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
         gap: 12px;
     }
 
+    .user-name-link {
+        text-decoration: none;
+        color: inherit;
+        max-width: 200px;
+        border-radius: var(--radius-sm);
+        transition: color 0.15s ease, opacity 0.15s ease;
+
+        &:hover .user-name {
+            color: var(--color-primary);
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 2px;
+        }
+    }
+
     .user-name {
         font-family: var(--font-sans);
         font-size: 13px;
         font-weight: 500;
         color: var(--color-text);
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: color 0.15s ease;
     }
 }
 
