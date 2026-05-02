@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Team } from '~/types/teams.interface'
-import { useToast } from "vue-toastification";
 import { useApi } from '~/composables/useApi';
 
 
@@ -17,7 +16,7 @@ type CreateTeamPayload = {
 }
 
 export const useTeamsStore = defineStore('teams', () => {
-    const toast = useToast();
+    const toast = useServerSafeToast()
     const teams = ref<Team[]>([])
     const page = ref(1)
     const totalPages = ref(0)

@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { useToast } from 'vue-toastification'
 
 export interface TournamentTask {
     id: string
@@ -23,7 +22,7 @@ export interface TaskSubmission {
 }
 
 export const useTasksStore = defineStore('tasks', () => {
-    const toast = useToast()
+    const toast = useServerSafeToast()
     const loading = ref(false)
     const error = ref<string | null>(null)
     const tasks = ref<TournamentTask[]>([])

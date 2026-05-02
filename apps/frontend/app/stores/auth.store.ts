@@ -1,12 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useApi } from '~/composables/useApi'
-import { useToast } from "vue-toastification";
 import type { Form } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
-    const toast = useToast()
+    const toast = useServerSafeToast()
     const user = ref<any>(null)
     const authenticated = ref(false)
     const isAdmin = ref(false)

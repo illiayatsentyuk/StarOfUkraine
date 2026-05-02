@@ -1,14 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
-import { useToast } from 'vue-toastification'
 import { useApi } from '~/composables/useApi'
 import type { Tournament } from '~/types'
 
 const LIMIT = 5
 
 export const useTournamentsStore = defineStore('tournaments', () => {
-    const toast = useToast()
+    const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
