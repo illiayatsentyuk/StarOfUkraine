@@ -15,7 +15,7 @@ section.tournament-detail
             .status-badge(v-if="tournamentStatus" :style="{ backgroundColor: tournamentStatus.color }") {{ tournamentStatus.label }}
             h1.title {{ tournament.name }}
             .tournament-detail__hero__actions
-                Button.home-btn.active-tab( type="button" label="Опис турніру")
+                //- Button.home-btn.active-tab( type="button" label="Опис турніру")
                 NuxtLink(:to="`/tournaments/${route.params.id}/tasks`" style="text-decoration: none;")
                     Button.task-btn(type="button" label="Завдання")
         
@@ -51,7 +51,13 @@ section.tournament-detail
                                 p.team-card__meta(v-if="team.city")
                                     | Місто:
                                     span  {{ team.city }}
-                                Button.delete-btn(v-if="authStore.isAdmin" @click="teamsStore.deleteTeam(team.id)" type="button" label="Видалити команду" icon="pi pi-trash")
+                                Button.team-card__delete.delete-btn(
+                                    v-if="authStore.isAdmin"
+                                    type="button"
+                                    label="Видалити команду"
+                                    icon="pi pi-trash"
+                                    @click="teamsStore.deleteTeam(team.id)"
+                                )
 
                 TournamentTeamsTable(
                     v-model:teams="teams"
@@ -78,16 +84,21 @@ section.tournament-detail
                     .divider
                     
                     .sidebar__footer
-                        .status-info
+                        .status-info 
                             span.label ПОТОЧНИЙ СТАТУС
                             span.value(v-if="tournamentStatus" :style="{ color: tournamentStatus.color }") {{ tournamentStatus.label }}
-                        Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
-                        Button.create-btn(
-                            v-if="authStore.isAuthenticated" 
-                            @click="openTeamModal" 
-                            type="button" 
-                            label="Створити команду" 
+                        Button.sidebar__delete.delete-btn(
+                            v-if="authStore.isAdmin"
+                            type="button"
+                            label="Видалити турнір"
+                            @click="handleDelete"
+                        )
+                        Button.sidebar__create.create-btn(
+                            v-if="authStore.isAuthenticated"
+                            type="button"
+                            label="Створити команду"
                             icon="pi pi-plus"
+                            @click="openTeamModal"
                             :disabled="!isRegistrationActive && !authStore.isAdmin"
                         )
         
@@ -269,7 +280,9 @@ const shuffleTeams = () => {
             gap: 16px;
             margin-top: 40px;
 
-            button {
+            $hero-tab-ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+            :deep(.home-btn.p-button) {
                 min-width: 200px;
                 height: 52px;
                 border-radius: 0;
@@ -278,47 +291,80 @@ const shuffleTeams = () => {
                 font-size: 13px;
                 letter-spacing: 2px;
                 text-transform: uppercase;
-                transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                border: 1px solid var(--color-text);
+                transition:
+                    background 0.3s $hero-tab-ease,
+                    border-color 0.3s $hero-tab-ease,
+                    color 0.3s $hero-tab-ease,
+                    transform 0.3s $hero-tab-ease,
+                    box-shadow 0.3s $hero-tab-ease;
                 cursor: pointer;
-                display: flex;
+                display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 gap: 12px;
+                background: transparent !important;
+                border: 1px solid var(--color-text) !important;
+                color: var(--color-text) !important;
 
-                &.home-btn {
-                    background: transparent;
-                    color: var(--color-text);
-                    opacity: 1;
-
-                    &:hover {
-                        background: var(--color-text);
-                        color: white;
-                    }
-                    
-                    &.active-tab {
-                        background: var(--color-text);
-                        color: white;
-                        cursor: default;
-                    }
+                &:not(:disabled):hover {
+                    background: var(--color-text) !important;
+                    border-color: var(--color-text) !important;
+                    color: #fff !important;
                 }
 
+                &.active-tab {
+                    background: var(--color-text) !important;
+                    border-color: var(--color-text) !important;
+                    color: #fff !important;
+                    cursor: default;
+                }
 
-                &.task-btn {
-                    background: var(--color-text);
-                    border-color: var(--color-text);
-                    color: white;
+                &.active-tab:not(:disabled):hover {
+                    background: var(--color-text) !important;
+                    border-color: var(--color-text) !important;
+                    color: #fff !important;
+                }
+            }
 
-                    &:hover {
-                        background: var(--color-primary);
-                        border-color: var(--color-primary);
-                        transform: translateY(-2px);
-                        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-                    }
+            :deep(.task-btn.p-button) {
+                min-width: 200px;
+                height: 52px;
+                border-radius: 0;
+                font-family: var(--font-display);
+                font-weight: 700;
+                font-size: 13px;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                transition:
+                    background 0.3s $hero-tab-ease,
+                    border-color 0.3s $hero-tab-ease,
+                    color 0.3s $hero-tab-ease,
+                    transform 0.3s $hero-tab-ease,
+                    box-shadow 0.3s $hero-tab-ease;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                background: var(--color-text) !important;
+                border: 1px solid var(--color-text) !important;
+                color: #fff !important;
 
-                    &:active {
-                        transform: translateY(0);
-                    }
+                &:not(:disabled):hover {
+                    background: var(--color-primary) !important;
+                    border-color: var(--color-primary) !important;
+                    color: #fff !important;
+                    transform: translateY(-2px);
+                    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+                }
+
+                &:not(:disabled):active {
+                    transform: translateY(0);
+                }
+
+                &:not(:disabled):hover .p-button-icon,
+                &:not(:disabled):hover .p-button-icon .pi {
+                    color: #fff !important;
                 }
             }
         }
@@ -417,6 +463,42 @@ const shuffleTeams = () => {
             margin-left: 6px;
         }
     }
+
+    :deep(.team-card__delete.p-button) {
+        margin-top: var(--space-4);
+        width: 100%;
+        justify-content: center;
+        gap: var(--space-2);
+        background: transparent;
+        border: 1px solid var(--color-error);
+        color: var(--color-error);
+        font-family: var(--font-display);
+        font-size: 12px;
+        font-weight: 600;
+        padding: 10px var(--space-3);
+        border-radius: 0;
+        letter-spacing: 0.04em;
+        transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+
+        &:not(:disabled):hover {
+            background: var(--color-error) !important;
+            border-color: var(--color-error) !important;
+            color: #fff !important;
+        }
+
+        &:not(:disabled):hover .p-button-icon,
+        &:not(:disabled):hover .p-button-icon .pi {
+            color: #fff !important;
+        }
+
+        &:focus-visible {
+            outline: 2px solid var(--color-error);
+            outline-offset: 2px;
+        }
+    }
 }
 
 .sidebar {
@@ -467,7 +549,7 @@ const shuffleTeams = () => {
         .sidebar__footer {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: var(--space-4);
 
             .status-info {
                 display: flex;
@@ -487,54 +569,89 @@ const shuffleTeams = () => {
                     color: var(--color-text);
                 }
             }
+
+            :deep(.sidebar__delete.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: transparent;
+                border: 1px solid var(--color-error);
+                color: var(--color-error);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition:
+                    background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
+
+                &:not(:disabled):hover {
+                    background: var(--color-error) !important;
+                    border-color: var(--color-error) !important;
+                    color: #fff !important;
+                }
+
+                &:focus-visible {
+                    outline: 2px solid var(--color-error);
+                    outline-offset: 2px;
+                }
+            }
+
+            :deep(.sidebar__create.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: var(--color-primary);
+                border: 2px solid var(--color-primary);
+                color: #fff;
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 800;
+                padding: 18px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition:
+                    background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease,
+                    box-shadow 0.2s ease;
+
+                &:not(:disabled):hover {
+                    background: #000 !important;
+                    border-color: #000 !important;
+                    color: #fff !important;
+                    box-shadow: 0 8px 24px rgba(228, 35, 19, 0.2);
+                }
+
+                &:not(:disabled):hover .p-button-icon,
+                &:not(:disabled):hover .p-button-icon .pi {
+                    color: #fff !important;
+                }
+
+                &:not(:disabled):active {
+                    background: #000 !important;
+                    border-color: #000 !important;
+                }
+
+                &:disabled {
+                    opacity: 0.45;
+                    cursor: not-allowed;
+                    box-shadow: none;
+                }
+
+                &:focus-visible:not(:disabled) {
+                    outline: 2px solid var(--color-text);
+                    outline-offset: 2px;
+                }
+            }
         }
-    }
-}
-
-:deep(.delete-btn) {
-    margin-top: 16px;
-    width: 100%;
-    background: transparent;
-    border: 1px solid var(--color-error, #ef4444);
-    color: var(--color-error, #ef4444);
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 600;
-    padding: 12px;
-    border-radius: 0;
-    letter-spacing: 1px;
-    transition: all 0.2s ease;
-
-    &:hover {
-        background: var(--color-error, #ef4444);
-        color: white;
-    }
-}
-
-:deep(.create-btn) {
-    margin-top: 16px;
-    width: 100%;
-    background: var(--color-primary);
-    border: 2px solid var(--color-primary);
-    color: white;
-    font-family: var(--font-display);
-    font-size: 13px;
-    font-weight: 800;
-    padding: 18px;
-    border-radius: 0;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    transition: all 0.2s;
-    cursor: pointer;
-
-    &:hover:not(:disabled) {
-        background: #000000;
-        border-color: #000000;
-        box-shadow: 0 8px 24px rgba(228, 35, 19, 0.2);
-    }
-
-    &:active {
-        background: #000000;
     }
 }
 
