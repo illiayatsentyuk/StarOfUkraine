@@ -11,7 +11,7 @@ section.tournament-detail
 
         TournamentHero(
             :name="tournament.name"
-            :tournamentId="route.params.id as string"
+            :tournamentId="route.params.id"
             :status="tournamentStatus"
         )
 
