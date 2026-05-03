@@ -51,9 +51,22 @@ export default {
     roles: {
       user: "Користувач",
       admin: "Адміністратор",
-      jury: "Журі"
+      jury: "Журі",
+      admin_only: "Тільки адміністратори можуть підтверджувати результати.",
+      cannot_verify: "Ще неможливо підтвердити"
     },
     change_photo: "Змінити фото"
+  },
+  footer: {
+    description: "Ідеальна платформа для легкої організації, управління та проведення змагальних турнірів.",
+    platform: "Платформа",
+    tournaments: "Турніри",
+    create_tournament: "Створити турнір",
+    about_us: "Про нас",
+    legal: "Юридична інформація",
+    privacy_policy: "Політика конфіденційності",
+    terms_of_use: "Умови використання",
+    rights_reserved: "© 2026 Star Of Ukraine. Всі права захищені."
   },
   privacy: {
     title: "Політика конфіденційності",
@@ -104,11 +117,49 @@ export default {
     no_tournaments: "Турнірів поки немає.",
     load_more: "ЗАВАНТАЖИТИ ЩЕ",
     loading: "ЗАВАНТАЖЕННЯ...",
-    status_registration_open: "РЕЄСТРАЦІЯ ВІДКРИТА",
-    status_draft: "ЧЕРНЕТКА",
-    status_open: "ВІДКРИТИЙ",
+    status: {
+      planned: "ПЛАНУЄТЬСЯ",
+      registration: "РЕЄСТРАЦІЯ ВІДКРИТА",
+      waiting: "ОЧІКУВАННЯ",
+      active: "ТРИВАЄ",
+      finished: "ЗАВЕРШЕНО"
+    },
+    teams: {
+      seed_title: "ПОСІВ КОМАНД",
+      list_title: "СПИСОК КОМАНД",
+      hint: "Перетягніть рядки, щоб змінити порядок. Натисніть «Згенерувати сітку» — сітка з’явиться нижче на сторінці.",
+      generate_btn: "Згенерувати сітку",
+      shuffle_btn: "Перемішати випадково",
+      columns: {
+        team: "Команда",
+        points: "Очки"
+      },
+      unnamed: "Без назви"
+    },
     details: {
       about: "ПРО ТУРНІР",
+      teams_title: "КОМАНДИ",
+      teams_hidden: "Список команд буде доступний після завершення реєстрації.",
+      teams_loading: "Завантаження команд...",
+      teams_empty: "Команди поки не додані.",
+      captain: "Капітан:",
+      city: "Місто:",
+      delete_team: "Видалити команду",
+      create_team: "Створити команду",
+      actions: {
+        description: "Опис турніру",
+        show_bracket: "Відкрити сітку",
+        hide_bracket: "Сховати сітку"
+      },
+      bracket: {
+        title: "СІТКА ТУРНІРУ",
+        sides_title: "СТОРОНИ КОМАНД У МАТЧАХ",
+        round: "Раунд",
+        match: "Матч",
+        auto: "Авто",
+        match_id_placeholder: "ID матчу",
+        calculate_result: "Розрахувати результат"
+      },
       stats: {
         rounds: "РАУНДІВ",
         team_size: "ГРАВЦІВ У КОМАНДІ",
@@ -123,11 +174,16 @@ export default {
       },
       admin: {
         title: "ПЕРЕВІРКА МАТЧУ (АДМІН)",
-        dota_placeholder: "Введіть Dota 2 Match ID (напр. 7600000000)",
+        info: "Вкажіть ID матчу з OpenDota для автоматичного розрахунку результатів та просування по сітці.",
+        dota_placeholder: "Наприклад: 7678123456",
+        loading_data: "ЗАВАНТАЖЕННЯ ДАНИХ...",
+        enter_match_id: "ВВЕДІТЬ ID МАТЧУ ДЛЯ ПЕРЕВІРКИ",
+        cancel: "СКАСУВАТИ",
+        confirm: "ПІДТВЕРДИТИ РЕЗУЛЬТАТ",
         find_btn: "Знайти",
         searching: "Шукаємо...",
-        winner: "Переможець",
-        duration: "Тривалість",
+        winner: "ПЕРЕМОЖЕЦЬ",
+        duration: "ТРИВАЛІСТЬ",
         match_not_found: "Матч не знайдено або помилка API",
         radiant_win: "Перемога Radiant",
         dire_win: "Перемога Dire",

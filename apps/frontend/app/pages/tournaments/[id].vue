@@ -12,11 +12,11 @@ section.tournament-detail
                 span.text {{ $t('navigation.back_to_list') }}
 
         header.tournament-detail__hero
-            .status-badge(v-if="tournamentStatus" :style="{ backgroundColor: tournamentStatus.color }") {{ tournamentStatus.label }}
+            .status-badge(v-if="tournamentStatus" :style="{ backgroundColor: tournamentStatus.color }") {{ $t('tournaments.status.' + tournamentStatus.code) }}
             h1.title {{ tournament.name }}
             .tournament-detail__hero__actions
-                Button.home-btn( @click="isOpenBracket = false" type="button" label="Опис турніру")
-                Button.bracket-btn( @click="isOpenBracket = !isOpenBracket" type="button" :label="isOpenBracket ? 'Сховати сітку' : 'Відкрити сітку'")
+                Button.home-btn( @click="isOpenBracket = false" type="button" :label="$t('tournaments.details.actions.description')")
+                Button.bracket-btn( @click="isOpenBracket = !isOpenBracket" type="button" :label="isOpenBracket ? $t('tournaments.details.actions.hide_bracket') : $t('tournaments.details.actions.show_bracket')")
         
         .tournament-detail__layout(v-if="!isOpenBracket")
             main.main-content
@@ -26,7 +26,7 @@ section.tournament-detail
                 
                 .content-section.stats-section
                     .stat-box
-                        span.label РАУНДІВ
+                        span.label {{ $t('tournaments.details.stats.rounds') }}
                         span.value {{ roundsStatDisplay }}
                     .stat-box
                         span.label {{ $t('tournaments.details.stats.team_size') }}
@@ -36,21 +36,21 @@ section.tournament-detail
                         span.value {{ tournament.maxTeams }}
 
                 .content-section
-                    h3.section-label КОМАНДИ
-                    p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
+                    h3.section-label {{ $t('tournaments.details.teams_title') }}
+                    p.description(v-if="shouldHideTeams") {{ $t('tournaments.details.teams_hidden') }}
                     template(v-else)
-                        p.description(v-if="teamsStore.loading") Завантаження команд...
-                        p.description(v-else-if="!teams.length") Команди поки не додані.
+                        p.description(v-if="teamsStore.loading") {{ $t('tournaments.details.teams_loading') }}
+                        p.description(v-else-if="!teams.length") {{ $t('tournaments.details.teams_empty') }}
                         .teams-grid(v-else)
                             .team-card(v-for="team in teams" :key="team.id")
                                 h4.team-card__name {{ team.name || team.teamName }}
                                 p.team-card__meta
-                                    | Капітан:
+                                    | {{ $t('tournaments.details.captain') }}
                                     span  {{ team.captainName }}
                                 p.team-card__meta(v-if="team.city")
-                                    | Місто:
+                                    | {{ $t('tournaments.details.city') }}
                                     span  {{ team.city }}
-                                Button.delete-btn(v-if="authStore.isAdmin" @click="teamsStore.deleteTeam(team.id)" type="button" label="Видалити команду" icon="pi pi-trash")
+                                Button.delete-btn(v-if="authStore.isAdmin" @click="teamsStore.deleteTeam(team.id)" type="button" :label="$t('tournaments.details.delete_team')" icon="pi pi-trash")
 
                 TournamentTeamsTable(
                     v-model:teams="teams"
@@ -81,14 +81,14 @@ section.tournament-detail
                     
                     .sidebar__footer
                         .status-info
-                            span.label ПОТОЧНИЙ СТАТУС
-                            span.value(v-if="tournamentStatus" :style="{ color: tournamentStatus.color }") {{ tournamentStatus.label }}
-                        Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" label="Видалити турнір")
+                            span.label {{ $t('tournaments.details.dates.current_status') }}
+                            span.value(v-if="tournamentStatus" :style="{ color: tournamentStatus.color }") {{ $t('tournaments.status.' + tournamentStatus.code) }}
+                        Button.delete-btn(v-if="authStore.isAdmin" @click="handleDelete" type="button" :label="$t('tournaments.details.delete_tournament')")
                         Button.create-btn(
                             v-if="authStore.isAuthenticated" 
                             @click="openTeamModal" 
                             type="button" 
-                            label="Створити команду" 
+                            :label="$t('tournaments.details.create_team')" 
                             icon="pi pi-plus"
                             :disabled="!isRegistrationActive && !authStore.isAdmin"
                         )
@@ -128,13 +128,13 @@ section.tournament-detail
         :pt="{ mask: { style: 'backdrop-filter: blur(8px); background: rgba(0,0,0,0.4)' } }"
     )
         .dota-modal-content
-            p.info Вкажіть ID матчу з OpenDota для автоматичного розрахунку результатів та просування по сітці.
+            p.info {{ $t('tournaments.admin.info') }}
             
             .field-group
                 label.field-label MATCH ID
                 InputText#dotaMatchId(
                     v-model="matchIdInput"
-                    placeholder="Наприклад: 7678123456"
+                    :placeholder="$t('tournaments.admin.dota_placeholder')"
                     class="dota-input"
                     :disabled="isMatching"
                     @keyup.enter="handleMatchConfirm"
@@ -144,7 +144,7 @@ section.tournament-detail
                 transition(name="fade" mode="out-in")
                     .dota-loading(v-if="bracketStore.loading")
                         i.pi.pi-spin.pi-spinner
-                        span ЗАВАНТАЖЕННЯ ДАНИХ...
+                        span {{ $t('tournaments.admin.loading_data') }}
                     
                     .dota-preview(v-else-if="bracketStore.matchData")
                         .preview-score
@@ -159,16 +159,16 @@ section.tournament-detail
                                 span.team-name DIRE
                         
                         .preview-meta
-                            span.meta-item ТРИВАЛІСТЬ: {{ Math.floor(bracketStore.matchData.duration / 60) }}:{{ (bracketStore.matchData.duration % 60).toString().padStart(2, '0') }}
-                            span.meta-item.winner ПЕРЕМОЖЕЦЬ: {{ bracketStore.matchData.radiant_win ? 'RADIANT' : 'DIRE' }}
+                            span.meta-item {{ $t('tournaments.admin.duration') }}: {{ Math.floor(bracketStore.matchData.duration / 60) }}:{{ (bracketStore.matchData.duration % 60).toString().padStart(2, '0') }}
+                            span.meta-item.winner {{ $t('tournaments.admin.winner') }}: {{ bracketStore.matchData.radiant_win ? 'RADIANT' : 'DIRE' }}
                     
                     .dota-empty(v-else)
-                        span ВВЕДІТЬ ID МАТЧУ ДЛЯ ПЕРЕВІРКИ
+                        span {{ $t('tournaments.admin.enter_match_id') }}
             
             .footer-actions
-                Button.cancel-btn(label="СКАСУВАТИ" @click="isMatchModalOpen = false" :disabled="isMatching")
+                Button.cancel-btn(:label="$t('tournaments.admin.cancel')" @click="isMatchModalOpen = false" :disabled="isMatching")
                 Button.confirm-btn(
-                    label="ПІДТВЕРДИТИ РЕЗУЛЬТАТ" 
+                    :label="$t('tournaments.admin.confirm')" 
                     @click="handleMatchConfirm" 
                     :loading="isMatching"
                     :disabled="!matchIdInput || !bracketStore.matchData"

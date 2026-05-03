@@ -11,15 +11,15 @@ const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
 const filters = [
-    { key: 'all', label: 'Всі' },
-    { key: 'byDate', label: 'За датою' },
-    { key: 'byName', label: 'За назвою' },
-    { key: 'byMaxTeams', label: 'К-ть команд' },
-    { key: 'byTeamSizeMin', label: 'Мін. склад' },
-    { key: 'byTeamSizeMax', label: 'Макс. склад' },
-    { key: 'byRounds', label: 'Раунди' },
-    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
-    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
+    { key: 'all', label: 'tournaments.filters.all' },
+    { key: 'byDate', label: 'tournaments.filters.byDate' },
+    { key: 'byName', label: 'tournaments.filters.byName' },
+    { key: 'byMaxTeams', label: 'tournaments.filters.byMaxTeams' },
+    { key: 'byTeamSizeMin', label: 'tournaments.filters.byTeamSizeMin' },
+    { key: 'byTeamSizeMax', label: 'tournaments.filters.byTeamSizeMax' },
+    { key: 'byRounds', label: 'tournaments.filters.byRounds' },
+    { key: 'byRegistrationStart', label: 'tournaments.filters.byRegistrationStart' },
+    { key: 'byRegistrationEnd', label: 'tournaments.filters.byRegistrationEnd' },
 ]
 
 const formatDate = (dateString: string) => {
@@ -88,7 +88,7 @@ section.tournaments-list
             :to="`/tournaments/${tournament.id}`"
         )
             .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
-                span {{ getTournamentStatus(tournament).label }}
+                span {{ $t('tournaments.status.' + getTournamentStatus(tournament).code) }}
 
             h3.tournament-card__title {{ tournament.name }}
 

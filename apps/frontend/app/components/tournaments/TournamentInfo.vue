@@ -6,7 +6,7 @@ section.tournament-info
     template(v-else)
         .tournament-info__header
             h1.tournament-info__title {{ $t('tournaments.listing_title') }}
-            .status-badge(v-if="store.tournaments.length") {{ $t('tournaments.status_registration_open') }}
+            .status-badge(v-if="store.tournaments.length") {{ $t('tournaments.status.registration') }}
         
         .tournament-info__grid(v-if="store.tournaments.length")
             .tournament-card(v-for="tournament in store.tournaments" :key="tournament.id || tournament.name")

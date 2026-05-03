@@ -1,20 +1,20 @@
 <template lang="pug">
 .content-section.tournament-teams-panel(v-if="!shouldHideTeams && teams && teams.length")
-    h3.section-label(v-if="isAdmin") ПОСІВ КОМАНД
-    h3.section-label(v-else) СПИСОК КОМАНД
+    h3.section-label(v-if="isAdmin") {{ $t('tournaments.teams.seed_title') }}
+    h3.section-label(v-else) {{ $t('tournaments.teams.list_title') }}
     
-    p.tournament-teams-panel__hint(v-if="isAdmin") Перетягніть рядки, щоб змінити порядок. Натисніть «Згенерувати сітку» — сітка з’явиться нижче на сторінці.
+    p.tournament-teams-panel__hint(v-if="isAdmin") {{ $t('tournaments.teams.hint') }}
 
     .tournament-teams-panel__card
         .tournament-teams-panel__actions(v-if="isAdmin")
             button.tournament-teams-panel__btn.tournament-teams-panel__btn--primary(
                 type="button"
                 @click="$emit('generate')"
-            ) Згенерувати сітку
+            ) {{ $t('tournaments.teams.generate_btn') }}
             button.tournament-teams-panel__btn(
                 type="button"
                 @click="$emit('shuffle')"
-            ) Перемішати випадково
+            ) {{ $t('tournaments.teams.shuffle_btn') }}
 
         ClientOnly
             .tournament-teams-panel__table-wrap
@@ -23,8 +23,8 @@
                         tr
                             th.tournament-teams-panel__th.tournament-teams-panel__th--drag(v-if="isAdmin")
                             th.tournament-teams-panel__th #
-                            th.tournament-teams-panel__th Команда
-                            th.tournament-teams-panel__th Очки
+                            th.tournament-teams-panel__th {{ $t('tournaments.teams.columns.team') }}
+                            th.tournament-teams-panel__th {{ $t('tournaments.teams.columns.points') }}
 
                     VueDraggableNext(
                         v-model="internalTeams"
@@ -39,7 +39,7 @@
                         )
                             td.drag-handle(v-if="isAdmin") ⋮⋮
                             td.tournament-teams-panel__num {{ index + 1 }}
-                            td.tournament-teams-panel__team {{ element.name || element.teamName || 'Без назви' }}
+                            td.tournament-teams-panel__team {{ element.name || element.teamName || $t('tournaments.teams.unnamed') }}
                             td.tournament-teams-panel__pts {{ element.points != null ? element.points : '—' }}
 </template>
 

@@ -4,6 +4,7 @@
   main.layout__main
     .layout__content
       slot
+  AppFooter
 </template>
 
 <style scoped lang="scss">

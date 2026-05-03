@@ -18,45 +18,44 @@ const currentLocale = computed({
 
 <template lang="pug">
 .language-switcher
-  Select(
-    v-model="currentLocale"
-    :options="availableLocales"
-    optionLabel="name"
-    placeholder="Select Language"
-    class="w-full md:w-40"
-  )
-    template(#value="slotProps")
-      .flex.align-items-center(v-if="slotProps.value")
-        i.pi.pi-language.mr-2
-        span {{ slotProps.value.name }}
-    template(#option="slotProps")
-      .flex.align-items-center
-        span {{ slotProps.option.name }}
+  button.lang-btn(
+    v-for="l in availableLocales" 
+    :key="l.code"
+    :class="{ active: currentLocale?.code === l.code }"
+    @click="currentLocale = l"
+  ) {{ l.code.toUpperCase() }}
 </template>
 
 <style scoped lang="scss">
 .language-switcher {
   display: flex;
   align-items: center;
+  gap: 4px;
+  background: var(--color-surface, #f5f5f5);
+  border: 1px solid var(--color-border);
+  padding: 4px;
+  border-radius: var(--radius-sm, 6px);
 
-  :deep(.p-select) {
+  .lang-btn {
     background: transparent;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    
-    &:hover {
-      border-color: var(--color-primary);
-    }
+    border: none;
+    padding: 4px 8px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    border-radius: var(--radius-sm, 4px);
+    cursor: pointer;
+    transition: all 0.2s ease;
 
-    .p-select-label {
-      font-size: 13px;
-      font-family: var(--font-sans);
-      padding: 8px 12px;
+    &:hover {
       color: var(--color-text);
     }
-    
-    .p-select-dropdown {
-       width: 2rem;
+
+    &.active {
+      background: var(--color-bg, #ffffff);
+      color: var(--color-text);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
   }
 }

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useLoginStore } from '../../stores/auth.store'
 
+const localePath = useLocalePath()
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
 const isOpen = ref(false)
@@ -25,9 +26,13 @@ function closeModal(){
 header.header-competition
     .header-competition__left
         .header-competition__logo
-         NuxtLink(to="/" style="text-decoration: none; color: inherit;") STAR OF UKRAINE
+         NuxtLink(:to="localePath('/')" style="text-decoration: none; color: inherit;") STAR OF UKRAINE
     
     .header-competition__center
+        .header-competition__links
+            NuxtLink(:to="localePath('/tournaments')" class="nav-link") {{ $t('navigation.tournaments') }}
+            NuxtLink(:to="localePath('/about')" class="nav-link") {{ $t('navigation.about') }}
+            NuxtLink(:to="localePath('/privacy-policy')" class="nav-link") {{ $t('privacy.title') }}
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
@@ -37,10 +42,11 @@ header.header-competition
         .auth-section
             template(v-if="loginStore.user")
                 .user-info
-                    NuxtLink(to="/profile" style="text-decoration: none; color: inherit;").user-name {{ loginStore.user.name || loginStore.user.email }}
+                    i.pi.pi-user.user-icon
+                    NuxtLink(:to="localePath('/profile')" style="text-decoration: none; color: inherit;").user-name {{ loginStore.user.name || loginStore.user.email }}
                     Button.logout-btn(@click="loginStore.logout" type="button" icon="pi pi-sign-out" :label="$t('profile.logout')" text)
             template(v-else)
-                NuxtLink(to="/auth").login-btn(icon="pi pi-google" :label="$t('auth.login')" severity="secondary" style="text-decoration: none; color: inherit;") {{ $t('auth.login') }}
+                NuxtLink(:to="localePath('/auth')").login-btn(icon="pi pi-google" :label="$t('auth.login')" severity="secondary" style="text-decoration: none; color: inherit;") {{ $t('auth.login') }}
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
@@ -65,8 +71,33 @@ CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
 
     &__center {
         flex: 1;
-        max-width: 400px;
+        display: flex;
+        align-items: center;
+        gap: 32px;
         margin: 0 40px;
+    }
+
+    &__links {
+        display: flex;
+        gap: 24px;
+        
+        .nav-link {
+            font-family: var(--font-sans);
+            font-size: 14px;
+            color: var(--color-text-muted);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            white-space: nowrap;
+
+            &:hover {
+                color: var(--color-text);
+            }
+            
+            &.router-link-active {
+                color: var(--color-text);
+                font-weight: 500;
+            }
+        }
     }
 
     &__nav {
@@ -86,7 +117,12 @@ CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
     .user-info {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
+    }
+
+    .user-icon {
+        font-size: 16px;
+        color: var(--color-text-muted);
     }
 
     .user-name {

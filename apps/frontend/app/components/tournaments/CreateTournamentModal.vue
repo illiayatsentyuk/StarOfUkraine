@@ -1,4 +1,6 @@
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n'
+
 const props = defineProps<{
   isOpen: boolean
 }>()
@@ -8,6 +10,7 @@ const emit = defineEmits<{
 }>()
 
 const store = useTournamentsStore()
+const { t } = useI18n()
 
 const initialValues = {
     name: "",
@@ -38,7 +41,7 @@ async function onSubmit(values: any) {
         await store.addTournament(payload)
         emit("close")
     } catch (e) {
-        console.error("Виникла помилка під час створення турніру.", e)
+        console.error(t('modals.create.error_creating'), e)
     } finally {
         isLoading.value = false
     }
@@ -54,64 +57,64 @@ function closeModal() {
     .modal-overlay(@click="closeModal")
     .modal-content
         .modal-header
-            h2.modal-title НОВИЙ ТУРНІР
+            h2.modal-title {{ $t('modals.create.title') }}
             button.icon-btn(@click="closeModal" type="button")
                 i.pi.pi-times
         
         VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
             .form-group
-                label.form-label НАЗВА ТУРНІРУ *
+                label.form-label {{ $t('modals.create.name_label') }} *
                 VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву турніру" :class="{ 'is-invalid': errorMessage }")
+                    input.form-input(type="text" v-bind="field" :placeholder="$t('modals.create.name_placeholder')" :class="{ 'is-invalid': errorMessage }")
                     span.error-text(v-if="errorMessage") {{ errorMessage }}
             
             .form-group
-                label.form-label ОПИС ТА ПРАВИЛА
+                label.form-label {{ $t('modals.create.desc_label') }}
                 VeeField(name="description" v-slot="{ field }")
-                    textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
+                    textarea.form-input.form-textarea(v-bind="field" :placeholder="$t('modals.create.desc_placeholder')")
             
             .form-row
                 .form-group
-                    label.form-label ДАТА СТАРТУ *
+                    label.form-label {{ $t('modals.create.start_date') }} *
                     VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage }")
                         input.form-input(type="date" v-bind="field" :class="{ 'is-invalid': errorMessage }")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
-                    label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
+                    label.form-label {{ $t('modals.create.reg_start') }}
                     VeeField(name="registrationStart" v-slot="{ field }")
                         input.form-input(type="date" v-bind="field")
             
             .form-row
                 .form-group
-                    label.form-label КІЛЬКІСТЬ РАУНДІВ
+                    label.form-label {{ $t('modals.create.rounds_label') }}
                     VeeField(name="rounds" rules="numeric" v-slot="{ field, errorMessage }")
-                        input.form-input(type="number" v-bind="field" placeholder="6" :class="{ 'is-invalid': errorMessage }")
+                        input.form-input(type="number" v-bind="field" :placeholder="$t('modals.create.rounds_placeholder')" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label МАКС. КОМАНД
+                    label.form-label {{ $t('modals.create.max_teams_label') }}
                     VeeField(name="maxTeams" rules="numeric" v-slot="{ field, errorMessage }")
-                        input.form-input(type="number" v-bind="field" placeholder="16" :class="{ 'is-invalid': errorMessage }")
+                        input.form-input(type="number" v-bind="field" :placeholder="$t('modals.create.max_teams_placeholder')" :class="{ 'is-invalid': errorMessage }")
             
             .form-row
                 .form-group
-                    label.form-label МІН. ГРАВЦІВ
+                    label.form-label {{ $t('modals.create.min_players') }}
                     VeeField(name="teamSizeMin" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
                         input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label МАКС. ГРАВЦІВ
+                    label.form-label {{ $t('modals.create.max_players') }}
                     VeeField(name="teamSizeMax" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
                         input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
             
             .form-group
-                label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
+                label.form-label {{ $t('modals.create.reg_end') }}
                 VeeField(name="registrationEnd" v-slot="{ field }")
                     input.form-input(type="date" v-bind="field")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
                     input.form-checkbox(type="checkbox" v-bind="field" id="hideTeams" :value="true")
-                    label.form-label.checkbox-label(for="hideTeams") СХОВАТИ КОМАНДИ ДО КІНЦЯ РЕЄСТРАЦІЇ
+                    label.form-label.checkbox-label(for="hideTeams") {{ $t('modals.create.hide_teams') }}
             
-            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ ТУРНІР' }}
+            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? $t('modals.create.creating') : $t('modals.create.create_btn') }}
 </template>
 
 <style lang="scss" scoped>

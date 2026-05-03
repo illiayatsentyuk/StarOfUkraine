@@ -50,10 +50,21 @@ export default {
     logout: "Log Out",
     roles: {
       user: "User",
-      admin: "Administrator",
-      jury: "Jury"
+      admin_only: "Only administrators can verify match results.",
+      cannot_verify: "Cannot verify result yet"
     },
     change_photo: "Change Photo"
+  },
+  footer: {
+    description: "The ultimate platform for organizing, managing, and hosting competitive tournaments with ease.",
+    platform: "Platform",
+    tournaments: "Tournaments",
+    create_tournament: "Create Tournament",
+    about_us: "About Us",
+    legal: "Legal",
+    privacy_policy: "Privacy Policy",
+    terms_of_use: "Terms of Use",
+    rights_reserved: "© 2026 Star Of Ukraine. All rights reserved."
   },
   privacy: {
     title: "Privacy Policy",
@@ -104,11 +115,49 @@ export default {
     no_tournaments: "No tournaments yet.",
     load_more: "LOAD MORE",
     loading: "LOADING...",
-    status_registration_open: "REGISTRATION OPEN",
-    status_draft: "DRAFT",
-    status_open: "OPEN",
+    status: {
+      planned: "PLANNED",
+      registration: "REGISTRATION OPEN",
+      waiting: "WAITING",
+      active: "ACTIVE",
+      finished: "FINISHED"
+    },
+    teams: {
+      seed_title: "TEAM SEEDING",
+      list_title: "TEAM LIST",
+      hint: "Drag rows to reorder. Click 'Generate Bracket' — the bracket will appear below.",
+      generate_btn: "Generate Bracket",
+      shuffle_btn: "Shuffle Randomly",
+      columns: {
+        team: "Team",
+        points: "Points"
+      },
+      unnamed: "Unnamed"
+    },
     details: {
       about: "ABOUT TOURNAMENT",
+      teams_title: "TEAMS",
+      teams_hidden: "The list of teams will be available after registration ends.",
+      teams_loading: "Loading teams...",
+      teams_empty: "No teams added yet.",
+      captain: "Captain:",
+      city: "City:",
+      delete_team: "Delete Team",
+      create_team: "Create Team",
+      actions: {
+        description: "Tournament Description",
+        show_bracket: "Open Bracket",
+        hide_bracket: "Hide Bracket"
+      },
+      bracket: {
+        title: "TOURNAMENT BRACKET",
+        sides_title: "TEAM SIDES IN MATCHES",
+        round: "Round",
+        match: "Match",
+        auto: "Auto",
+        match_id_placeholder: "Match ID",
+        calculate_result: "Calculate Result"
+      },
       stats: {
         rounds: "ROUNDS",
         team_size: "PLAYERS PER TEAM",
@@ -123,11 +172,16 @@ export default {
       },
       admin: {
         title: "MATCH VERIFICATION (ADMIN)",
-        dota_placeholder: "Enter Dota 2 Match ID (e.g. 7600000000)",
+        info: "Provide a Match ID from OpenDota for automatic result calculation and bracket progression.",
+        dota_placeholder: "Example: 7678123456",
+        loading_data: "LOADING DATA...",
+        enter_match_id: "ENTER MATCH ID TO VERIFY",
+        cancel: "CANCEL",
+        confirm: "CONFIRM RESULT",
         find_btn: "Find",
         searching: "Searching...",
-        winner: "Winner",
-        duration: "Duration",
+        winner: "WINNER",
+        duration: "DURATION",
         match_not_found: "Match not found or API error",
         radiant_win: "Radiant Victory",
         dire_win: "Dire Victory",
