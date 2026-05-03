@@ -12,7 +12,9 @@ export const useLoginStore = defineStore('login', () => {
     const loading = ref(false)
 
     const loginByGoogle = () => {
-        window.location.href = `${config.public.apiURL}/auth/google/login`
+        if (typeof window !== 'undefined') {
+            window.location.href = `${config.public.apiURL}/auth/google/login`
+        }
     }
 
     const signupByEmail = async (userData: any) => {
@@ -31,7 +33,9 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
@@ -51,7 +55,9 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
@@ -86,7 +92,9 @@ export const useLoginStore = defineStore('login', () => {
             user.value = null
             isAdmin.value = false
             authenticated.value = false
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 

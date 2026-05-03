@@ -1,6 +1,6 @@
 <template lang="pug">
 section.tournament-detail
-    .loading-overlay(v-if="store.loading")
+    .loading-overlay(v-if="pending")
         Loader
 
     template(v-else-if="tournament")
@@ -11,15 +11,13 @@ section.tournament-detail
 
         TournamentHero(
             :name="tournament.name"
-            :tournamentId="route.params.id as string"
+            :tournamentId="tournamentId"
             :status="tournamentStatus"
         )
 
         .tournament-detail__layout
             main.main-content
-                .content-section
-                    h3.section-label ПРО ТУРНІР
-                    p.description {{ tournament.description }}
+                TournamentAbout(:description="tournament.description")
 
                 .content-section
                     TournamentStats(
@@ -29,25 +27,11 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-                .content-section
-                    h3.section-label КОМАНДИ
-                    p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
-                    template(v-else)
-                        p.description(v-if="teamsStore.loading") Завантаження команд...
-                        p.description(v-else-if="!teams.length") Команди поки не додані.
-                        .teams-grid(v-else)
-                            TeamCard(
-                                v-for="team in teams"
-                                :key="team.id"
-                                :team="team"
-                                :isAdmin="authStore.isAdmin"
-                                @delete="teamsStore.deleteTeam($event)"
-                            )
-
-                TournamentTeamsTable(
-                    v-model:teams="teams"
-                    :isAdmin="authStore.isAdmin"
+                TournamentTeamsSection(
+                    :teams="teams"
+                    :loadingTeams="loadingTeams"
                     :shouldHideTeams="shouldHideTeams"
+                    :isAdmin="authStore.isAdmin"
                     @shuffle="shuffleTeams"
                 )
 
@@ -57,12 +41,12 @@ section.tournament-detail
                 :isAdmin="authStore.isAdmin"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
-                @delete="handleDelete"
-                @createTeam="openTeamModal"
+                @delete="isDeleteModalOpen = true"
+                @createTeam="isTeamOpen = true"
             )
 
     .error-state(v-else)
-        p Турнір не знайдено.
+        p {{ fetchError ? 'Помилка завантаження' : 'Турнір не знайдено.' }}
         NuxtLink(to="/") Повернутися до списку
 
     DeleteModal(
@@ -72,7 +56,7 @@ section.tournament-detail
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
-    TeamsCreateTeamModal(
+    CreateTeamModal(
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
@@ -84,12 +68,21 @@ section.tournament-detail
 import { calculateTournamentStatus } from '~/utils/tournament-status'
 
 const route = useRoute()
-const store = useTournamentsStore()
+const tournamentStore = useTournamentsStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
+const api = useApi()
 
-const tournament = ref<any>(null)
+const tournamentId = computed(() => route.params.id as string)
+
+// SSR-safe tournament fetching
+const { data: tournament, pending, error: fetchError } = await useAsyncData(
+    `tournament-${tournamentId.value}`,
+    () => tournamentStore.fetchTournamentById(tournamentId.value)
+)
+
 const teams = ref<any[]>([])
+const loadingTeams = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 
@@ -99,7 +92,8 @@ const tournamentStatus = computed(() => {
 })
 
 const isRegistrationActive = computed(() => {
-    return tournamentStatus.value?.code === 'registration'
+    const code = tournamentStatus.value?.code
+    return code === 'registration' || code === 'planned'
 })
 
 const shouldHideTeams = computed(() => {
@@ -109,38 +103,33 @@ const shouldHideTeams = computed(() => {
     return new Date(tournament.value.registrationEnd) > new Date()
 })
 
-function openTeamModal() {
-    isTeamOpen.value = true
-}
-
-async function refreshTeams() {
+const refreshTeams = async () => {
     if (shouldHideTeams.value) return
+    loadingTeams.value = true
     try {
-        const teamsResponse = await teamsStore.loadFromDatabase(true)
-        teams.value = teamsResponse?.data || []
-    } catch {
-        console.error('Failed to refresh teams')
+        const response = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
+        if (response.data && Array.isArray(response.data)) {
+            teams.value = response.data.map((row: any) => ({
+                ...row.team,
+                points: row.totalScore
+            }))
+        }
+    } catch (err) {
+        console.error('Failed to fetch teams:', err)
+    } finally {
+        loadingTeams.value = false
     }
 }
 
-onMounted(async () => {
-    try {
-        tournament.value = await store.fetchTournamentById(route.params.id as string)
-        await refreshTeams()
-    } catch {
-        console.error('Failed to load tournament detail')
-    }
+onMounted(() => {
+    refreshTeams()
 })
 
-function handleDelete() {
-    isDeleteModalOpen.value = true
+const onTournamentDeleted = () => {
+    navigateTo('/')
 }
 
-async function onTournamentDeleted() {
-    await navigateTo('/')
-}
-
-function shuffleTeams() {
+const shuffleTeams = () => {
     teams.value = [...teams.value].sort(() => Math.random() - 0.5)
 }
 </script>
@@ -193,32 +182,7 @@ function shuffleTeams() {
 .main-content {
     .content-section {
         margin-bottom: 64px;
-
-        .description {
-            font-size: 22px;
-            line-height: 1.5;
-            color: var(--color-text);
-            margin: 24px 0 0 0;
-            max-width: 800px;
-            font-weight: 400;
-        }
     }
-}
-
-.section-label {
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    letter-spacing: 2px;
-    margin: 0;
-}
-
-.teams-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px;
-    margin-top: 24px;
 }
 
 .loading-overlay {

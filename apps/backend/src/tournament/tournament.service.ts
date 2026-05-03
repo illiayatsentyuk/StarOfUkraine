@@ -22,7 +22,7 @@ export class TournamentService {
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
-  ) {}
+  ) { }
 
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({
@@ -59,20 +59,20 @@ export class TournamentService {
 
     const where: Prisma.TournamentWhereInput | undefined = name
       ? {
-          OR: [
-            {
-              name: {
-                contains: name,
-                mode: Prisma.QueryMode.insensitive,
-              },
+        OR: [
+          {
+            name: {
+              contains: name,
+              mode: Prisma.QueryMode.insensitive,
             },
-            {
-              id: {
-                contains: name,
-              },
+          },
+          {
+            id: {
+              contains: name,
             },
-          ],
-        }
+          },
+        ],
+      }
       : undefined;
 
     const totalCount = await (where

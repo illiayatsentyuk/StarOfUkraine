@@ -5,17 +5,12 @@ section.tasks-page
             span.icon ←
             span.text НАЗАД ДО ТУРНІРУ
 
-    header.tasks-page__hero
-        .hero-content
-            h1.title ЗАВДАННЯ ТУРНІРУ
-            p.subtitle(v-if="!store.loading") Доступно завдань: {{ store.tasks.length }}
-        Button.create-btn(
-            v-if="authStore.isAdmin"
-            type="button"
-            label="СТВОРИТИ ЗАВДАННЯ"
-            icon="pi pi-plus"
-            @click="isModalOpen = true"
-        )
+    TasksHero(
+        :loading="store.loading"
+        :taskCount="store.tasks.length"
+        :isAdmin="authStore.isAdmin"
+        @create="isModalOpen = true"
+    )
 
     .loading-state(v-if="store.loading")
         i.pi.pi-spin.pi-spinner
@@ -90,52 +85,6 @@ async function handleCreateTask(payload: { title: string; description: string; p
             &:hover {
                 color: var(--color-primary);
                 transform: translateX(-4px);
-            }
-        }
-    }
-
-    &__hero {
-        margin-bottom: 48px;
-        border-bottom: 2px solid var(--color-text);
-        padding-bottom: 32px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-
-        .title {
-            font-family: var(--font-display);
-            font-size: 64px;
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -2px;
-            margin: 0 0 16px 0;
-            color: var(--color-text);
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            color: var(--color-text-muted);
-            margin: 0;
-            font-weight: 500;
-        }
-
-        :deep(.create-btn) {
-            background: var(--color-primary);
-            border: 1px solid var(--color-primary);
-            color: white;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 12px;
-            padding: 16px 32px;
-            border-radius: 0;
-            letter-spacing: 1.5px;
-            transition: all 0.2s;
-
-            &:hover {
-                background: var(--color-text);
-                border-color: var(--color-text);
-                transform: translateY(-2px);
             }
         }
     }

@@ -119,7 +119,7 @@ export const useTeamsStore = defineStore('teams', () => {
         }
     }
 
-    const fetchTeamById = async (teamId: string) => { 
+    const fetchTeamById = async (teamId: string) => {
         if (loading.value) return
         loading.value = true
         error.value = null
@@ -130,7 +130,7 @@ export const useTeamsStore = defineStore('teams', () => {
 
             if (!response.data) throw new Error('Не вдалося завантажити команду')
 
-            currentTeam.value = response.data as Team 
+            currentTeam.value = response.data as Team
 
             return currentTeam.value
         } catch (err: any) {
@@ -157,7 +157,9 @@ export const useTeamsStore = defineStore('teams', () => {
             throw err
         } finally {
             loading.value = false
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
     const clearSearchResults = () => {
