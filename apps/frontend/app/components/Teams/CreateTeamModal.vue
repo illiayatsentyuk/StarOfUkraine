@@ -1,3 +1,81 @@
+<template lang="pug">
+.modal-wrapper(v-if="isTeamOpen")
+    .modal-overlay(@click="closeModal")
+    .modal-content
+        .modal-header
+            h2.modal-title СТВОРИТИ КОМАНДУ
+            button.icon-btn(@click="closeModal" type="button")
+                i.pi.pi-times
+        
+        VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
+            .form-group
+                label.form-label НАЗВА КОМАНДИ *
+                VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
+                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву команди" :class="{ 'is-invalid': errorMessage }")
+                    span.error-text(v-if="errorMessage") {{ errorMessage }}
+
+            .form-group
+                label.form-label ІМ'Я КАПІТАНА
+                VeeField(name="captainName" v-slot="{ field }")
+                    input.form-input(type="text" v-bind="field" placeholder="Введіть ім'я капітана")
+
+            .form-group
+                label.form-label МІСТО
+                VeeField(name="city" v-slot="{ field }")
+                    input.form-input(type="text" v-bind="field" placeholder="Місто")
+
+            .form-group
+                label.form-label ПОШУК ГРАВЦІВ
+                .members-tags(v-if="selectedMembers.length")
+                    span.member-tag(v-for="email in selectedMembers" :key="email")
+                        | {{ email }}
+                        button.tag-remove(type="button" @click="removeMember(email)") ×
+
+                .members-input-wrapper
+                    input.form-input(
+                        :value="memberQuery"
+                        @input="onMemberInput($event.target.value)"
+                        @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
+                        @blur="onBlur"
+                        placeholder="Пошук за email або nameId..."
+                        autocomplete="off"
+                    )
+
+                    .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
+                        span Шукаємо...
+
+                    .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
+                        .dropdown-item(
+                            v-for="user in filteredSearchResults"
+                            :key="user.id || user.email"
+                            @mousedown.prevent="selectMember(user.email)"
+                        )
+                            span.user-email {{ user.email }}
+                            span.user-name(v-if="user.name || user.nameId") — {{ user.name || user.nameId }}
+
+                    .members-dropdown.dropdown--empty(v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2")
+                        .dropdown-empty Нікого не знайдено
+
+            .form-row
+                .form-group
+                    label.form-label ОРГАНІЗАЦІЯ
+                    VeeField(name="organization" v-slot="{ field }")
+                        input.form-input(v-bind="field" placeholder="Організація")
+                .form-group
+                    label.form-label TELEGRAM
+                    VeeField(name="telegram" v-slot="{ field }")
+                        input.form-input(v-bind="field" placeholder="@telegram")
+
+            .form-group
+                label.form-label DISCORD
+                VeeField(name="discord" v-slot="{ field }")
+                    input.form-input(v-bind="field" placeholder="@discord")
+
+            .modal-footer
+                button.cancel-btn(type="button" @click="closeModal") СКАСУВАТИ
+                button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ КОМАНДУ' }}
+</template>
+
 <script lang="ts" setup>
 import { ref, reactive, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
@@ -95,84 +173,6 @@ async function onSubmit(values: any) {
 
 function closeModal() { emit('close') }
 </script>
-
-<template lang="pug">
-.modal-wrapper(v-if="isTeamOpen")
-    .modal-overlay(@click="closeModal")
-    .modal-content
-        .modal-header
-            h2.modal-title СТВОРИТИ КОМАНДУ
-            button.icon-btn(@click="closeModal" type="button")
-                i.pi.pi-times
-        
-        VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
-            .form-group
-                label.form-label НАЗВА КОМАНДИ *
-                VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву команди" :class="{ 'is-invalid': errorMessage }")
-                    span.error-text(v-if="errorMessage") {{ errorMessage }}
-
-            .form-group
-                label.form-label ІМ'Я КАПІТАНА
-                VeeField(name="captainName" v-slot="{ field }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть ім'я капітана")
-
-            .form-group
-                label.form-label МІСТО
-                VeeField(name="city" v-slot="{ field }")
-                    input.form-input(type="text" v-bind="field" placeholder="Місто")
-
-            .form-group
-                label.form-label ПОШУК ГРАВЦІВ
-                .members-tags(v-if="selectedMembers.length")
-                    span.member-tag(v-for="email in selectedMembers" :key="email")
-                        | {{ email }}
-                        button.tag-remove(type="button" @click="removeMember(email)") ×
-
-                .members-input-wrapper
-                    input.form-input(
-                        :value="memberQuery"
-                        @input="onMemberInput($event.target.value)"
-                        @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
-                        @blur="onBlur"
-                        placeholder="Пошук за email або nameId..."
-                        autocomplete="off"
-                    )
-
-                    .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
-                        span Шукаємо...
-
-                    .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
-                        .dropdown-item(
-                            v-for="user in filteredSearchResults"
-                            :key="user.id || user.email"
-                            @mousedown.prevent="selectMember(user.email)"
-                        )
-                            span.user-email {{ user.email }}
-                            span.user-name(v-if="user.name || user.nameId") — {{ user.name || user.nameId }}
-
-                    .members-dropdown.dropdown--empty(v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2")
-                        .dropdown-empty Нікого не знайдено
-
-            .form-row
-                .form-group
-                    label.form-label ОРГАНІЗАЦІЯ
-                    VeeField(name="organization" v-slot="{ field }")
-                        input.form-input(v-bind="field" placeholder="Організація")
-                .form-group
-                    label.form-label TELEGRAM
-                    VeeField(name="telegram" v-slot="{ field }")
-                        input.form-input(v-bind="field" placeholder="@telegram")
-
-            .form-group
-                label.form-label DISCORD
-                VeeField(name="discord" v-slot="{ field }")
-                    input.form-input(v-bind="field" placeholder="@discord")
-
-            .modal-footer
-                button.cancel-btn(type="button" @click="closeModal") СКАСУВАТИ
-                button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ КОМАНДУ' }}
-</template>
 
 <style lang="scss" scoped>
 .modal-wrapper {

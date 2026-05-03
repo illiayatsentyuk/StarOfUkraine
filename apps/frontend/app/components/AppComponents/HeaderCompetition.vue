@@ -1,25 +1,3 @@
-<script lang="ts" setup>
-import { ref } from 'vue'
-import { useTournamentsStore } from '../../stores/tournaments.store'
-
-const store = useTournamentsStore()
-const loginStore = useLoginStore()
-const isOpen = ref(false)
-const isTeamOpen = ref(false)
-
-function openModal(){
-    isOpen.value=true
-}
-function openTeamModal(){
-    isTeamOpen.value=true
-}
-function closeModal(){
-    isOpen.value=false
-    isTeamOpen.value=false
-}
-
-</script>
-
 <template lang="pug">
 header.header-competition
     .header-competition__left
@@ -59,6 +37,28 @@ header.header-competition
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
 </template>
+
+<script lang="ts" setup>
+import { ref } from 'vue'
+import { useTournamentsStore } from '../../stores/tournaments.store'
+
+const store = useTournamentsStore()
+const loginStore = useLoginStore()
+const isOpen = ref(false)
+const isTeamOpen = ref(false)
+
+function openModal(){
+    isOpen.value=true
+}
+function openTeamModal(){
+    isTeamOpen.value=true
+}
+function closeModal(){
+    isOpen.value=false
+    isTeamOpen.value=false
+}
+
+</script>
 
 <style lang="scss" scoped>
 .header-competition {

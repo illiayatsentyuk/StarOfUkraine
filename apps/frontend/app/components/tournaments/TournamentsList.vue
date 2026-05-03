@@ -1,35 +1,3 @@
-<script lang="ts" setup>
-import { calculateTournamentStatus } from '~/utils/tournament-status'
-
-const store = useTournamentsStore()
-const filtersStore = useFiltersTournamentsStore()
-
-const filters = [
-    { key: 'all', label: 'Всі' },
-    { key: 'byDate', label: 'За датою' },
-    { key: 'byName', label: 'За назвою' },
-    { key: 'byMaxTeams', label: 'К-ть команд' },
-    { key: 'byTeamSizeMin', label: 'Мін. склад' },
-    { key: 'byTeamSizeMax', label: 'Макс. склад' },
-    { key: 'byRounds', label: 'Раунди' },
-    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
-    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
-]
-
-const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString('uk-UA')
-}
-
-const getTournamentStatus = (tournament: any) => {
-    return calculateTournamentStatus(tournament)
-}
-
-onMounted(() => {
-    store.loadFromDatabase(true)
-})
-</script>
-
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
@@ -112,6 +80,38 @@ section.tournaments-list
             .btn-content
                 span {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
 </template>
+
+<script lang="ts" setup>
+import { calculateTournamentStatus } from '~/utils/tournament-status'
+
+const store = useTournamentsStore()
+const filtersStore = useFiltersTournamentsStore()
+
+const filters = [
+    { key: 'all', label: 'Всі' },
+    { key: 'byDate', label: 'За датою' },
+    { key: 'byName', label: 'За назвою' },
+    { key: 'byMaxTeams', label: 'К-ть команд' },
+    { key: 'byTeamSizeMin', label: 'Мін. склад' },
+    { key: 'byTeamSizeMax', label: 'Макс. склад' },
+    { key: 'byRounds', label: 'Раунди' },
+    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
+    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
+]
+
+const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('uk-UA')
+}
+
+const getTournamentStatus = (tournament: any) => {
+    return calculateTournamentStatus(tournament)
+}
+
+onMounted(() => {
+    store.loadFromDatabase(true)
+})
+</script>
 
 <style lang="scss" scoped>
 .tournaments-list {

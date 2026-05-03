@@ -1,54 +1,3 @@
-<script lang="ts" setup>
-const props = defineProps<{
-  isOpen: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: "close"): void
-}>()
-
-const store = useTournamentsStore()
-
-const initialValues = {
-    name: "",
-    description: "",
-    startDate: "",
-    registrationStart: "",
-    registrationEnd: "",
-    rounds: null,
-    maxTeams: null,
-    teamSizeMin: 2,
-    teamSizeMax: 5,
-    hideTeamsUntilRegistrationEnds: false,
-}
-
-const isLoading = ref(false)
-
-async function onSubmit(values: any) {
-    try {
-        isLoading.value = true
-        const payload = {
-            ...values,
-            startDate: values.startDate ? new Date(values.startDate).toISOString() : "",
-            registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : "",
-            registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : "",
-            status: "DRAFT"
-        }
-        
-        await store.addTournament(payload)
-        emit("close")
-    } catch (e) {
-        console.error("Виникла помилка під час створення турніру.", e)
-    } finally {
-        isLoading.value = false
-    }
-}
-
-function closeModal() {
-  emit("close")
-}
-</script>
-
 <template lang="pug">
 .modal-wrapper(v-if="isOpen")
     .modal-overlay(@click="closeModal")
@@ -113,6 +62,57 @@ function closeModal() {
             
             button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ ТУРНІР' }}
 </template>
+
+<script lang="ts" setup>
+const props = defineProps<{
+  isOpen: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: "close"): void
+}>()
+
+const store = useTournamentsStore()
+
+const initialValues = {
+    name: "",
+    description: "",
+    startDate: "",
+    registrationStart: "",
+    registrationEnd: "",
+    rounds: null,
+    maxTeams: null,
+    teamSizeMin: 2,
+    teamSizeMax: 5,
+    hideTeamsUntilRegistrationEnds: false,
+}
+
+const isLoading = ref(false)
+
+async function onSubmit(values: any) {
+    try {
+        isLoading.value = true
+        const payload = {
+            ...values,
+            startDate: values.startDate ? new Date(values.startDate).toISOString() : "",
+            registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : "",
+            registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : "",
+            status: "DRAFT"
+        }
+        
+        await store.addTournament(payload)
+        emit("close")
+    } catch (e) {
+        console.error("Виникла помилка під час створення турніру.", e)
+    } finally {
+        isLoading.value = false
+    }
+}
+
+function closeModal() {
+  emit("close")
+}
+</script>
 
 <style lang="scss" scoped>
 .modal-wrapper {
