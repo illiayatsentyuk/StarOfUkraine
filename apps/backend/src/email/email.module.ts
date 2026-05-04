@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { PrismaService } from '../prisma/prisma.service';
 import { EmailController } from './email.controller';
 import { EmailService } from './email.service';
 
@@ -18,7 +19,7 @@ import { EmailService } from './email.service';
     }),
   ],
   controllers: [EmailController],
-  providers: [EmailService],
+  providers: [EmailService, PrismaService],
   exports: [EmailService],
 })
 export class EmailModule {}

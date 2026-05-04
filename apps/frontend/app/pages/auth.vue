@@ -54,6 +54,9 @@
           @blur="emitFieldBlur(field, handleBlur, $event)"
         )
 
+      .forgot-row(v-if="isLogin")
+        NuxtLink.forgot-row__link(to="/forgot-password") Забули пароль?
+
       VeeField(
         v-if="!isLogin"
         v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
@@ -158,9 +161,6 @@
 </template>
 
 <script setup lang="ts">
-import {useLoginStore} from "~/stores/auth.store"
-import { ref } from 'vue'
-
 const authInitialValues = {
   email: '',
   password: '',
@@ -350,8 +350,30 @@ const handleRegister = async (values: FormData) => {
     }
   }
 
-  .divider {
-    text-align: center;
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: calc(-1 * var(--space-2));
+
+      &__link {
+        font-family: var(--font-sans);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition:
+          color 0.2s ease,
+          border-color 0.2s ease;
+
+        &:hover {
+          color: var(--color-primary);
+          border-bottom-color: var(--color-primary);
+        }
+      }
+    }
+
+    .divider {
+      text-align: center;
     color: var(--color-text-muted);
     font-size: 10px;
     font-family: var(--font-display);

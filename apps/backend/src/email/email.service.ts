@@ -5,7 +5,7 @@ import { createTransport } from 'nodemailer';
 import type { SignOptions } from 'jsonwebtoken';
 import type { Transporter } from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class EmailService {
