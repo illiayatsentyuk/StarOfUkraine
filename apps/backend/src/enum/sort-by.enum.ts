@@ -14,4 +14,5 @@ export enum TournamentsSortBy {
   ROUNDS = 'rounds',
   TEAM_SIZE_MIN = 'teamSizeMin',
   TEAM_SIZE_MAX = 'teamSizeMax',
+  STATUS = 'status',
 }

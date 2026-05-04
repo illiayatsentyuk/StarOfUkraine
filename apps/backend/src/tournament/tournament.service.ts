@@ -108,10 +108,6 @@ export class TournamentService {
     };
   }
 
-  /**
-   * Maps `FindTournamentQueryDto.sortBy` / `sortOrder` to Prisma `orderBy`.
-   * Secondary sort by `id` keeps page order stable when primary values tie.
-   */
   private buildTournamentOrderBy(
     sortBy: TournamentsSortBy,
     sortOrder: SortOrder,
@@ -148,6 +144,9 @@ export class TournamentService {
         break;
       case TournamentsSortBy.TEAM_SIZE_MAX:
         primary = { teamSizeMax: dir };
+        break;
+      case TournamentsSortBy.STATUS:
+        primary = { status: dir };
         break;
       default: {
         const _exhaustive: never = sortBy;

@@ -229,6 +229,36 @@ describe('TournamentService', () => {
           }),
         );
       });
+
+      it('sorts by status asc when sortBy=STATUS, sortOrder=ASC', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: TournamentsSortBy.STATUS,
+          sortOrder: SortOrder.ASC,
+        });
+
+        expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: [{ status: 'asc' }, { id: 'asc' }],
+          }),
+        );
+      });
+
+      it('sorts by status desc when sortBy=STATUS, sortOrder=DESC', async () => {
+        await service.findAll({
+          page: 1,
+          limit: 10,
+          sortBy: TournamentsSortBy.STATUS,
+          sortOrder: SortOrder.DESC,
+        });
+
+        expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderBy: [{ status: 'desc' }, { id: 'asc' }],
+          }),
+        );
+      });
     });
   });
 
