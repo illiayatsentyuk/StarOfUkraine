@@ -30,16 +30,17 @@ header.header-competition
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ ТУРНІР"
-            @click="openModal"
-        )
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ КОМАНДУ"
-            @click="openTeamModal"
-        )
+        template(v-if="loginStore.isAuthenticated")
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ ТУРНІР"
+                @click="openModal"
+            )
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ КОМАНДУ"
+                @click="openTeamModal"
+            )
 
         .auth-section
             template(v-if="loginStore.user")

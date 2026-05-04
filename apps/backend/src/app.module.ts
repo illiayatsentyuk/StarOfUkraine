@@ -15,6 +15,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UsersModule } from './users/users.module';
     GatewayModule,
     UsersModule,
     TasksModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [

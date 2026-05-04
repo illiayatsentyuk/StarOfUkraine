@@ -40,6 +40,7 @@ model User {
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  resetToken String?
 
   accounts       Account[]
   teamsAsCaptain Team[]    @relation("TeamCaptain")

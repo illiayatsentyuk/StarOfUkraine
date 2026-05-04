@@ -247,6 +247,20 @@ export class AuthController {
     return res.redirect(302, `${frontendBase}/?oauth=success`);
   }
 
+  @Public()
+  @Post('forgot-password')
+  forgotPassword(@Body() { email }: { email: string }): Promise<void> {
+    return this.authService.forgotPassword(email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  resetPassword(
+    @Body() { token, password }: { token: string; password: string },
+  ): Promise<void> {
+    return this.authService.resetPassword(token, password);
+  }
+
   private setAuthCookies(res: Response, at: string, rt: string) {
     const isProd = process.env.NODE_ENV === 'production';
     res.cookie('access_token', at, {
