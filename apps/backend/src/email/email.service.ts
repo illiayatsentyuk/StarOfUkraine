@@ -7,6 +7,13 @@ import type { Transporter } from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
 import { PrismaService } from '../prisma/prisma.service';
 
+type SendMailConfig = {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: { user?: string; pass?: string };
+};
+
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -16,31 +23,30 @@ export class EmailService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
   ) {
+    const sendMail = this.configService.get<SendMailConfig>('sendMail');
+    if (!sendMail?.host) {
+      throw new Error('Missing sendMail config (EMAIL_HOST / sendMail namespace)');
+    }
     this.nodemailerTransport = createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: configService.get('EMAIL_USER'),
-            pass: configService.get('EMAIL_PASSWORD')
-        }
+      host: sendMail.host,
+      port: sendMail.port,
+      secure: sendMail.secure,
+      auth: sendMail.auth,
     });
   }
 
   async sendResetPasswordLink(email: string): Promise<void> {
-    const secret = this.configService.get<string>(
-      'JWT_VERIFICATION_TOKEN_SECRET',
-    );
-    const expirationSeconds = this.configService.get<string>(
-      'JWT_VERIFICATION_TOKEN_EXPIRATION_TIME',
+    const secret = this.configService.get<string>('resetPassword.secret');
+    const expiresIn = this.configService.get<string>(
+      'resetPassword.expiresIn',
     );
     const resetUrlBase = this.configService.get<string>(
-      'EMAIL_RESET_PASSWORD_URL',
+      'resetPassword.resetUrl',
     );
 
-    if (!secret || !expirationSeconds || !resetUrlBase) {
+    if (!secret || !expiresIn || !resetUrlBase) {
       throw new Error(
-        'Missing JWT_VERIFICATION_TOKEN_SECRET, JWT_VERIFICATION_TOKEN_EXPIRATION_TIME, or EMAIL_RESET_PASSWORD_URL',
+        'Missing reset password config: RESET_PASSWORD_SECRET (or JWT_VERIFICATION_TOKEN_SECRET), RESET_PASSWORD_EXPIRES_IN (or JWT_VERIFICATION_TOKEN_EXPIRATION_TIME), EMAIL_RESET_PASSWORD_URL',
       );
     }
     const user = await this.prisma.user.findUnique({
@@ -53,7 +59,7 @@ export class EmailService {
     const payload = { email };
     const token = this.jwtService.sign(payload, {
       secret,
-      expiresIn: expirationSeconds as SignOptions['expiresIn'],
+      expiresIn: expiresIn as SignOptions['expiresIn'],
     });
 
     await this.prisma.user.update({
@@ -74,7 +80,7 @@ export class EmailService {
   public async decodeConfirmationToken(token: string) {
         try {
             const payload = await this.jwtService.verify(token, {
-                secret: this.configService.get('JWT_VERIFICATION_TOKEN_SECRET')
+                secret: this.configService.get<string>('resetPassword.secret'),
             });
 
             if (typeof payload === 'object' && 'email' in payload) {

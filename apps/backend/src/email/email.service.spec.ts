@@ -21,12 +21,18 @@ describe('EmailService', () => {
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
+      if (key === 'sendMail') {
+        return {
+          host: 'smtp.test.example',
+          port: 465,
+          secure: true,
+          auth: { user: 'test@example.com', pass: 'app-password' },
+        };
+      }
       const map: Record<string, string> = {
-        JWT_VERIFICATION_TOKEN_SECRET: 'test-secret',
-        JWT_VERIFICATION_TOKEN_EXPIRATION_TIME: '3600',
-        EMAIL_RESET_PASSWORD_URL: 'https://app.example/reset',
-        EMAIL_USER: 'test@example.com',
-        EMAIL_PASSWORD: 'app-password',
+        'resetPassword.secret': 'test-secret',
+        'resetPassword.expiresIn': '3600',
+        'resetPassword.resetUrl': 'https://app.example/reset',
       };
       return map[key];
     }),

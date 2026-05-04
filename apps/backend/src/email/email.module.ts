@@ -13,8 +13,7 @@ import { EmailService } from './email.service';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret:
-          config.get<string>('JWT_VERIFICATION_TOKEN_SECRET') ??
-          'placeholder-reset-secret-configure-env',
+          config.get<string>('resetPassword.secret')
       }),
     }),
   ],
