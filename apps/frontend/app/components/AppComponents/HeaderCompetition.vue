@@ -1,9 +1,14 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { isRouteWithoutTournamentSearch } from '~/enums'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 
+const route = useRoute()
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
+
+const showSearchBar = computed(
+  () => !isRouteWithoutTournamentSearch(route.path),
+)
 const isOpen = ref(false)
 const isTeamOpen = ref(false)
 
@@ -26,7 +31,7 @@ header.header-competition
         .header-competition__logo
             NuxtLink(to="/") STAR OF UKRAINE
     
-    .header-competition__center
+    .header-competition__center(v-if="showSearchBar")
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
