@@ -28,7 +28,10 @@ Copy `.env.example` to `.env` and fill in real values. Never commit `.env`.
 | `JWT_EXPIRES_IN` / `AT_EXPIRES_IN` / `RT_EXPIRES_IN` | Token lifetimes | `1d`, `15m`, `7d` |
 | `RESET_PASSWORD_*` | Password reset signing + URL | — |
 | `EMAIL_*` | SMTP for transactional email | — |
-| `GOOGLE_*` | Google OAuth client + callback | — |
+| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 client ID | — |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth 2.0 client secret | — |
+| `GOOGLE_CALLBACK_URL` | Authorized redirect URI in Google Cloud (must match the API callback route) | `http://localhost:3000/auth/google/callback` |
+| `FRONTEND_URL` | Nuxt origin for post-OAuth redirect (`/?oauth=success`); not the API URL | `http://localhost:4040` |
 | `PAGE_SIZE` | Default list page size | `10` |
 | `PORT` | HTTP port | `3000` |
 
@@ -68,6 +71,10 @@ Use your team’s workflow for `migrate deploy` in production.
 | `POST` | `/auth/me` | Current user (`access_token`) |
 | `POST` | `/auth/refresh` | Refresh tokens |
 | `POST` | `/auth/logout` | Clears cookies |
+| `GET` | `/auth/google/login` | Starts **Google OAuth**; redirects the browser to Google’s consent screen |
+| `GET` | `/auth/google/callback` | **Google OAuth callback**; validates the code, sets `access_token` / `refresh_token` cookies, then **302** redirects to `{FRONTEND_URL}/?oauth=success` (see `FRONTEND_URL` above) |
+
+Configure **`GOOGLE_CALLBACK_URL`** in `.env` to the full URL of `/auth/google/callback` on this API (e.g. `http://localhost:3000/auth/google/callback`) and register the same URI in the Google Cloud console.
 
 ## Teams / tournaments (list endpoints)
 
