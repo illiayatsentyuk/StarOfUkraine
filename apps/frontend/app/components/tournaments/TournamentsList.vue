@@ -1,42 +1,3 @@
-<script lang="ts" setup>
-import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
-
-const store = useTournamentsStore()
-const filtersStore = useFiltersTournamentsStore()
-
-const filters = [
-    { key: 'all', label: 'Всі' },
-    { key: 'byDate', label: 'За датою' },
-    { key: 'byName', label: 'За назвою' },
-    { key: 'byMaxTeams', label: 'К-ть команд' },
-    { key: 'byTeamSizeMin', label: 'Мін. склад' },
-    { key: 'byTeamSizeMax', label: 'Макс. склад' },
-    { key: 'byRounds', label: 'Раунди' },
-    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
-    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
-]
-
-const statusFilters = [
-    { key: 'all', label: 'Всі статуси' },
-    { key: 'DRAFT', label: 'Очікування' },
-    { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
-    { key: 'ONGOING', label: 'Триває' },
-    { key: 'COMPLETED', label: 'Завершено' },
-    { key: 'CANCELLED', label: 'Скасовано' },
-] as const
-
-const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString('uk-UA')
-}
-
-const getTournamentStatus = (tournament: any) => getTournamentStatusInfo(tournament?.status)
-
-onMounted(() => {
-    store.loadFromDatabase(true)
-})
-</script>
-
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
@@ -137,7 +98,7 @@ section.tournaments-list
 </template>
 
 <script lang="ts" setup>
-import { calculateTournamentStatus } from '~/utils/tournament-status'
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
@@ -160,7 +121,7 @@ const formatDate = (dateString: string) => {
 }
 
 const getTournamentStatus = (tournament: any) => {
-    return calculateTournamentStatus(tournament)
+    return getTournamentStatusInfo(tournament?.status)
 }
 
 onMounted(() => {
