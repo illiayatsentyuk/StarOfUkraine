@@ -1,13 +1,11 @@
 ---
 name: frontend-testing
 description: >-
-  Vitest + @vue/test-utils testing expert for the StarOfUkraine Nuxt 4 frontend.
-  Knows the project's srcDir convention (app/), how to mock useApi (axios via
-  useNuxtApp().$api), useServerSafeToast, Nuxt auto-imports (useRuntimeConfig,
-  navigateTo), and patterns for Pinia setup stores and pure utils. Use when
-  writing or fixing unit tests for stores (*.store.ts), composables, utils, or
-  Vue components; when the user mentions vitest, @vue/test-utils, mocking useApi,
-  or testing Pinia stores in the frontend.
+  Playwright testing expert for the StarOfUkraine Nuxt 4 frontend (E2E-first).
+  Knows the project's srcDir convention (app/), Nuxt runtime behaviors, and how
+  to mock backend calls via Playwright routing (page.route), authenticate via
+  storageState, and write stable, user-centric tests. Use when writing or fixing
+  Playwright tests (*.spec.ts) for critical flows, pages, and API integration.
 category: testing
 risk: low
 source: project
@@ -16,7 +14,7 @@ date_added: "2026-05-05"
 
 # Frontend Testing
 
-Vitest + `@vue/test-utils` unit testing for `apps/frontend`. No tests exist yet — this skill sets up the toolchain and provides patterns.
+Playwright testing for `apps/frontend` (Nuxt 4). This skill is **E2E-first**: verify real user flows in a running app and mock backend calls at the network layer when needed.
 
 ## Project Layout
 
@@ -28,11 +26,10 @@ apps/frontend/
 │   ├── utils/
 │   └── components/
 ├── tests/
-│   ├── setup.ts               # global mocks
-│   ├── stores/                # *.store.spec.ts
-│   ├── utils/                 # *.spec.ts
-│   └── components/            # *.spec.ts
-├── vitest.config.ts
+│   ├── e2e/                    # *.spec.ts
+│   ├── fixtures/               # test users, seed payloads, etc.
+│   └── helpers/                # route mocks, auth helpers
+├── playwright.config.ts
 └── package.json
 ```
 
@@ -43,211 +40,162 @@ apps/frontend/
 ### Install dev dependencies
 
 ```bash
-pnpm add -D vitest @vue/test-utils @vitejs/plugin-vue happy-dom
+pnpm add -D @playwright/test
 ```
 
-### `vitest.config.ts` (place in `apps/frontend/`)
+Then install browsers (once per machine / CI image):
+
+```bash
+pnpm exec playwright install --with-deps
+```
+
+### `playwright.config.ts` (place in `apps/frontend/`)
 
 ```ts
-import { defineConfig } from 'vitest/config'
-import vue from '@vitejs/plugin-vue'
-import { fileURLToPath } from 'url'
+import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
-  plugins: [vue()],
-  test: {
-    environment: 'happy-dom',
-    globals: true,
-    setupFiles: ['./tests/setup.ts'],
+  testDir: './tests/e2e',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 2 : 0,
+  reporter: process.env.CI ? 'github' : 'list',
+  use: {
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
-  resolve: {
-    alias: {
-      '~': fileURLToPath(new URL('./app', import.meta.url)),
-      '@': fileURLToPath(new URL('./app', import.meta.url)),
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
     },
-  },
+  ],
+  webServer: process.env.PLAYWRIGHT_BASE_URL
+    ? undefined
+    : {
+        command: 'pnpm dev',
+        url: 'http://localhost:3000',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 })
 ```
 
 ### `package.json` scripts to add
 
+Add these to `apps/frontend/package.json`:
+
 ```json
-"test": "vitest",
-"test:run": "vitest run",
-"test:cov": "vitest run --coverage"
-```
-
-### `tests/setup.ts` — global Nuxt auto-import mocks
-
-```ts
-import { vi } from 'vitest'
-
-vi.mock('#imports', async () => {
-  const vue = await vi.importActual<typeof import('vue')>('vue')
-  return {
-    ...vue,
-    useRuntimeConfig: vi.fn(() => ({
-      public: { apiURL: 'http://localhost:3001' },
-    })),
-    navigateTo: vi.fn(),
-    useNuxtApp: vi.fn(),
-  }
-})
+"test:e2e": "playwright test",
+"test:e2e:ui": "playwright test --ui",
+"test:e2e:debug": "playwright test --debug",
+"test:e2e:report": "playwright show-report"
 ```
 
 ---
 
-## Core Rule: Always Mock `useApi` and Nuxt Composables in Store Tests
+## Core Rule: Prefer Network-Layer Mocks Over App Internals
 
-`useApi()` returns `useNuxtApp().$api` — an Axios instance registered as a plugin. It is **never available** outside a running Nuxt app. Always mock the module:
+Nuxt plugins/composables (like `useApi()` → `useNuxtApp().$api`) are runtime concerns; in Playwright, prefer validating behavior via UI + network.
 
-```ts
-import { vi } from 'vitest'
-
-vi.mock('~/composables/useApi', () => ({ useApi: vi.fn() }))
-vi.mock('~/composables/useServerSafeToast', () => ({
-  useServerSafeToast: vi.fn(() => ({
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    warning: vi.fn(),
-  })),
-}))
-```
+- Mock backend calls with `page.route()` (or `context.route()` for global)
+- Assert outgoing requests with `page.waitForRequest()` / `page.waitForResponse()`
+- Avoid stubbing composables directly (that’s a unit-test concern)
 
 ---
 
-## Pinia Store Test Structure
+## API Mocking Template (`page.route`)
 
 ```ts
-// tests/stores/tournaments.store.spec.ts
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { setActivePinia, createPinia } from 'pinia'
-import { useApi } from '~/composables/useApi'
+// tests/e2e/helpers/mock-api.ts
+import type { Page, Route } from '@playwright/test'
 
-vi.mock('~/composables/useApi', () => ({ useApi: vi.fn() }))
-vi.mock('~/composables/useServerSafeToast', () => ({
-  useServerSafeToast: vi.fn(() => ({
-    success: vi.fn(),
-    error: vi.fn(),
-  })),
-}))
+type Json = Record<string, unknown> | unknown[]
 
-const mockApi = {
-  get: vi.fn(),
-  post: vi.fn(),
-  patch: vi.fn(),
-  delete: vi.fn(),
+export async function mockJson(
+  page: Page,
+  url: string | RegExp,
+  body: Json,
+  status = 200,
+) {
+  await page.route(url, async (route: Route) => {
+    await route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: JSON.stringify(body),
+    })
+  })
 }
-
-describe('useTournamentsStore', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-    vi.mocked(useApi).mockReturnValue(mockApi as any)
-  })
-
-  afterEach(() => vi.clearAllMocks())
-
-  it('loadFromDatabase populates tournaments', async () => {
-    mockApi.post.mockResolvedValue({
-      data: {
-        data: [{ id: 't-1', name: 'Cup 2026' }],
-        totalPages: 1,
-      },
-    })
-
-    const { useTournamentsStore } = await import('~/stores/tournaments.store')
-    const store = useTournamentsStore()
-    await store.loadFromDatabase()
-
-    expect(store.tournaments).toHaveLength(1)
-    expect(store.tournaments[0].id).toBe('t-1')
-  })
-})
 ```
 
-**Always** call `setActivePinia(createPinia())` in `beforeEach` — it resets store state between tests.
-
----
-
-## Pure Utility Tests
-
-No mocking needed. Import and call directly.
+Example usage:
 
 ```ts
-// tests/utils/tournament-status-ui.spec.ts
-import { describe, it, expect } from 'vitest'
-import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
+import { test, expect } from '@playwright/test'
+import { mockJson } from '../helpers/mock-api'
 
-describe('getTournamentStatusInfo', () => {
-  it('returns null for falsy input', () => {
-    expect(getTournamentStatusInfo(null)).toBeNull()
-    expect(getTournamentStatusInfo('')).toBeNull()
+test('tournaments list shows items', async ({ page }) => {
+  await mockJson(page, /\/tournaments/, {
+    data: [{ id: 't-1', name: 'Cup 2026' }],
+    totalPages: 1,
   })
 
-  it('returns DRAFT info for unknown status', () => {
-    const result = getTournamentStatusInfo('UNKNOWN')
-    expect(result?.code).toBe('DRAFT')
-    expect(result?.label).toBe('ОЧІКУВАННЯ')
-  })
-
-  it('returns correct color for ONGOING', () => {
-    const result = getTournamentStatusInfo('ONGOING')
-    expect(result?.color).toBe('#ff8800')
-  })
+  await page.goto('/tournaments')
+  await expect(page.getByText('Cup 2026')).toBeVisible()
 })
 ```
 
 ---
 
-## Component Tests
+## Auth Pattern: `storageState`
+
+For flows requiring auth, prefer logging in once and reusing state.
 
 ```ts
-// tests/components/TournamentCard.spec.ts
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import { createPinia } from 'pinia'
-import TournamentCard from '~/components/TournamentCard.vue'
+// tests/e2e/helpers/auth.ts
+import type { Page } from '@playwright/test'
 
-describe('TournamentCard', () => {
-  const pinia = createPinia()
+export async function loginUi(page: Page, email: string, password: string) {
+  await page.goto('/login')
+  await page.getByLabel(/email/i).fill(email)
+  await page.getByLabel(/password/i).fill(password)
+  await page.getByRole('button', { name: /sign in|login/i }).click()
+}
+```
 
-  it('renders tournament name', () => {
-    const wrapper = mount(TournamentCard, {
-      global: { plugins: [pinia] },
-      props: { tournament: { id: 't-1', name: 'Cup 2026', status: 'DRAFT' } },
-    })
-    expect(wrapper.text()).toContain('Cup 2026')
-  })
+Generate a `storageState` file:
+
+```ts
+// tests/e2e/auth.setup.ts
+import { test as setup } from '@playwright/test'
+import { loginUi } from './helpers/auth'
+
+setup('authenticate', async ({ page }) => {
+  await loginUi(page, process.env.E2E_EMAIL!, process.env.E2E_PASSWORD!)
+  await page.context().storageState({ path: 'tests/.auth/state.json' })
 })
 ```
 
----
-
-## Spec File Placement
-
-| What to test | Spec file location |
-|---|---|
-| `useTournamentsStore` | `tests/stores/tournaments.store.spec.ts` |
-| `useTeamsStore` | `tests/stores/teams.store.spec.ts` |
-| `useLoginStore` | `tests/stores/auth.store.spec.ts` |
-| `getTournamentStatusInfo` | `tests/utils/tournament-status-ui.spec.ts` |
-| `formatDate` | `tests/utils/format-date.spec.ts` |
-| Any `.vue` component | `tests/components/<ComponentName>.spec.ts` |
+Then enable it in `playwright.config.ts` by adding a setup project and using `storageState` for the main project.
 
 ---
+
+## Test Writing Rules (stability)
+
+- Prefer `getByRole` / `getByLabel` / `getByText` over CSS selectors.
+- Avoid arbitrary `waitForTimeout`; wait for a UI state or a network response instead.
+- Make each test assert one behavior; cover both happy path and error case when the flow is critical.
 
 ## Checklist
 
-- [ ] `vitest.config.ts` created with `happy-dom` environment and `~/` alias
-- [ ] `tests/setup.ts` mocks `#imports` (Nuxt auto-imports)
-- [ ] `useApi` mocked — never relies on a running Nuxt app
-- [ ] `useServerSafeToast` mocked in every store test
-- [ ] `setActivePinia(createPinia())` in `beforeEach` for all store tests
-- [ ] `vi.clearAllMocks()` in `afterEach`
-- [ ] Pure utils tested without any mocks
-- [ ] Each `it` tests one behaviour
-- [ ] Both happy path and error cases covered
+- [ ] `@playwright/test` installed and browsers installed
+- [ ] `playwright.config.ts` points to `tests/e2e` and runs `pnpm dev` via `webServer`
+- [ ] Tests are user-centric (prefer `getByRole` / `getByLabel`) and avoid brittle selectors
+- [ ] Backend interactions mocked with `page.route()` when the API is not required
+- [ ] Auth handled via `storageState` for speed and stability (when auth is needed)
+- [ ] Failures capture trace + screenshot + video (config defaults)
 
 ## Additional Resources
 
