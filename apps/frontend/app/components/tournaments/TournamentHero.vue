@@ -8,7 +8,7 @@ header.tournament-detail__hero
 </template>
 
 <script setup lang="ts">
-import type { TournamentStatusInfo } from '~/utils/tournament-status'
+import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 defineProps<{
     name: string

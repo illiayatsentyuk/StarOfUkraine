@@ -57,6 +57,7 @@ section.tournament-detail
                 :isAdmin="authStore.isAdmin"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
+        @edit="openEditModal"
                 @delete="handleDelete"
                 @createTeam="openTeamModal"
             )
@@ -72,6 +73,13 @@ section.tournament-detail
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
+    EditTournamentModal(
+        v-if="tournament && authStore.isAdmin"
+        :isOpen="isEditModalOpen"
+        :tournament="tournament"
+        @close="isEditModalOpen = false"
+        @updated="onTournamentUpdated"
+    )
     CreateTeamModal(
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
@@ -81,7 +89,7 @@ section.tournament-detail
 </template>
 
 <script setup lang="ts">
-import { calculateTournamentStatus } from '~/utils/tournament-status'
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const route = useRoute()
 const store = useTournamentsStore()
@@ -92,14 +100,15 @@ const tournament = ref<any>(null)
 const teams = ref<any[]>([])
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
+const isEditModalOpen = ref(false)
 
 const tournamentStatus = computed(() => {
     if (!tournament.value) return null
-    return calculateTournamentStatus(tournament.value)
+    return getTournamentStatusInfo(tournament.value?.status)
 })
 
 const isRegistrationActive = computed(() => {
-    return tournamentStatus.value?.code === 'registration'
+    return tournament.value?.status === 'REGISTRATION_OPEN'
 })
 
 const shouldHideTeams = computed(() => {
@@ -134,6 +143,14 @@ onMounted(async () => {
 
 function handleDelete() {
     isDeleteModalOpen.value = true
+}
+
+function openEditModal() {
+    isEditModalOpen.value = true
+}
+
+async function onTournamentUpdated(updatedTournament: any) {
+    tournament.value = updatedTournament
 }
 
 async function onTournamentDeleted() {

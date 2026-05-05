@@ -126,6 +126,23 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const updateTournament = async (id: string, tournament: Partial<Tournament>) => {
+        try {
+            const api = useApi()
+            const response = await api.patch(`/tournaments/${id}`, tournament)
+            if (!response.data) throw new Error('Не вдалося оновити турнір')
+
+            const updatedTournament = response.data
+            tournaments.value = tournaments.value.map((t) => (t.id === id ? updatedTournament : t))
+            toast.success('Турнір успішно оновлено')
+            return updatedTournament
+        } catch (error: unknown) {
+            console.error('Помилка API при оновленні турніру:', error)
+            toast.error('Помилка API при оновленні турніру')
+            throw error
+        }
+    }
+
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -146,6 +163,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         loadFromDatabase,
         fetchTournamentById,
         addTournament,
+        updateTournament,
         deleteTournament,
     }
 })

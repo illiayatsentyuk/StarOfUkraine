@@ -16,6 +16,7 @@ describe('TournamentService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
     },
@@ -40,6 +41,9 @@ describe('TournamentService', () => {
   };
 
   beforeEach(async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.tournament.findFirst.mockResolvedValue(null);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TournamentService,
@@ -282,6 +286,7 @@ describe('TournamentService', () => {
   describe('update', () => {
     it('updates tournament when name differs from existing', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.tournament.findFirst.mockResolvedValue(null);
       mockPrisma.tournament.update.mockResolvedValue({
         ...tournamentMock,
         name: 'Updated Tournament Name',
@@ -295,11 +300,21 @@ describe('TournamentService', () => {
       expect(mockPrisma.tournament.update).toHaveBeenCalled();
     });
 
-    it('throws when new name matches current name', async () => {
+    it('does not throw when name is unchanged', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.tournament.update.mockResolvedValue(tournamentMock);
 
       await expect(
         service.update('tournament-1', { name: tournamentMock.name }),
+      ).resolves.toEqual(tournamentMock);
+    });
+
+    it('throws when new name is taken by another tournament', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.tournament.findFirst.mockResolvedValue({ id: 'tournament-2' });
+
+      await expect(
+        service.update('tournament-1', { name: 'Taken Name' }),
       ).rejects.toThrow(
         new BadRequestException('Tournament with this name already exists'),
       );

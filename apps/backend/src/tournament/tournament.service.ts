@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, TournamentStatus } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -23,6 +23,47 @@ export class TournamentService {
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
   ) {}
+
+  /**
+   * Keep `Tournament.status` synchronized with dates.
+   * We intentionally do it on read paths (list/details) so the UI can trust DB status.
+   *
+   * Note: COMPLETED/CANCELLED are treated as terminal and not auto-overwritten.
+   */
+  private async syncTournamentStatuses(now = new Date()) {
+    const terminalStatuses = [TournamentStatus.COMPLETED, TournamentStatus.CANCELLED];
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.ONGOING] },
+        startDate: { lte: now },
+      },
+      data: { status: TournamentStatus.ONGOING },
+    });
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.REGISTRATION_OPEN] },
+        registrationStart: { lte: now },
+        registrationEnd: { gte: now },
+      },
+      data: { status: TournamentStatus.REGISTRATION_OPEN },
+    });
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.DRAFT] },
+        OR: [
+          { registrationStart: { gt: now } },
+          {
+            registrationEnd: { lt: now },
+            startDate: { gt: now },
+          },
+        ],
+      },
+      data: { status: TournamentStatus.DRAFT },
+    });
+  }
 
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({
@@ -53,6 +94,8 @@ export class TournamentService {
   }
 
   async findAll(query: FindTournamentQueryDto) {
+    await this.syncTournamentStatuses();
+
     const name = (query.name ?? '').trim();
     const status = query.status;
     const page = Number(query.page ?? 1);
@@ -163,6 +206,8 @@ export class TournamentService {
   }
 
   async findOne(id: string) {
+    await this.syncTournamentStatuses();
+
     const tournament = await this.prisma.tournament.findUnique({
       where: { id },
     });
@@ -194,10 +239,26 @@ export class TournamentService {
   }
 
   async update(id: string, data: UpdateTournamentDto) {
-    await this.findOne(id);
-    const isTheSameName = data.name === (await this.findOne(id)).name;
-    if (isTheSameName) {
-      throw new BadRequestException('Tournament with this name already exists');
+    const current = await this.findOne(id);
+
+    // Only validate uniqueness when name is actually being changed
+    if (typeof data.name === 'string' && data.name.trim().length > 0) {
+      const nextName = data.name.trim();
+      const currentName = (current.name ?? '').trim();
+
+      if (nextName !== currentName) {
+        const existingTournament = await this.prisma.tournament.findFirst({
+          where: {
+            name: nextName,
+            id: { not: id },
+          },
+        });
+        if (existingTournament) {
+          throw new BadRequestException(
+            'Tournament with this name already exists',
+          );
+        }
+      }
     }
     const updatedTournament = await this.prisma.tournament.update({
       where: { id },

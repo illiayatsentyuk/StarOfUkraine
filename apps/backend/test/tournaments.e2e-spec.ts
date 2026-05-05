@@ -41,6 +41,7 @@ describe('Tournaments (e2e)', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
     },
@@ -71,6 +72,7 @@ describe('Tournaments (e2e)', () => {
   });
 
   it('POST /tournaments returns paginated response', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.count.mockResolvedValue(1);
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
 
@@ -95,6 +97,7 @@ describe('Tournaments (e2e)', () => {
   });
 
   it('POST /tournaments/list supports filtering by status', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.count.mockResolvedValue(1);
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
 
@@ -112,6 +115,7 @@ describe('Tournaments (e2e)', () => {
   });
 
   it('GET /tournaments/:id returns tournament', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
     const response = await request(app.getHttpServer())

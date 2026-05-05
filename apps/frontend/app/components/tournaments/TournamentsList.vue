@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { calculateTournamentStatus } from '~/utils/tournament-status'
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
@@ -18,7 +18,7 @@ const filters = [
 
 const statusFilters = [
     { key: 'all', label: 'Всі статуси' },
-    { key: 'DRAFT', label: 'Чернетка' },
+    { key: 'DRAFT', label: 'Очікування' },
     { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
     { key: 'ONGOING', label: 'Триває' },
     { key: 'COMPLETED', label: 'Завершено' },
@@ -30,9 +30,7 @@ const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('uk-UA')
 }
 
-const getTournamentStatus = (tournament: any) => {
-    return calculateTournamentStatus(tournament)
-}
+const getTournamentStatus = (tournament: any) => getTournamentStatusInfo(tournament?.status)
 
 onMounted(() => {
     store.loadFromDatabase(true)
@@ -100,8 +98,11 @@ section.tournaments-list
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )
-            .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
-                span {{ getTournamentStatus(tournament).label }}
+            .tournament-card__status(
+                v-if="getTournamentStatus(tournament)"
+                :style="{ backgroundColor: getTournamentStatus(tournament)?.color }"
+            )
+                span {{ getTournamentStatus(tournament)?.label }}
 
             h3.tournament-card__title {{ tournament.name }}
 
