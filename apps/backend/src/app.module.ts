@@ -10,11 +10,14 @@ import databaseConfig from './config/database.config';
 import googleConfig from './config/google.config';
 import jwtConfig from './config/jwt.config';
 import paginationConfig from './config/pagination.config';
+import resetPasswordConfig from './config/reset-password.config';
+import sendMailConfig from './config/send-mail.config';
 import { GatewayModule } from './gateway/gateway.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -23,11 +26,19 @@ import { UsersModule } from './users/users.module';
     TournamentModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [jwtConfig, paginationConfig, databaseConfig, googleConfig],
+      load: [
+        jwtConfig,
+        paginationConfig,
+        databaseConfig,
+        googleConfig,
+        resetPasswordConfig,
+        sendMailConfig,
+      ],
     }),
     GatewayModule,
     UsersModule,
     TasksModule,
+    EmailModule,
   ],
   controllers: [AppController],
   providers: [

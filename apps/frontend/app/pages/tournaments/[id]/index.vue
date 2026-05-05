@@ -11,6 +11,7 @@ section.tournament-detail
 
         TournamentHero(
             :name="tournament.name"
+            :tournamentId="route.params.id"
             :status="tournamentStatus"
         )
 
@@ -40,8 +41,9 @@ section.tournament-detail
                 :isAdmin="authStore.isAdmin"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
-                @delete="isDeleteModalOpen = true"
-                @createTeam="isTeamOpen = true"
+        @edit="openEditModal"
+                @delete="handleDelete"
+                @createTeam="openTeamModal"
             )
 
     .error-state(v-else)
@@ -55,6 +57,13 @@ section.tournament-detail
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
+    EditTournamentModal(
+        v-if="tournament && authStore.isAdmin"
+        :isOpen="isEditModalOpen"
+        :tournament="tournament"
+        @close="isEditModalOpen = false"
+        @updated="onTournamentUpdated"
+    )
     CreateTeamModal(
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
@@ -64,7 +73,7 @@ section.tournament-detail
 </template>
 
 <script setup lang="ts">
-import { calculateTournamentStatus } from '~/utils/tournament-status'
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
@@ -84,15 +93,15 @@ const teams = ref<any[]>([])
 const loadingTeams = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
+const isEditModalOpen = ref(false)
 
 const tournamentStatus = computed(() => {
     if (!tournament.value) return null
-    return calculateTournamentStatus(tournament.value)
+    return getTournamentStatusInfo(tournament.value?.status)
 })
 
 const isRegistrationActive = computed(() => {
-    const code = tournamentStatus.value?.code
-    return code === 'registration' || code === 'planned'
+    return tournament.value?.status === 'REGISTRATION_OPEN'
 })
 
 const shouldHideTeams = computed(() => {
@@ -106,26 +115,36 @@ const refreshTeams = async () => {
     if (shouldHideTeams.value) return
     loadingTeams.value = true
     try {
-        const response = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
-        if (response.data && Array.isArray(response.data)) {
-            teams.value = response.data.map((row: any) => ({
-                ...row.team,
-                points: row.totalScore
-            }))
-        }
-    } catch (err) {
-        console.error('Failed to fetch teams:', err)
-    } finally {
-        loadingTeams.value = false
+        const teamsResponse = await teamsStore.loadFromDatabase(true)
+        teams.value = teamsResponse?.data || []
+    } catch {
+        console.error('Failed to refresh teams')
     }
 }
 
-onMounted(() => {
-    refreshTeams()
+onMounted(async () => {
+    try {
+        tournament.value = await store.fetchTournamentById(route.params.id as string)
+        await refreshTeams()
+    } catch {
+        console.error('Failed to load tournament detail')
+    }
 })
 
-const onTournamentDeleted = () => {
-    navigateTo('/')
+function handleDelete() {
+    isDeleteModalOpen.value = true
+}
+
+function openEditModal() {
+    isEditModalOpen.value = true
+}
+
+async function onTournamentUpdated(updatedTournament: any) {
+    tournament.value = updatedTournament
+}
+
+async function onTournamentDeleted() {
+    await navigateTo('/')
 }
 
 const shuffleTeams = () => {

@@ -1,23 +1,51 @@
+<script lang="ts" setup>
+import { isRouteWithoutTournamentSearch } from '~/enums'
+import { useTournamentsStore } from '../../stores/tournaments.store'
+
+const route = useRoute()
+const store = useTournamentsStore()
+const loginStore = useLoginStore()
+
+const showSearchBar = computed(
+  () => !isRouteWithoutTournamentSearch(route.path),
+)
+const isOpen = ref(false)
+const isTeamOpen = ref(false)
+
+function openModal(){
+    isOpen.value=true
+}
+function openTeamModal(){
+    isTeamOpen.value=true
+}
+function closeModal(){
+    isOpen.value=false
+    isTeamOpen.value=false
+}
+
+</script>
+
 <template lang="pug">
 header.header-competition
     .header-competition__left
         .header-competition__logo
             NuxtLink(to="/") STAR OF UKRAINE
     
-    .header-competition__center
+    .header-competition__center(v-if="showSearchBar")
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ ТУРНІР"
-            @click="openModal"
-        )
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ КОМАНДУ"
-            @click="openTeamModal"
-        )
+        template(v-if="loginStore.isAuthenticated")
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ ТУРНІР"
+                @click="openModal"
+            )
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ КОМАНДУ"
+                @click="openTeamModal"
+            )
 
         .auth-section
             template(v-if="loginStore.user")

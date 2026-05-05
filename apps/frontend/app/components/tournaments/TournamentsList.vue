@@ -1,3 +1,42 @@
+<script lang="ts" setup>
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
+
+const store = useTournamentsStore()
+const filtersStore = useFiltersTournamentsStore()
+
+const filters = [
+    { key: 'all', label: 'Всі' },
+    { key: 'byDate', label: 'За датою' },
+    { key: 'byName', label: 'За назвою' },
+    { key: 'byMaxTeams', label: 'К-ть команд' },
+    { key: 'byTeamSizeMin', label: 'Мін. склад' },
+    { key: 'byTeamSizeMax', label: 'Макс. склад' },
+    { key: 'byRounds', label: 'Раунди' },
+    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
+    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
+]
+
+const statusFilters = [
+    { key: 'all', label: 'Всі статуси' },
+    { key: 'DRAFT', label: 'Очікування' },
+    { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
+    { key: 'ONGOING', label: 'Триває' },
+    { key: 'COMPLETED', label: 'Завершено' },
+    { key: 'CANCELLED', label: 'Скасовано' },
+] as const
+
+const formatDate = (dateString: string) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('uk-UA')
+}
+
+const getTournamentStatus = (tournament: any) => getTournamentStatusInfo(tournament?.status)
+
+onMounted(() => {
+    store.loadFromDatabase(true)
+})
+</script>
+
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
@@ -43,17 +82,30 @@ section.tournaments-list
                 )
                     polyline(points="18 15 12 9 6 15")
 
+    .filter-bar
+        button.filter-btn(
+            v-for="s in statusFilters"
+            :key="s.key"
+            :class="{ 'filter-btn--active': store.statusFilter === s.key }"
+            type="button"
+            @click="store.statusFilter = s.key; store.loadFromDatabase(true)"
+        )
+            span {{ s.label }}
+
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
         Loader
 
-    .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
+    .tournaments-list__grid(v-else-if="store.filteredTournaments.length > 0")
         NuxtLink.tournament-card(
-            v-for="tournament in store.tournaments"
+            v-for="tournament in store.filteredTournaments"
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )
-            .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
-                span {{ getTournamentStatus(tournament).label }}
+            .tournament-card__status(
+                v-if="getTournamentStatus(tournament)"
+                :style="{ backgroundColor: getTournamentStatus(tournament)?.color }"
+            )
+                span {{ getTournamentStatus(tournament)?.label }}
 
             h3.tournament-card__title {{ tournament.name }}
 
@@ -74,7 +126,7 @@ section.tournaments-list
     .no-data(v-else-if="!store.loading")
         p Турнірів поки немає.
 
-    .tournaments-list__footer(v-if="store.tournaments.length > 0")
+    .tournaments-list__footer(v-if="store.filteredTournaments.length > 0")
         button.load-more(
             @click="store.loadFromDatabase()"
             :disabled="!store.hasMore || store.loading"

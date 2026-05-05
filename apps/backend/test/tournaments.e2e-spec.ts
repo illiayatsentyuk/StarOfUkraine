@@ -41,6 +41,7 @@ describe('Tournaments (e2e)', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
     },
@@ -71,6 +72,7 @@ describe('Tournaments (e2e)', () => {
   });
 
   it('POST /tournaments returns paginated response', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.count.mockResolvedValue(1);
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
 
@@ -78,6 +80,11 @@ describe('Tournaments (e2e)', () => {
       .post('/tournaments/list')
       .send({ page: 1, limit: 10 })
       .expect(200);
+
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({ where: undefined });
+    expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: undefined }),
+    );
 
     expect(response.body).toEqual({
       data: [tournamentMock],
@@ -89,7 +96,26 @@ describe('Tournaments (e2e)', () => {
     });
   });
 
+  it('POST /tournaments/list supports filtering by status', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
+    mockPrisma.tournament.count.mockResolvedValue(1);
+    mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
+
+    await request(app.getHttpServer())
+      .post('/tournaments/list')
+      .send({ page: 1, limit: 10, status: TournamentStatus.DRAFT })
+      .expect(200);
+
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({
+      where: { status: TournamentStatus.DRAFT },
+    });
+    expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { status: TournamentStatus.DRAFT } }),
+    );
+  });
+
   it('GET /tournaments/:id returns tournament', async () => {
+    mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
     const response = await request(app.getHttpServer())

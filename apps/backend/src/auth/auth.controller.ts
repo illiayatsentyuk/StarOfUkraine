@@ -17,7 +17,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { Role } from 'src/enum';
 import {
   GetCurrentOAuthUser,
   GetCurrentUser,
@@ -28,7 +27,13 @@ import { GoogleAuthGuard } from '../common/guards';
 import { RtGuard } from '../common/guards/rt.guard';
 import { authExamples } from '../examples';
 import { AuthService } from './auth.service';
-import { SigninDto, SignupDto } from './dto';
+import {
+  ForgotPasswordDto,
+  GoogleOAuthCallbackUserDto,
+  ResetPasswordDto,
+  SigninDto,
+  SignupDto,
+} from './dto';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -229,7 +234,7 @@ export class AuthController {
     schema: { example: authExamples.unauthorized },
   })
   async googleCallback(
-    @GetCurrentOAuthUser() user: { sub: string; email: string; role: Role },
+    @GetCurrentOAuthUser() user: GoogleOAuthCallbackUserDto,
     @Res() res: Response,
   ) {
     console.log('user', user);
@@ -245,6 +250,24 @@ export class AuthController {
       '',
     );
     return res.redirect(302, `${frontendBase}/?oauth=success`);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiBody({ type: ForgotPasswordDto })
+  @ApiResponse({ status: 200, description: 'Reset email sent if user exists' })
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Set new password using reset token' })
+  @ApiBody({ type: ResetPasswordDto })
+  @ApiResponse({ status: 200, description: 'Password updated' })
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {

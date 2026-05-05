@@ -12,6 +12,7 @@ import type { SignOptions } from 'jsonwebtoken';
 import { OAuthUserPayload } from '../common/types';
 import jwtTokensConfig from '../config/jwt.config';
 import { AuthProvider, Role } from '../enum';
+import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SigninDto, SignupDto } from './dto';
 import { Tokens } from './types';
@@ -23,6 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(jwtTokensConfig.KEY)
     private jwtConfig: ConfigType<typeof jwtTokensConfig>,
+    private emailService: EmailService,
   ) {}
 
   async getMe(userId: string) {
@@ -70,6 +72,7 @@ export class AuthService {
         hash,
         name: dto.name,
         nameId,
+        resetToken: '',
       },
     });
 
@@ -181,15 +184,13 @@ export class AuthService {
     });
 
     if (existingAccount) {
-      return existingAccount.user; // already linked, just return the user
+      return existingAccount.user;
     }
 
-    // 2. Check if a user with this email already exists (password account)
     let user = await this.prisma.user.findUnique({
       where: { email: profile.email },
     });
 
-    // 3. Create user if they don't exist at all
     if (!user) {
       const nameId = `${profile.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
       user = await this.prisma.user.create({
@@ -197,12 +198,11 @@ export class AuthService {
           email: profile.email,
           name: profile.name,
           nameId,
-          // no password — OAuth user
+          resetToken: '',
         },
       });
     }
 
-    // 4. Link the Google account to the user
     await this.prisma.account.create({
       data: {
         userId: user.id,
@@ -212,5 +212,42 @@ export class AuthService {
     });
 
     return user;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException(`No user found for email: ${email}`);
+    }
+    await this.emailService.sendResetPasswordLink(email);
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const emailFromToken = await this.emailService.decodeConfirmationToken(
+      token,
+    );
+    const email =
+      typeof emailFromToken === 'string'
+        ? emailFromToken.toLowerCase()
+        : String(emailFromToken).toLowerCase();
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException(`No user found for email: ${email}`);
+    }
+
+    const hash = await this.hashData(password);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        hash,
+        hashedRt: null,
+        resetToken: '',
+      },
+    });
   }
 }

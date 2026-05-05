@@ -14,7 +14,7 @@ header.tournament-detail__hero
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import type { TournamentStatusInfo } from '~/utils/tournament-status'
+import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const props = defineProps<{
     name: string

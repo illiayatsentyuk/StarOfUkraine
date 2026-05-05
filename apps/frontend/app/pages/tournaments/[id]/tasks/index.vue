@@ -21,6 +21,7 @@ section.tasks-page
             v-for="task in store.tasks"
             :key="task.id"
             :task="task"
+            :tournamentId="route.params.id"
         )
 
     .empty-state(v-else)

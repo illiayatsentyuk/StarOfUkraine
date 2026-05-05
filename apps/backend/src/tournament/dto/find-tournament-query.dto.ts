@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { TournamentStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { SortOrder, TournamentsSortBy } from '../../enum';
@@ -38,4 +39,13 @@ export class FindTournamentQueryDto {
   @IsOptional()
   @IsString()
   name?: string;
+
+  @ApiPropertyOptional({
+    enum: TournamentStatus,
+    description: 'Filter by tournament status',
+    example: TournamentStatus.DRAFT,
+  })
+  @IsOptional()
+  @IsEnum(TournamentStatus)
+  status?: TournamentStatus;
 }

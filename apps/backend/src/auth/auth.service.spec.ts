@@ -8,6 +8,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import jwtTokensConfig from '../config/jwt.config';
 import { AuthProvider, Role } from '../enum';
+import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
@@ -40,6 +41,11 @@ describe('AuthService', () => {
     at: { secret: 'at-secret-test', expiresIn: '15m' },
     rt: { secret: 'rt-secret-test', expiresIn: '7d' },
     signOptions: { expiresIn: '1d' },
+  };
+
+  const mockEmailService = {
+    sendResetPasswordLink: jest.fn(),
+    decodeConfirmationToken: jest.fn(),
   };
 
   const mockUser = {
@@ -90,6 +96,10 @@ describe('AuthService', () => {
           provide: jwtTokensConfig.KEY,
           useValue: mockJwtConfig,
         },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
       ],
     }).compile();
 
@@ -137,6 +147,7 @@ describe('AuthService', () => {
           hash: 'hashed-password',
           name: 'Ivan Petrenko',
           nameId: expect.stringMatching(/^ivan-petrenko-\d{1,4}$/),
+          resetToken: '',
         },
       });
 
@@ -374,6 +385,7 @@ describe('AuthService', () => {
           email: 'oauth@example.com',
           name: 'OAuth User',
           nameId: expect.stringMatching(/^oauth-user-\d{1,4}$/),
+          resetToken: '',
         },
       });
       expect(mockPrisma.account.create).toHaveBeenCalledWith({
@@ -408,6 +420,72 @@ describe('AuthService', () => {
         },
       });
       expect(result).toEqual(mockUser);
+    });
+  });
+
+  describe('forgotPassword', () => {
+    it('calls email service when user exists', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+
+      await service.forgotPassword('user@example.com');
+
+      expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'user@example.com' },
+      });
+      expect(mockEmailService.sendResetPasswordLink).toHaveBeenCalledWith(
+        'user@example.com',
+      );
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.forgotPassword('missing@example.com')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockEmailService.sendResetPasswordLink).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('hashes password and updates user hash, clears refresh token', async () => {
+      mockEmailService.decodeConfirmationToken.mockResolvedValue(
+        'user@example.com',
+      );
+      mockPrisma.user.findUnique.mockResolvedValue(mockUser);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-hashed-password');
+      mockPrisma.user.update.mockResolvedValue({
+        ...mockUser,
+        hash: 'new-hashed-password',
+        hashedRt: null,
+      });
+
+      await service.resetPassword('jwt-token', 'newPassword1!');
+
+      expect(mockEmailService.decodeConfirmationToken).toHaveBeenCalledWith(
+        'jwt-token',
+      );
+      expect(bcrypt.hash).toHaveBeenCalledWith('newPassword1!', 10);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+        data: {
+          hash: 'new-hashed-password',
+          hashedRt: null,
+          resetToken: '',
+        },
+      });
+    });
+
+    it('throws NotFoundException when user does not exist', async () => {
+      mockEmailService.decodeConfirmationToken.mockResolvedValue(
+        'missing@example.com',
+      );
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(service.resetPassword('t', 'pw')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
     });
   });
 });

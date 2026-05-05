@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, TournamentStatus } from '@prisma/client';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,7 +22,48 @@ export class TournamentService {
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
-  ) { }
+  ) {}
+
+  /**
+   * Keep `Tournament.status` synchronized with dates.
+   * We intentionally do it on read paths (list/details) so the UI can trust DB status.
+   *
+   * Note: COMPLETED/CANCELLED are treated as terminal and not auto-overwritten.
+   */
+  private async syncTournamentStatuses(now = new Date()) {
+    const terminalStatuses = [TournamentStatus.COMPLETED, TournamentStatus.CANCELLED];
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.ONGOING] },
+        startDate: { lte: now },
+      },
+      data: { status: TournamentStatus.ONGOING },
+    });
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.REGISTRATION_OPEN] },
+        registrationStart: { lte: now },
+        registrationEnd: { gte: now },
+      },
+      data: { status: TournamentStatus.REGISTRATION_OPEN },
+    });
+
+    await this.prisma.tournament.updateMany({
+      where: {
+        status: { notIn: [...terminalStatuses, TournamentStatus.DRAFT] },
+        OR: [
+          { registrationStart: { gt: now } },
+          {
+            registrationEnd: { lt: now },
+            startDate: { gt: now },
+          },
+        ],
+      },
+      data: { status: TournamentStatus.DRAFT },
+    });
+  }
 
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({
@@ -53,30 +94,36 @@ export class TournamentService {
   }
 
   async findAll(query: FindTournamentQueryDto) {
+    await this.syncTournamentStatuses();
+
     const name = (query.name ?? '').trim();
+    const status = query.status;
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
 
-    const where: Prisma.TournamentWhereInput | undefined = name
-      ? {
-        OR: [
-          {
-            name: {
-              contains: name,
-              mode: Prisma.QueryMode.insensitive,
-            },
+    const where: Prisma.TournamentWhereInput = {};
+    if (name) {
+      where.OR = [
+        {
+          name: {
+            contains: name,
+            mode: Prisma.QueryMode.insensitive,
           },
-          {
-            id: {
-              contains: name,
-            },
+        },
+        {
+          id: {
+            contains: name,
           },
-        ],
-      }
-      : undefined;
+        },
+      ];
+    }
+    if (status) {
+      where.status = status;
+    }
+    const whereOrUndefined = Object.keys(where).length ? where : undefined;
 
-    const totalCount = await (where
-      ? this.prisma.tournament.count({ where })
+    const totalCount = await (whereOrUndefined
+      ? this.prisma.tournament.count({ where: whereOrUndefined })
       : this.prisma.tournament.count());
     const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 
@@ -89,7 +136,7 @@ export class TournamentService {
     const orderBy = this.buildTournamentOrderBy(sortBy, sortOrder);
 
     const tournaments = await this.prisma.tournament.findMany({
-      ...(where ? { where } : {}),
+      ...(whereOrUndefined ? { where: whereOrUndefined } : {}),
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
       orderBy,
@@ -108,10 +155,6 @@ export class TournamentService {
     };
   }
 
-  /**
-   * Maps `FindTournamentQueryDto.sortBy` / `sortOrder` to Prisma `orderBy`.
-   * Secondary sort by `id` keeps page order stable when primary values tie.
-   */
   private buildTournamentOrderBy(
     sortBy: TournamentsSortBy,
     sortOrder: SortOrder,
@@ -149,6 +192,9 @@ export class TournamentService {
       case TournamentsSortBy.TEAM_SIZE_MAX:
         primary = { teamSizeMax: dir };
         break;
+      case TournamentsSortBy.STATUS:
+        primary = { status: dir };
+        break;
       default: {
         const _exhaustive: never = sortBy;
         throw new Error(
@@ -160,6 +206,8 @@ export class TournamentService {
   }
 
   async findOne(id: string) {
+    await this.syncTournamentStatuses();
+
     const tournament = await this.prisma.tournament.findUnique({
       where: { id },
     });
@@ -191,10 +239,26 @@ export class TournamentService {
   }
 
   async update(id: string, data: UpdateTournamentDto) {
-    await this.findOne(id);
-    const isTheSameName = data.name === (await this.findOne(id)).name;
-    if (isTheSameName) {
-      throw new BadRequestException('Tournament with this name already exists');
+    const current = await this.findOne(id);
+
+    // Only validate uniqueness when name is actually being changed
+    if (typeof data.name === 'string' && data.name.trim().length > 0) {
+      const nextName = data.name.trim();
+      const currentName = (current.name ?? '').trim();
+
+      if (nextName !== currentName) {
+        const existingTournament = await this.prisma.tournament.findFirst({
+          where: {
+            name: nextName,
+            id: { not: id },
+          },
+        });
+        if (existingTournament) {
+          throw new BadRequestException(
+            'Tournament with this name already exists',
+          );
+        }
+      }
     }
     const updatedTournament = await this.prisma.tournament.update({
       where: { id },

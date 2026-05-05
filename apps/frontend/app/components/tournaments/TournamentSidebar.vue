@@ -19,28 +19,15 @@ aside.sidebar
             .status-info
                 span.label ПОТОЧНИЙ СТАТУС
                 span.value(v-if="status" :style="{ color: status.color }") {{ status.label }}
-            
-            NuxtLink.sidebar__tasks-link(
-                :to="`/tournaments/${tournament.id}/tasks`"
-            )
-                Button.sidebar__tasks(
-                    type="button"
-                    label="Завдання турніру"
-                    icon="pi pi-list"
-                    style="width: 100%"
-                )
-                
-            NuxtLink.sidebar__admin-link(
+
+            Button.sidebar__edit(
                 v-if="isAdmin"
-                :to="`/tournaments/${tournament.id}/admin`"
+                type="button"
+                label="Редагувати турнір"
+                icon="pi pi-pencil"
+                @click="$emit('edit')"
             )
-                Button.sidebar__admin(
-                    type="button"
-                    label="Панель суддівства"
-                    icon="pi pi-shield"
-                    style="width: 100%"
-                )
-                
+
             Button.sidebar__delete(
                 v-if="isAdmin"
                 type="button"
@@ -58,7 +45,7 @@ aside.sidebar
 </template>
 
 <script setup lang="ts">
-import type { TournamentStatusInfo } from '~/utils/tournament-status'
+import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 defineProps<{
     tournament: any
@@ -69,6 +56,7 @@ defineProps<{
 }>()
 
 defineEmits<{
+    edit: []
     delete: []
     createTeam: []
 }>()
@@ -209,6 +197,36 @@ defineEmits<{
 
                 &:focus-visible {
                     outline: 2px solid var(--color-error);
+                    outline-offset: 2px;
+                }
+            }
+
+            :deep(.sidebar__edit.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: transparent;
+                border: 1px solid var(--color-border);
+                color: var(--color-text);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition:
+                    background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
+
+                &:not(:disabled):hover {
+                    background: var(--color-surface) !important;
+                    border-color: var(--color-text) !important;
+                }
+
+                &:focus-visible {
+                    outline: 2px solid var(--color-text);
                     outline-offset: 2px;
                 }
             }
