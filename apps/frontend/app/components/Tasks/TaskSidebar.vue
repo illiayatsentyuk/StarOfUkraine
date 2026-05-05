@@ -22,7 +22,7 @@ aside.task-sidebar
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TournamentTask } from '~/stores/tasks.store'
+import type { TournamentTask } from '~/types'
 
 interface Props {
     tasks: TournamentTask[]

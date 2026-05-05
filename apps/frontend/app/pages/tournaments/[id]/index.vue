@@ -124,7 +124,7 @@ const refreshTeams = async () => {
 
 onMounted(async () => {
     try {
-        tournament.value = await store.fetchTournamentById(route.params.id as string)
+        tournament.value = await tournamentStore.fetchTournamentById(route.params.id as string)
         await refreshTeams()
     } catch {
         console.error('Failed to load tournament detail')

@@ -44,8 +44,8 @@ onMounted(async () => {
     await store.fetchSubmissions(taskId)
 })
 
-async function handleGrade(submissionId: string, score: number) {
-    await store.gradeSubmission(submissionId, score)
+async function handleGrade(submissionId: string, grades: Record<string, number>) {
+    await store.gradeSubmission(submissionId, grades)
 }
 </script>
 
