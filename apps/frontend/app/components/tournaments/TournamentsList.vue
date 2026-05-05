@@ -16,6 +16,15 @@ const filters = [
     { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
 ]
 
+const statusFilters = [
+    { key: 'all', label: 'Всі статуси' },
+    { key: 'DRAFT', label: 'Чернетка' },
+    { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
+    { key: 'ONGOING', label: 'Триває' },
+    { key: 'COMPLETED', label: 'Завершено' },
+    { key: 'CANCELLED', label: 'Скасовано' },
+] as const
+
 const formatDate = (dateString: string) => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('uk-UA')
@@ -72,12 +81,22 @@ section.tournaments-list
                 )
                     polyline(points="18 15 12 9 6 15")
 
+    .filter-bar
+        button.filter-btn(
+            v-for="s in statusFilters"
+            :key="s.key"
+            :class="{ 'filter-btn--active': store.statusFilter === s.key }"
+            type="button"
+            @click="store.statusFilter = s.key; store.loadFromDatabase(true)"
+        )
+            span {{ s.label }}
+
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
         Loader
 
-    .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
+    .tournaments-list__grid(v-else-if="store.filteredTournaments.length > 0")
         NuxtLink.tournament-card(
-            v-for="tournament in store.tournaments"
+            v-for="tournament in store.filteredTournaments"
             :key="tournament.id || tournament.name"
             :to="`/tournaments/${tournament.id}`"
         )
@@ -103,7 +122,7 @@ section.tournaments-list
     .no-data(v-else-if="!store.loading")
         p Турнірів поки немає.
 
-    .tournaments-list__footer(v-if="store.tournaments.length > 0")
+    .tournaments-list__footer(v-if="store.filteredTournaments.length > 0")
         button.load-more(
             @click="store.loadFromDatabase()"
             :disabled="!store.hasMore || store.loading"

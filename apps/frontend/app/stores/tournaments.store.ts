@@ -6,6 +6,8 @@ import type { Tournament } from '~/types'
 
 const LIMIT = 5
 
+type TournamentStatusFilter = 'all' | 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])
@@ -16,8 +18,13 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const search = ref('')
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
+    const statusFilter = ref<TournamentStatusFilter>('all')
 
     const hasMore = computed(() => page.value <= totalPages.value)
+    const filteredTournaments = computed(() => {
+        if (statusFilter.value === 'all') return tournaments.value
+        return tournaments.value.filter((t) => t.status === statusFilter.value)
+    })
 
     const reset = () => {
         page.value = 1
@@ -44,6 +51,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
                 name: search.value.trim() || undefined,
                 sortBy: sortBy.value,
                 sortOrder: sortOrder.value,
+                status: statusFilter.value === 'all' ? undefined : statusFilter.value,
             })
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')
@@ -126,12 +134,14 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     return {
         tournaments,
+        filteredTournaments,
         loading,
         error,
         hasMore,
         search,
         sortBy,
         sortOrder,
+        statusFilter,
         reset,
         loadFromDatabase,
         fetchTournamentById,

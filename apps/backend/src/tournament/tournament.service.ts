@@ -54,29 +54,33 @@ export class TournamentService {
 
   async findAll(query: FindTournamentQueryDto) {
     const name = (query.name ?? '').trim();
+    const status = query.status;
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? this.paginationsConfig.pageSize);
 
-    const where: Prisma.TournamentWhereInput | undefined = name
-      ? {
-          OR: [
-            {
-              name: {
-                contains: name,
-                mode: Prisma.QueryMode.insensitive,
-              },
-            },
-            {
-              id: {
-                contains: name,
-              },
-            },
-          ],
-        }
-      : undefined;
+    const where: Prisma.TournamentWhereInput = {};
+    if (name) {
+      where.OR = [
+        {
+          name: {
+            contains: name,
+            mode: Prisma.QueryMode.insensitive,
+          },
+        },
+        {
+          id: {
+            contains: name,
+          },
+        },
+      ];
+    }
+    if (status) {
+      where.status = status;
+    }
+    const whereOrUndefined = Object.keys(where).length ? where : undefined;
 
-    const totalCount = await (where
-      ? this.prisma.tournament.count({ where })
+    const totalCount = await (whereOrUndefined
+      ? this.prisma.tournament.count({ where: whereOrUndefined })
       : this.prisma.tournament.count());
     const maximumPage = Math.max(1, Math.ceil(totalCount / limit));
 
@@ -89,7 +93,7 @@ export class TournamentService {
     const orderBy = this.buildTournamentOrderBy(sortBy, sortOrder);
 
     const tournaments = await this.prisma.tournament.findMany({
-      ...(where ? { where } : {}),
+      ...(whereOrUndefined ? { where: whereOrUndefined } : {}),
       skip: Number(page - 1) * Number(limit),
       take: Number(limit),
       orderBy,

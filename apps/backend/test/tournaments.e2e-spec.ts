@@ -79,6 +79,11 @@ describe('Tournaments (e2e)', () => {
       .send({ page: 1, limit: 10 })
       .expect(200);
 
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({ where: undefined });
+    expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: undefined }),
+    );
+
     expect(response.body).toEqual({
       data: [tournamentMock],
       currentPage: 1,
@@ -87,6 +92,23 @@ describe('Tournaments (e2e)', () => {
       totalPages: 1,
       itemsPerPage: 10,
     });
+  });
+
+  it('POST /tournaments/list supports filtering by status', async () => {
+    mockPrisma.tournament.count.mockResolvedValue(1);
+    mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
+
+    await request(app.getHttpServer())
+      .post('/tournaments/list')
+      .send({ page: 1, limit: 10, status: TournamentStatus.DRAFT })
+      .expect(200);
+
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({
+      where: { status: TournamentStatus.DRAFT },
+    });
+    expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { status: TournamentStatus.DRAFT } }),
+    );
   });
 
   it('GET /tournaments/:id returns tournament', async () => {
