@@ -21,7 +21,6 @@ section.tasks-page
             v-for="task in store.tasks"
             :key="task.id"
             :task="task"
-            :tournamentId="route.params.id as string"
         )
 
     .empty-state(v-else)
@@ -38,6 +37,8 @@ section.tasks-page
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()

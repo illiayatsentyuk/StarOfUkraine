@@ -1,7 +1,10 @@
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
-        h2.tournaments-list__title НАЙБЛИЖЧІ ТУРНІРИ
+        h2.tournaments-list__title АКТИВНІ ТУРНІРИ
+        NuxtLink.archive-link(to="/tournaments/archive")
+            i.pi.pi-box
+            span АРХІВ ТУРНІРІВ
 
     .filter-bar
         button.filter-btn(
@@ -122,7 +125,32 @@ onMounted(() => {
     min-height: 400px;
 
     &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
         margin-bottom: var(--space-4);
+
+        .archive-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            transition: all 0.2s;
+
+            &:hover {
+                color: var(--color-primary);
+                border-color: var(--color-primary);
+                transform: translateY(-2px);
+            }
+
+            i { font-size: 16px; }
+        }
     }
 
     &__title {

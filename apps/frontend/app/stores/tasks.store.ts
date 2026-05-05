@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+export interface GradingCriterion {
+    name: string
+    type: 'points' | 'stars'
+    max: number
+}
+
 export interface TournamentTask {
     id: string
     tournamentId: string
@@ -9,6 +15,7 @@ export interface TournamentTask {
     points: number
     status: 'pending' | 'completed' | 'failed'
     deadline: string
+    criteria?: GradingCriterion[]
 }
 
 export interface TaskSubmission {
@@ -19,6 +26,7 @@ export interface TaskSubmission {
     youtubeUrl: string
     status: 'pending' | 'graded'
     score?: number
+    grades?: Record<string, number> // criterionName -> score
 }
 
 export const useTasksStore = defineStore('tasks', () => {
@@ -131,14 +139,15 @@ export const useTasksStore = defineStore('tasks', () => {
         }
     }
 
-    const gradeSubmission = async (submissionId: string, score: number) => {
+    const gradeSubmission = async (submissionId: string, grades: Record<string, number>) => {
         loading.value = true
         try {
             await new Promise(resolve => setTimeout(resolve, 600))
             const sub = submissions.value.find(s => s.id === submissionId)
             if (sub) {
                 sub.status = 'graded'
-                sub.score = score
+                sub.grades = grades
+                sub.score = Object.values(grades).reduce((a, b) => a + b, 0)
             }
             toast.success('Роботу оцінено!')
         } catch (err) {

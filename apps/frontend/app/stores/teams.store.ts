@@ -22,7 +22,7 @@ export const useTeamsStore = defineStore('teams', () => {
     const totalPages = ref(0)
     const loading = ref(false)
     const error = ref<string | null>(null)
-    const currentTeam = ref<Team | null>(null) // ⚠️ було `id` — перейменовано щоб не конфліктувало
+    const currentTeam = ref<Team | null>(null) 
     const searchResults = ref<{ id: string; email: string; name?: string }[]>([])
     const searchingMembers = ref(false)
 
@@ -61,7 +61,7 @@ export const useTeamsStore = defineStore('teams', () => {
             }
 
             return data
-        } catch (err: any) { // ⚠️ перейменовано з `error` — уникаємо shadowing ref
+        } catch (err: any) { 
             console.error('Помилка API при завантаженні команд:', err)
             toast.error('Не вдалося завантажити команди')
             error.value = err.message || 'Помилка завантаження'

@@ -3,97 +3,96 @@ header.tournament-detail__hero
     .status-badge(v-if="status" :style="{ backgroundColor: status.color }") {{ status.label }}
     h1.title {{ name }}
     .tournament-detail__hero__actions
-        NuxtLink(:to="`/tournaments/${tournamentId}/tasks`" style="text-decoration: none;")
-            Button.task-btn(type="button" label="Завдання")
+        NuxtLink.task-btn(
+            :to="`/tournaments/${tournamentId}/tasks`"
+            @click="handleTasksClick"
+        )
+            i.pi.pi-list
+            span ПЕРЕГЛЯНУТИ ЗАВДАННЯ
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import type { TournamentStatusInfo } from '~/utils/tournament-status'
 
-defineProps<{
+const props = defineProps<{
     name: string
-    tournamentId: string
     status: TournamentStatusInfo | null
 }>()
+
+const route = useRoute()
+const router = useRouter()
+const tournamentId = computed(() => route.params.id as string)
+
+function handleTasksClick(e: MouseEvent) {
+    if (tournamentId.value) {
+        router.push(`/tournaments/${tournamentId.value}/tasks`)
+    }
+}
 </script>
 
 <style scoped lang="scss">
 .tournament-detail__hero {
-    margin-bottom: 64px;
-    border-bottom: 2px solid var(--color-text);
-    padding-bottom: 48px;
+    margin-bottom: 48px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--color-border);
 
     .status-badge {
         display: inline-block;
         background: var(--color-primary);
         color: white;
-        padding: 6px 14px;
+        padding: 4px 12px;
         font-weight: 700;
-        font-size: 11px;
-        letter-spacing: 1.5px;
-        margin-bottom: 24px;
+        font-size: 10px;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        border-radius: 4px;
     }
 
     .title {
         font-family: var(--font-display);
-        font-size: 84px;
-        font-weight: 700;
-        line-height: 0.95;
-        letter-spacing: -2px;
+        font-size: 64px;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -1.5px;
         margin: 0;
         color: var(--color-text);
 
         @media (max-width: 768px) {
-            font-size: 48px;
+            font-size: 40px;
         }
     }
 
     &__actions {
         display: flex;
         gap: 16px;
-        margin-top: 40px;
+        margin-top: 32px;
 
-        $hero-tab-ease: cubic-bezier(0.16, 1, 0.3, 1);
-
-        :deep(.task-btn.p-button) {
-            min-width: 200px;
-            height: 52px;
-            border-radius: 0;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition:
-                background 0.3s $hero-tab-ease,
-                border-color 0.3s $hero-tab-ease,
-                color 0.3s $hero-tab-ease,
-                transform 0.3s $hero-tab-ease,
-                box-shadow 0.3s $hero-tab-ease;
-            cursor: pointer;
+        .task-btn {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
-            background: var(--color-text) !important;
-            border: 1px solid var(--color-text) !important;
-            color: #fff !important;
+            padding: 14px 28px;
+            background: var(--color-primary);
+            color: white;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            border-radius: 6px;
+            transition: all 0.2s;
 
-            &:not(:disabled):hover {
-                background: var(--color-primary) !important;
-                border-color: var(--color-primary) !important;
-                color: #fff !important;
+            i { font-size: 14px; }
+
+            &:hover {
+                background: var(--color-text);
                 transform: translateY(-2px);
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             }
 
-            &:not(:disabled):active {
+            &:active {
                 transform: translateY(0);
-            }
-
-            &:not(:disabled):hover .p-button-icon,
-            &:not(:disabled):hover .p-button-icon .pi {
-                color: #fff !important;
             }
         }
     }

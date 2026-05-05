@@ -19,6 +19,28 @@ aside.sidebar
             .status-info
                 span.label ПОТОЧНИЙ СТАТУС
                 span.value(v-if="status" :style="{ color: status.color }") {{ status.label }}
+            
+            NuxtLink.sidebar__tasks-link(
+                :to="`/tournaments/${tournament.id}/tasks`"
+            )
+                Button.sidebar__tasks(
+                    type="button"
+                    label="Завдання турніру"
+                    icon="pi pi-list"
+                    style="width: 100%"
+                )
+                
+            NuxtLink.sidebar__admin-link(
+                v-if="isAdmin"
+                :to="`/tournaments/${tournament.id}/admin`"
+            )
+                Button.sidebar__admin(
+                    type="button"
+                    label="Панель суддівства"
+                    icon="pi pi-shield"
+                    style="width: 100%"
+                )
+                
             Button.sidebar__delete(
                 v-if="isAdmin"
                 type="button"
@@ -130,6 +152,33 @@ defineEmits<{
                     font-size: 20px;
                     font-weight: 700;
                     color: var(--color-text);
+                }
+            }
+
+            .sidebar__tasks-link {
+                text-decoration: none;
+                display: block;
+                width: 100%;
+            }
+
+            :deep(.sidebar__tasks.p-button) {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: var(--color-text);
+                border: 1px solid var(--color-text);
+                color: #fff;
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: var(--color-primary) !important;
+                    border-color: var(--color-primary) !important;
                 }
             }
 
