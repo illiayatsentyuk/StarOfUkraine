@@ -11,7 +11,8 @@ export default defineConfig({
     baseURL: env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:4040',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    // Video needs `pnpm exec playwright install ffmpeg` (or --with-deps). Off by default for fewer deps.
+    video: 'off',
   },
   projects: [
     {
