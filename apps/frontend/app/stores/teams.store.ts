@@ -1,19 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Team } from '~/types/teams.interface'
+import type { Team, CreateTeamPayload } from '~/types'
 import { useApi } from '~/composables/useApi';
 
-
 const LIMIT = 16
-type CreateTeamPayload = {
-    name: string
-    captainName: string
-    city?: string
-    organization?: string
-    telegram?: string
-    discord?: string
-    members?: string[]
-}
 
 export const useTeamsStore = defineStore('teams', () => {
     const toast = useServerSafeToast()
