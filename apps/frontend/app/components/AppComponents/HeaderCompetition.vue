@@ -1,30 +1,3 @@
-<script lang="ts" setup>
-import { isRouteWithoutTournamentSearch } from '~/enums'
-import { useTournamentsStore } from '../../stores/tournaments.store'
-
-const route = useRoute()
-const store = useTournamentsStore()
-const loginStore = useLoginStore()
-
-const showSearchBar = computed(
-  () => !isRouteWithoutTournamentSearch(route.path),
-)
-const isOpen = ref(false)
-const isTeamOpen = ref(false)
-
-function openModal(){
-    isOpen.value=true
-}
-function openTeamModal(){
-    isTeamOpen.value=true
-}
-function closeModal(){
-    isOpen.value=false
-    isTeamOpen.value=false
-}
-
-</script>
-
 <template lang="pug">
 header.header-competition
     .header-competition__left
@@ -67,11 +40,16 @@ CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { isRouteWithoutTournamentSearch } from '~/enums'
 import { useTournamentsStore } from '../../stores/tournaments.store'
 
+const route = useRoute()
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
+
+const showSearchBar = computed(
+  () => !isRouteWithoutTournamentSearch(route.path),
+)
 const isOpen = ref(false)
 const isTeamOpen = ref(false)
 
@@ -85,7 +63,6 @@ function closeModal(){
     isOpen.value=false
     isTeamOpen.value=false
 }
-
 </script>
 
 <style lang="scss" scoped>
