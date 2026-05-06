@@ -207,7 +207,6 @@ describe('TasksService', () => {
       mockPrisma.submission.upsert.mockResolvedValue({
         id: 'sub-1',
         taskId: 'task-1',
-        teamId: 'team-1',
         ...submitDto,
         status: SubmissionStatus.PENDING,
       });

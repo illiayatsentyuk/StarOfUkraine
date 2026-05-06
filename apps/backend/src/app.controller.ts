@@ -22,7 +22,7 @@ export class AppController {
       },
     },
   })
-  getHello() {
-    return this.appService.getHello();
+  getHealth() {
+    return this.appService.getHealth();
   }
 }

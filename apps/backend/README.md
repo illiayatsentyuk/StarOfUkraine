@@ -81,7 +81,7 @@ Configure **`GOOGLE_CALLBACK_URL`** in `.env` to the full URL of `/auth/google/c
 Paginated **POST** list endpoints (body uses `FindQueryDto`):
 
 - `POST /teams/list`
-- `POST /tournaments/list`
+- `GET /tournaments/list`
 
 Create endpoints (protected):
 

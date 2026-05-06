@@ -19,28 +19,28 @@ const ongoing = {
 }
 
 /**
- * Intercepts `POST …/tournaments/list` and returns a list that depends on the JSON body’s `status`.
+ * Intercepts `GET …/tournaments/list` and returns a list that depends on the query `status`.
  *
  * - `await page.route(...)` finishes as soon as the handler is **registered** (not when requests run).
  * - The inner `async (route) => { … }` runs **once per matching request**; each call must end in
  *   `fulfill` or `continue`, or the request will hang.
- * - Non-POST matches (e.g. CORS `OPTIONS`) are passed through with `continue()` so the browser can
+ * - Non-GET matches (e.g. CORS `OPTIONS`) are passed through with `continue()` so the browser can
  *   complete the real preflight against `apiURL` if needed.
  */
 export async function mockTournamentsListWithStatusFilter(page: Page) {
   await page.route(/\/tournaments\/list/, async (route) => {
     const req = route.request()
-    if (req.method() !== 'POST') {
+    if (req.method() !== 'GET') {
       await route.continue()
       return
     }
 
     let status: string | undefined
     try {
-      const json = req.postDataJSON() as { status?: string } | null
-      status = json?.status
+      const url = new URL(req.url())
+      status = url.searchParams.get('status') ?? undefined
     } catch {
-      /* ignore malformed body */
+      /* ignore malformed URL */
     }
 
     const body =

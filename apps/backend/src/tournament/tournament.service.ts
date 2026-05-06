@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { Prisma, TournamentStatus } from '@prisma/client';
+import type { Cache } from 'cache-manager';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -22,14 +23,9 @@ export class TournamentService {
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
+    @Inject('CACHE_MANAGER') private cacheManager: Cache,
   ) {}
 
-  /**
-   * Keep `Tournament.status` synchronized with dates.
-   * We intentionally do it on read paths (list/details) so the UI can trust DB status.
-   *
-   * Note: COMPLETED/CANCELLED are treated as terminal and not auto-overwritten.
-   */
   private async syncTournamentStatuses(now = new Date()) {
     const terminalStatuses = [
       TournamentStatus.COMPLETED,
