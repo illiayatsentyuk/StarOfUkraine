@@ -12,7 +12,8 @@ else
 fi
 
 # // Frontend
-if echo "$STAGED_FILES" | grep -q '^apps/frontend/'; then
+if echo "$STAGED_FILES" | grep -q '^apps/frontend/';
+then
   cd apps/frontend && pnpm run test:e2e && cd ../..
 else
   echo "Skipping Frontend (no changes)"
