@@ -9,27 +9,24 @@
     .submissions-list(v-else)
         .submission-card(v-for="sub in submissions" :key="sub.id")
             .submission-header
-                span.team-name {{ sub.teamName }}
+                span.team-name {{ sub.team?.name || sub.teamId }}
                 .status-badge(:class="sub.status")
-                    span {{ sub.status === 'pending' ? 'Очікує' : `Оцінено (${sub.score})` }}
+                    span {{ sub.status === 'PENDING' ? 'Очікує' : 'Оцінено' }}
             
             .submission-links
                 a.link-icon(:href="sub.githubUrl" target="_blank" v-if="sub.githubUrl")
                     i.pi.pi-github
-                a.link-icon(:href="sub.youtubeUrl" target="_blank" v-if="sub.youtubeUrl")
+                a.link-icon(:href="sub.videoUrl" target="_blank" v-if="sub.videoUrl")
                     i.pi.pi-youtube
             
-            .grading-area(v-if="sub.status === 'pending'")
-                .criterion-grading(v-for="c in task.criteria" :key="c.name")
+            .grading-area(v-if="sub.status === 'PENDING'")
+                .criterion-grading(v-for="c in task?.criteria?.rubric || []" :key="c.id")
                     .c-info
-                        span.c-name {{ c.name }}
-                        span.c-max(v-if="c.type === 'points'") max {{ c.max }}
+                        span.c-name {{ c.label }}
+                        span.c-max max {{ c.maxPoints }}
                     
                     .c-input
-                        template(v-if="c.type === 'stars'")
-                            Rating(v-model="gradingData[sub.id][c.name]" :stars="c.max || 5" :cancel="false")
-                        template(v-else)
-                            InputText(v-model="gradingData[sub.id][c.name]" type="number" :max="c.max" placeholder="0")
+                        InputText(v-model="gradingData[sub.id][c.id]" type="number" :max="c.maxPoints" placeholder="0")
                 
                 Button.grade-btn(
                     label="ЗБЕРЕГТИ ОЦІНКУ"
@@ -37,10 +34,6 @@
                     :loading="loading"
                 )
             
-            .graded-summary(v-else)
-                .g-item(v-for="(val, name) in sub.grades" :key="name")
-                    span.n {{ name }}:
-                    span.v {{ val }}
 </template>
 
 <script setup lang="ts">
@@ -53,7 +46,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: 'grade', submissionId: string, grades: Record<string, number>): void
+    (e: 'grade', submissionId: string, scores: Array<{ id: string; points: number }>): void
 }>()
 
 const gradingData = ref<Record<string, Record<string, number>>>({})
@@ -63,8 +56,8 @@ watch(() => props.submissions, (newSubs) => {
     newSubs.forEach(sub => {
         if (!gradingData.value[sub.id]) {
             const initial: Record<string, number> = {}
-            props.task.criteria?.forEach((c: any) => {
-                initial[c.name] = c.type === 'stars' ? 0 : 0
+            props.task?.criteria?.rubric?.forEach((c: any) => {
+                initial[c.id] = 0
             })
             gradingData.value[sub.id] = initial
         }
@@ -72,13 +65,12 @@ watch(() => props.submissions, (newSubs) => {
 }, { immediate: true })
 
 function submitGrade(submissionId: string) {
-    const grades = gradingData.value[submissionId]
-    // Convert string inputs to numbers
-    const finalGrades: Record<string, number> = {}
-    for (const key in grades) {
-        finalGrades[key] = Number(grades[key])
-    }
-    emit('grade', submissionId, finalGrades)
+    const grades = gradingData.value[submissionId] || {}
+    const scores = Object.entries(grades).map(([id, points]) => ({
+        id,
+        points: Number(points),
+    }))
+    emit('grade', submissionId, scores)
 }
 </script>
 
@@ -86,7 +78,6 @@ function submitGrade(submissionId: string) {
 .admin-section {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
     padding: 24px;
 }
 
@@ -107,7 +98,6 @@ function submitGrade(submissionId: string) {
 .submission-card {
     background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
     padding: 20px;
 
     .submission-header {
@@ -122,9 +112,8 @@ function submitGrade(submissionId: string) {
         font-size: 10px;
         font-weight: 700;
         padding: 4px 8px;
-        border-radius: 4px;
-        &.pending { background: #fef3c7; color: #92400e; }
-        &.graded { background: #d1fae5; color: #065f46; }
+        &.PENDING { background: #fef3c7; color: #92400e; }
+        &.EVALUATED { background: #d1fae5; color: #065f46; }
     }
 
     .submission-links {
@@ -155,7 +144,7 @@ function submitGrade(submissionId: string) {
         }
 
         .c-input {
-            :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; border-radius: 4px; text-align: center; }
+            :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; text-align: center; }
             :deep(.p-rating) { gap: 4px; .p-rating-item .p-rating-icon { font-size: 14px; color: #f59e0b; } }
         }
     }
@@ -169,7 +158,6 @@ function submitGrade(submissionId: string) {
         font-size: 12px;
         font-weight: 700;
         padding: 12px;
-        border-radius: 6px;
     }
 
     .graded-summary {

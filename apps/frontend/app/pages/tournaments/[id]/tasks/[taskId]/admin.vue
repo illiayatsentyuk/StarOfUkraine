@@ -14,7 +14,7 @@ section.task-admin-page
                 span.val {{ store.submissions.length }}
                 span.lbl ПОДАНО
             .stat-item
-                span.val {{ store.submissions.filter(s => s.status === 'graded').length }}
+                span.val {{ store.submissions.filter(s => s.status === 'EVALUATED').length }}
                 span.lbl ОЦІНЕНО
 
     .admin-content
@@ -32,20 +32,22 @@ import { computed, onMounted } from 'vue'
 const route = useRoute()
 const store = useTasksStore()
 
-const task = computed(() => store.tasks.find(t => t.id === route.params.taskId))
+const taskId = computed(() => route.params.taskId as string)
+const tournamentId = computed(() => route.params.id as string)
+const task = computed(() => store.tasks.find(t => t.id === taskId.value))
 
 onMounted(async () => {
-    const tournamentId = route.params.id as string
-    const taskId = route.params.taskId as string
-    
-    if (store.tasks.length === 0) {
-        await store.fetchTasks(tournamentId)
+    const hasCurrentTournamentTasks = store.tasks.some(t => t.tournamentId === tournamentId.value)
+    const hasCurrentTask = store.tasks.some(t => t.id === taskId.value)
+
+    if (!hasCurrentTournamentTasks || !hasCurrentTask) {
+        await store.fetchTasks(tournamentId.value)
     }
-    await store.fetchSubmissions(taskId)
+    await store.fetchSubmissions(taskId.value)
 })
 
-async function handleGrade(submissionId: string, grades: Record<string, number>) {
-    await store.gradeSubmission(submissionId, grades)
+async function handleGrade(submissionId: string, scores: Array<{ id: string; points: number }>) {
+    await store.gradeSubmission(submissionId, scores)
 }
 </script>
 

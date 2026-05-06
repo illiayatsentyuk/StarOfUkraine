@@ -84,7 +84,7 @@ import { useTeamsStore } from '~/stores/teams.store'
 const props = defineProps<{ isTeamOpen: boolean }>()
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'success'): void
+  (e: 'success', payload: { teamId: string }): void
 }>()
 
 const store = useTeamsStore()
@@ -161,8 +161,10 @@ async function onSubmit(values: any) {
             ...values,
             members: selectedMembers.value,
         }
-        await store.createTeam(payload)
-        emit('success')
+        const team = await store.createTeam(payload)
+        if (!team?.id) return
+        store.currentTeam = team
+        emit('success', { teamId: team.id })
         emit('close')
     } catch (e) {
         console.error('Помилка створення команди:', e)

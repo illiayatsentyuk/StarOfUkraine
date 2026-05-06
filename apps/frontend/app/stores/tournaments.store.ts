@@ -143,6 +143,20 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const joinTournament = async (tournamentId: string, teamId: string) => {
+        try {
+            const api = useApi()
+            const response = await api.patch(`/tournaments/join/${tournamentId}`, { teamId })
+            if (!response.data) throw new Error('Не вдалося зареєструвати команду в турнір')
+            toast.success('Команду зареєстровано в турнірі')
+            return response.data
+        } catch (err: unknown) {
+            console.error('Помилка API при реєстрації команди в турнірі:', err)
+            toast.error('Не вдалося зареєструвати команду в турнірі')
+            throw err
+        }
+    }
+
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -163,6 +177,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         loadFromDatabase,
         fetchTournamentById,
         addTournament,
+        joinTournament,
         updateTournament,
         deleteTournament,
     }

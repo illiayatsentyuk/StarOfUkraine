@@ -9,15 +9,15 @@ aside.task-sidebar
             v-for="(task, index) in tasks"
             :key="task.id"
             :to="`/tournaments/${tournamentId}/tasks/${task.id}`"
-            :class="{ 'is-active': currentTaskId === task.id, 'is-completed': task.status === 'completed' }"
+            :class="{ 'is-active': currentTaskId === task.id }"
         )
             .task-item__index {{ String.fromCharCode(65 + index) }}
             .task-item__content
-                span.task-item__title {{ task.title }}
+                span.task-item__title {{ task.name }}
                 .task-item__status
-                    span.status-dot(:class="task.status")
-                    span.status-text {{ getStatusLabel(task.status) }}
-            .task-item__points {{ task.points }}
+                    span.status-dot.pending
+                    span.status-text ВІДКРИТО
+            .task-item__points {{ task.order }}
 </template>
 
 <script setup lang="ts">
@@ -29,24 +29,17 @@ interface Props {
     currentTaskId: string
 }
 
-const props = defineProps<Props>()
+defineProps<Props>()
+
 const route = useRoute()
 const tournamentId = computed(() => route.params.id as string)
-
-function getStatusLabel(status: string) {
-    switch (status) {
-        case 'completed': return 'ВИКОНАНО'
-        case 'failed': return 'НЕ ВИКОНАНО'
-        default: return 'В ПРОЦЕСІ'
-    }
-}
 </script>
 
 <style lang="scss" scoped>
 .task-sidebar {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: 0;
     padding: 24px;
 }
 
@@ -84,7 +77,7 @@ function getStatusLabel(status: string) {
     align-items: center;
     gap: 12px;
     padding: 12px;
-    border-radius: 6px;
+    border-radius: 0;
     text-decoration: none;
     color: var(--color-text);
     transition: all 0.2s ease;
@@ -120,7 +113,7 @@ function getStatusLabel(status: string) {
         align-items: center;
         justify-content: center;
         background: var(--color-bg-secondary);
-        border-radius: 4px;
+        border-radius: 0;
         color: var(--color-text);
         font-weight: 700;
         font-size: 12px;
@@ -169,7 +162,7 @@ function getStatusLabel(status: string) {
         font-weight: 700;
         padding: 2px 6px;
         background: var(--color-bg-secondary);
-        border-radius: 3px;
+        border-radius: 0;
         color: var(--color-text-muted);
     }
 }

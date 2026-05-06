@@ -1,27 +1,40 @@
 export interface GradingCriterion {
-    name: string
-    type: 'points' | 'stars'
-    max: number
+    id: string
+    label: string
+    maxPoints: number
 }
 
 export interface TournamentTask {
     id: string
     tournamentId: string
-    title: string
+    name: string
     description: string
-    points: number
-    status: 'pending' | 'completed' | 'failed'
-    deadline: string
+    order: number
+    criteria?: {
+        rubric?: GradingCriterion[]
+    }
+}
+
+export interface CreateTournamentTaskPayload {
+    tournamentId: string
+    name: string
+    description: string
+    order: number
+    maxPoints?: number
     criteria?: GradingCriterion[]
 }
 
 export interface TaskSubmission {
     id: string
     taskId: string
-    teamName: string
+    teamId: string
+    team?: {
+        id: string
+        name: string
+        captainName?: string
+        captainEmail?: string
+    }
     githubUrl: string
-    youtubeUrl: string
-    status: 'pending' | 'graded'
-    score?: number
-    grades?: Record<string, number> // criterionName -> score
+    videoUrl: string
+    status: 'PENDING' | 'EVALUATED'
 }

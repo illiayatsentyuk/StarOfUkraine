@@ -39,6 +39,7 @@ section.tasks-page
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import CreateTaskModal from '~/components/Tasks/CreateTaskModal.vue'
 
 const route = useRoute()
 const store = useTasksStore()
@@ -50,10 +51,46 @@ onMounted(() => {
     store.fetchTasks(route.params.id as string)
 })
 
-async function handleCreateTask(payload: { title: string; description: string; points: number; deadline: string }) {
+async function handleCreateTask(payload: any) {
+    const derivedName = String(payload?.name ?? payload?.title ?? '').trim()
+    const derivedDescription = String(payload?.description ?? '').trim()
+    const parsedOrder = Number(payload?.order)
+    const safeOrder = Number.isInteger(parsedOrder) && parsedOrder >= 0
+        ? parsedOrder
+        : store.tasks.length
+    const parsedMaxPoints = Number(payload?.maxPoints ?? payload?.points)
+    const safeMaxPoints = Number.isFinite(parsedMaxPoints) && parsedMaxPoints > 0
+        ? parsedMaxPoints
+        : 100
+    const normalizedCriteria = Array.isArray(payload?.criteria)
+        ? payload.criteria
+            .map((criterion: any, index: number) => {
+                const label = String(criterion?.label ?? criterion?.name ?? '').trim()
+                if (!label) return null
+                const explicitMax = Number(criterion?.maxPoints ?? criterion?.max)
+                const isStars = criterion?.type === 'stars' || payload?.gradingMode === 'stars'
+                const maxPoints = isStars
+                    ? 5
+                    : Number.isFinite(explicitMax) && explicitMax > 0
+                        ? explicitMax
+                        : 1
+
+                return {
+                    id: `criterion_${index + 1}`,
+                    label,
+                    maxPoints,
+                }
+            })
+            .filter(Boolean)
+        : []
+
     await store.createTask({
         tournamentId: route.params.id as string,
-        ...payload,
+        name: derivedName,
+        description: derivedDescription,
+        order: safeOrder,
+        maxPoints: safeMaxPoints,
+        criteria: normalizedCriteria.length ? normalizedCriteria : undefined,
     })
     isModalOpen.value = false
 }

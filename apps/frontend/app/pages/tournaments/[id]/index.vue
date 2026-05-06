@@ -68,7 +68,7 @@ section.tournament-detail
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
-        @success="refreshTeams"
+        @success="onTeamCreated"
     )
 </template>
 
@@ -120,6 +120,11 @@ const refreshTeams = async () => {
     } catch {
         console.error('Failed to refresh teams')
     }
+}
+
+const onTeamCreated = async ({ teamId }: { teamId: string }) => {
+    await tournamentStore.joinTournament(tournamentId.value, teamId)
+    await refreshTeams()
 }
 
 onMounted(async () => {

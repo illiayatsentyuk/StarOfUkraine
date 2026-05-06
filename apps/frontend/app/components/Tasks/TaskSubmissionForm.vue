@@ -1,5 +1,5 @@
 <template lang="pug">
-.content-section.submission-section(v-if="task.status === 'pending'")
+.content-section.submission-section
     h3.section-title ВІДПРАВИТИ РЕЗУЛЬТАТ
     
     form.submission-form(@submit.prevent="handleSubmit")
@@ -29,12 +29,6 @@
             :disabled="!submissionGithub.trim()"
         )
 
-.content-section.submission-section(v-else-if="task.status === 'completed'")
-    .success-banner
-        i.pi.pi-check-circle
-        .text
-            h4 ЗАВДАННЯ ВИКОНАНО
-            p Ваша відповідь прийнята.
 </template>
 
 <script setup lang="ts">
@@ -65,7 +59,6 @@ function handleSubmit() {
 .submission-section {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 8px;
     padding: 24px;
 }
 
@@ -111,7 +104,6 @@ function handleSubmit() {
                 padding: 10px 12px 10px 36px !important;
                 background: var(--color-bg-secondary) !important;
                 border: 1px solid var(--color-border) !important;
-                border-radius: 6px !important;
                 font-size: 13px !important;
                 color: var(--color-text) !important;
                 transition: all 0.2s;
@@ -134,7 +126,6 @@ function handleSubmit() {
         font-weight: 700 !important;
         font-size: 12px !important;
         padding: 14px !important;
-        border-radius: 6px !important;
         letter-spacing: 1px !important;
         transition: all 0.2s;
         margin-top: 8px;

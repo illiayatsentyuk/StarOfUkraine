@@ -1,33 +1,30 @@
 <template lang="pug">
 header.task-detail__hero
   .status-line
-    .badge(:class="task.status")
+    .badge.pending
         span.dot
-        span {{ getStatusLabel(task.status) }}
-    .points {{ task.points }} pts
+        span ВІДКРИТО
+    .points {{ maxPoints }} pts
     
-  h1.title {{ task.title }}
+  h1.title {{ task.name }}
   
   .meta
     .meta-item
         i.pi.pi-calendar
-        span Дедлайн: {{ formatDate(task.deadline) }}
+        span Раунд: {{ task.order }}
 </template>
 
 <script setup lang="ts">
-import { formatDate } from '~/utils/format-date'
+import { computed } from 'vue'
+import type { TournamentTask } from '~/types'
 
 const props = defineProps<{
-  task: any
+  task: TournamentTask
 }>()
 
-function getStatusLabel(status: string) {
-    switch (status) {
-        case 'completed': return 'ВИКОНАНО'
-        case 'failed': return 'НЕ ВИКОНАНО'
-        default: return 'В ПРОЦЕСІ'
-    }
-}
+const maxPoints = computed(() =>
+    (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),
+)
 </script>
 
 <style scoped lang="scss">
@@ -48,7 +45,6 @@ function getStatusLabel(status: string) {
         gap: 8px;
         padding: 4px 12px;
         background: var(--color-bg-secondary);
-        border-radius: 20px;
         font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.5px;

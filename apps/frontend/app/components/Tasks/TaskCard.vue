@@ -1,18 +1,18 @@
 <template lang="pug">
 NuxtLink.task-card(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
     .task-card__header
-        .status-badge(:class="task.status")
+        .status-badge.pending
             span.dot
-            span {{ getStatusLabel(task.status) }}
-        .points {{ task.points }} pts
+            span ВІДКРИТО
+        .points {{ maxPoints }} pts
 
-    h3.task-title {{ task.title }}
+    h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer
         .deadline
             i.pi.pi-calendar
-            span {{ formatDate(task.deadline) }}
+            span Раунд {{ task.order }}
         .detail-btn
             span ДЕТАЛІ
             i.pi.pi-arrow-right
@@ -20,22 +20,19 @@ NuxtLink.task-card(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { formatDate } from '~/utils/format-date'
+import type { TournamentTask } from '~/types'
 
 const props = defineProps<{
-    task: any
+    task: TournamentTask
+    tournamentId?: string
 }>()
 
 const route = useRoute()
-const tournamentId = computed(() => route.params.id as string)
+const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
 
-function getStatusLabel(status: string) {
-    switch (status) {
-        case 'completed': return 'ВИКОНАНО'
-        case 'failed': return 'НЕ ВИКОНАНО'
-        default: return 'В ПРОЦЕСІ'
-    }
-}
+const maxPoints = computed(() =>
+    (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),
+)
 </script>
 
 <style scoped lang="scss">
@@ -48,7 +45,6 @@ function getStatusLabel(status: string) {
     transition: all 0.2s ease;
     text-decoration: none;
     color: inherit;
-    border-radius: 8px;
 
     &:hover {
         border-color: var(--color-primary);
@@ -70,7 +66,7 @@ function getStatusLabel(status: string) {
             font-weight: 700;
             padding: 4px 10px;
             background: var(--color-bg-secondary);
-            border-radius: 20px;
+            border-radius: 0;
 
             .dot {
                 width: 5px;

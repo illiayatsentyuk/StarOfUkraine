@@ -114,7 +114,6 @@ const completedTournaments = computed(() => {
             padding: 12px 16px 12px 44px;
             background: var(--color-surface);
             border: 1px solid var(--color-border);
-            border-radius: 8px;
             font-size: 14px;
             &:focus { outline: none; border-color: var(--color-primary); }
         }

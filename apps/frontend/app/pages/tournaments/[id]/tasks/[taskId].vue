@@ -66,21 +66,32 @@ import { computed, onMounted } from 'vue'
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()
+const teamsStore = useTeamsStore()
 
-const task = computed(() => store.tasks.find(t => t.id === route.params.taskId))
+const taskId = computed(() => route.params.taskId as string)
+const tournamentId = computed(() => route.params.id as string)
+const task = computed(() => store.tasks.find(t => t.id === taskId.value))
 
 onMounted(async () => {
-    const tournamentId = route.params.id as string
-    if (store.tasks.length === 0) {
-        await store.fetchTasks(tournamentId)
+    const hasCurrentTournamentTasks = store.tasks.some(t => t.tournamentId === tournamentId.value)
+    const hasCurrentTask = store.tasks.some(t => t.id === taskId.value)
+
+    if (!hasCurrentTournamentTasks || !hasCurrentTask) {
+        await store.fetchTasks(tournamentId.value)
     }
 })
 
 async function handleSubmit(payload: { github: string; youtube: string }) {
     if (!task.value) return
+    const teamId = (route.query.teamId as string) || teamsStore.currentTeam?.id
+    if (!teamId) {
+        useServerSafeToast().error('Оберіть команду для відправки завдання')
+        return
+    }
     await store.submitTask(task.value.id, {
-        github: payload.github,
-        youtube: payload.youtube,
+        teamId,
+        githubUrl: payload.github,
+        videoUrl: payload.youtube,
     })
 }
 </script>
@@ -137,7 +148,6 @@ async function handleSubmit(payload: { github: string; youtube: string }) {
     .content-card {
         background: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: 8px;
         padding: 40px;
     }
 
@@ -181,7 +191,6 @@ async function handleSubmit(payload: { github: string; youtube: string }) {
         padding: 16px;
         background: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: 8px;
         color: var(--color-text);
         text-decoration: none;
         font-weight: 700;
@@ -200,7 +209,6 @@ async function handleSubmit(payload: { github: string; youtube: string }) {
 
 .example-box {
     background: #1e1e1e;
-    border-radius: 6px;
     overflow: hidden;
     margin-bottom: 16px;
 

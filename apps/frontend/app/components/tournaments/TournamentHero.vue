@@ -47,7 +47,7 @@ function handleTasksClick(e: MouseEvent) {
         font-size: 10px;
         letter-spacing: 1px;
         margin-bottom: 20px;
-        border-radius: 4px;
+        border-radius: 0;
     }
 
     .title {
@@ -80,7 +80,7 @@ function handleTasksClick(e: MouseEvent) {
             font-weight: 700;
             font-size: 13px;
             letter-spacing: 0.5px;
-            border-radius: 6px;
+            border-radius: 0;
             transition: all 0.2s;
 
             i { font-size: 14px; }

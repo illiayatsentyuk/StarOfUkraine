@@ -44,8 +44,8 @@ section.judge-dashboard
                     .task-submission-card(v-for="task in store.tasks" :key="task.id")
                         .task-info
                             .task-header
-                                h3 {{ task.title }}
-                                span.points-max {{ task.points }} pts max
+                                h3 {{ task.name }}
+                                span.points-max {{ task.criteria?.rubric?.reduce((sum, item) => sum + item.maxPoints, 0) || 0 }} pts max
                             
                             .submission-status(v-if="getSubmission(selectedTeam.id, task.id)")
                                 .links
@@ -56,7 +56,7 @@ section.judge-dashboard
                                         i.pi.pi-youtube
                                         span Demo
                                 
-                                .grading-form(v-if="getSubmission(selectedTeam.id, task.id).status === 'pending'")
+                                .grading-form(v-if="getSubmission(selectedTeam.id, task.id).status === 'PENDING'")
                                     InputText.score-input(
                                         v-model="gradingScores[`${selectedTeam.id}-${task.id}`]"
                                         type="number"
@@ -70,7 +70,7 @@ section.judge-dashboard
                                 .graded-info(v-else)
                                     i.pi.pi-check-circle
                                     span ОЦІНЕНО: 
-                                    strong {{ getSubmission(selectedTeam.id, task.id).score }} БАЛІВ
+                                    strong ОЦІНЕНО
                             
                             .no-submission(v-else)
                                 i.pi.pi-clock
@@ -150,7 +150,7 @@ async function handleGrade(teamId: string, taskId: string) {
     // In real app, we need submissionId
     const sub = getSubmission(teamId, taskId)
     if (sub) {
-        await store.gradeSubmission(sub.id, score)
+        await store.gradeSubmission(sub.id, [{ id: 'total', points: score }])
     }
 }
 </script>
@@ -204,7 +204,6 @@ async function handleGrade(teamId: string, taskId: string) {
             background: #ef4444;
             color: white;
             padding: 2px 8px;
-            border-radius: 4px;
         }
     }
 }
@@ -219,7 +218,6 @@ async function handleGrade(teamId: string, taskId: string) {
 .teams-sidebar {
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
     overflow: hidden;
     height: calc(100vh - 200px);
     display: flex;
@@ -235,7 +233,6 @@ async function handleGrade(teamId: string, taskId: string) {
             padding: 10px 12px 10px 36px;
             background: #f1f5f9;
             border: none;
-            border-radius: 8px;
             font-size: 14px;
             &:focus { outline: none; background: #e2e8f0; }
         }
@@ -258,7 +255,6 @@ async function handleGrade(teamId: string, taskId: string) {
         padding: 12px;
         border: none;
         background: none;
-        border-radius: 8px;
         cursor: pointer;
         text-align: left;
         transition: all 0.2s;
@@ -273,7 +269,6 @@ async function handleGrade(teamId: string, taskId: string) {
             width: 40px;
             height: 40px;
             background: #cbd5e1;
-            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -319,8 +314,7 @@ async function handleGrade(teamId: string, taskId: string) {
     .task-submission-card {
         background: white;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 20px;
+            padding: 20px;
 
         .task-header {
             display: flex;
@@ -342,7 +336,6 @@ async function handleGrade(teamId: string, taskId: string) {
                     gap: 6px;
                     padding: 6px 12px;
                     background: #f1f5f9;
-                    border-radius: 6px;
                     text-decoration: none;
                     font-size: 12px;
                     font-weight: 700;
@@ -357,8 +350,7 @@ async function handleGrade(teamId: string, taskId: string) {
                 .score-input {
                     flex: 1;
                     height: 38px;
-                    border-radius: 8px;
-                    border: 1px solid #e2e8f0;
+                            border: 1px solid #e2e8f0;
                     padding: 0 12px;
                     font-size: 14px;
                     background: #f8fafc;
@@ -370,8 +362,7 @@ async function handleGrade(teamId: string, taskId: string) {
                     padding: 0 16px;
                     font-size: 12px;
                     font-weight: 700;
-                    border-radius: 8px;
-                }
+                        }
             }
 
             .graded-info {
@@ -394,7 +385,6 @@ async function handleGrade(teamId: string, taskId: string) {
             font-weight: 600;
             padding: 12px;
             background: #f8fafc;
-            border-radius: 8px;
         }
     }
 }
