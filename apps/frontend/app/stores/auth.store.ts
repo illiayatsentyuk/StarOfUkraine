@@ -49,7 +49,6 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    // Просто запитуємо профіль — cookies браузер надішле сам
     const fetchUser = async () => {
         loading.value = true
         try {
@@ -58,8 +57,9 @@ export const useLoginStore = defineStore('login', () => {
                 user.value = response.data.user
                 isAdmin.value = response.data.user.role === 'ADMIN'
                 image.value = response.data.user.image
+                console.log(user.value?.image)
             }
-            console.log(user.value?.image)
+
         } catch {
             user.value = null
             isAdmin.value = false
@@ -68,9 +68,8 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    // Ініціалізація при старті
     const init = async () => {
-        await fetchUser()  // просто пробуємо, без refresh спочатку
+        await fetchUser()
     }
 
     const logout = async () => {

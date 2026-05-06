@@ -30,7 +30,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ) {
-    this.logger.debug(profile);
     this.logger.debug(
       `Google profile received: id=${profile.id}, email=${profile._json.email ?? 'n/a'}`,
     );
