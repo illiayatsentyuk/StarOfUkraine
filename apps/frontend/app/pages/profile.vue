@@ -10,7 +10,7 @@ section.profile
         .profile__avatar-ring
           .profile__avatar-wrap
             Avatar(
-              v-if="loginStore.user.image"
+              v-if="loginStore.user?.image"
               :image="loginStore.user.image"
               size="xlarge"
               shape="circle"

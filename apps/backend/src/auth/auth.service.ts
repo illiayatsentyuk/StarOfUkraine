@@ -197,6 +197,7 @@ export class AuthService {
         data: {
           email: profile.email,
           name: profile.name,
+          image: profile.picture,
           nameId,
           resetToken: '',
         },

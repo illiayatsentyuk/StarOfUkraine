@@ -30,14 +30,18 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: VerifyCallback,
   ) {
+    this.logger.debug(profile);
     this.logger.debug(
       `Google profile received: id=${profile.id}, email=${profile._json.email ?? 'n/a'}`,
     );
+    const picture =
+      profile._json.picture ??
+      (Array.isArray(profile.photos) ? profile.photos[0]?.value : undefined);
     const user = await this.authService.findOrCreateFromGoogle({
       id: profile.id,
       email: profile._json.email ?? '',
       name: profile._json.name,
-      picture: profile._json.picture,
+      picture,
     });
     // Normalize shape to match JWT payload used across the app (sub/email/role).
     done(null, { sub: user.id, email: user.email, role: user.role });
