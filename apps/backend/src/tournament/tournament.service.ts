@@ -31,7 +31,10 @@ export class TournamentService {
    * Note: COMPLETED/CANCELLED are treated as terminal and not auto-overwritten.
    */
   private async syncTournamentStatuses(now = new Date()) {
-    const terminalStatuses = [TournamentStatus.COMPLETED, TournamentStatus.CANCELLED];
+    const terminalStatuses = [
+      TournamentStatus.COMPLETED,
+      TournamentStatus.CANCELLED,
+    ];
 
     await this.prisma.tournament.updateMany({
       where: {
@@ -43,7 +46,9 @@ export class TournamentService {
 
     await this.prisma.tournament.updateMany({
       where: {
-        status: { notIn: [...terminalStatuses, TournamentStatus.REGISTRATION_OPEN] },
+        status: {
+          notIn: [...terminalStatuses, TournamentStatus.REGISTRATION_OPEN],
+        },
         registrationStart: { lte: now },
         registrationEnd: { gte: now },
       },

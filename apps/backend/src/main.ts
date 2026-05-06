@@ -19,7 +19,10 @@ async function bootstrap() {
   );
   app.use(cookieParser());
   app.enableCors({
-    origin: ['http://localhost:4040','https://star-of-ukraine-frontend.vercel.app'],
+    origin: [
+      'http://localhost:4040',
+      'https://star-of-ukraine-frontend.vercel.app',
+    ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });

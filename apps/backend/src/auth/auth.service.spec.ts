@@ -7,8 +7,8 @@ import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import jwtTokensConfig from '../config/jwt.config';
-import { AuthProvider, Role } from '../enum';
 import { EmailService } from '../email/email.service';
+import { AuthProvider, Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
@@ -440,9 +440,9 @@ describe('AuthService', () => {
     it('throws NotFoundException when user does not exist', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.forgotPassword('missing@example.com')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.forgotPassword('missing@example.com'),
+      ).rejects.toThrow(NotFoundException);
       expect(mockEmailService.sendResetPasswordLink).not.toHaveBeenCalled();
     });
   });

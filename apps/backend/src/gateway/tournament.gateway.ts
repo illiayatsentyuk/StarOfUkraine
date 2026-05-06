@@ -10,17 +10,10 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { WsJwtMiddleware } from 'src/middleware';
-import { WsAuthGuard } from '../common/guards';
-import { RoomInfo } from '../common/types';
-
-type BroadcastPayload = {
-  message?: string;
-};
-
-type MessagePayload = {
-  message?: string;
-};
+import { WsAuthGuard } from 'src/common/guards/ws.guard';
+import { RoomInfo } from 'src/common/types/room-info.interface';
+import { WsJwtMiddleware } from 'src/middleware/ws-jwt.middleware';
+import type { BroadcastPayload, MessagePayload } from '../common/types';
 
 @UseGuards(WsAuthGuard)
 @Injectable()
@@ -29,15 +22,16 @@ type MessagePayload = {
     origin: '*',
   },
 })
-export class ChatGateway
+export class TournamentGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer() server: Server;
 
-  private logger: Logger = new Logger('ChatGateway');
+  private logger: Logger = new Logger('TournamentGateway');
   private rooms: Map<string, RoomInfo> = new Map();
 
   constructor(private readonly wsJwtMiddleware: WsJwtMiddleware) {}
+
   afterInit() {
     this.server.use(this.wsJwtMiddleware.apply());
     this.logger.log('Initialized');
@@ -48,8 +42,6 @@ export class ChatGateway
   }
 
   handleDisconnect(client: Socket) {
-    client.removeAllListeners();
-    client.disconnect(true);
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 

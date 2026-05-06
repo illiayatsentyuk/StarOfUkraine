@@ -11,8 +11,8 @@ import * as bcrypt from 'bcrypt';
 import type { SignOptions } from 'jsonwebtoken';
 import { OAuthUserPayload } from '../common/types';
 import jwtTokensConfig from '../config/jwt.config';
-import { AuthProvider, Role } from '../enum';
 import { EmailService } from '../email/email.service';
+import { AuthProvider, Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { SigninDto, SignupDto } from './dto';
 import { Tokens } from './types';
@@ -225,9 +225,8 @@ export class AuthService {
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    const emailFromToken = await this.emailService.decodeConfirmationToken(
-      token,
-    );
+    const emailFromToken =
+      await this.emailService.decodeConfirmationToken(token);
     const email =
       typeof emailFromToken === 'string'
         ? emailFromToken.toLowerCase()

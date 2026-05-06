@@ -81,7 +81,9 @@ describe('Tournaments (e2e)', () => {
       .send({ page: 1, limit: 10 })
       .expect(200);
 
-    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({ where: undefined });
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({
+      where: undefined,
+    });
     expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: undefined }),
     );
