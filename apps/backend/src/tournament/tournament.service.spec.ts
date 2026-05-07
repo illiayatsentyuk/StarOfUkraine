@@ -1,7 +1,11 @@
-import { CacheModule } from '@nestjs/cache-manager';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { TournamentStatus } from '@prisma/client';
+import { Prisma, TournamentStatus } from '@prisma/client';
+import {
+  CACHE_TTL,
+  CacheKeys,
+  hashQuery,
+} from '../common/cache/cache-keys.util';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TournamentsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -23,7 +27,13 @@ describe('TournamentService', () => {
     },
     team: {
       findMany: jest.fn(),
+      findUnique: jest.fn(),
     },
+  };
+
+  const mockCache = {
+    get: jest.fn().mockResolvedValue(undefined),
+    set: jest.fn().mockResolvedValue(undefined),
   };
 
   const tournamentMock = {
@@ -44,9 +54,12 @@ describe('TournamentService', () => {
   beforeEach(async () => {
     mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.findFirst.mockResolvedValue(null);
+    mockCache.get.mockReset();
+    mockCache.get.mockResolvedValue(undefined);
+    mockCache.set.mockReset();
+    mockCache.set.mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
-      imports: [CacheModule.register()],
       providers: [
         TournamentService,
         {
@@ -57,6 +70,7 @@ describe('TournamentService', () => {
           provide: paginationConfig.KEY,
           useValue: { pageSize: '10' },
         },
+        { provide: 'CACHE_MANAGER', useValue: mockCache },
       ],
     }).compile();
 
@@ -93,6 +107,11 @@ describe('TournamentService', () => {
       expect(mockPrisma.tournament.findFirst).toHaveBeenCalledWith({
         where: { name: tournamentMock.name },
       });
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.LIST_VERSION,
+        1,
+        CACHE_TTL.VERSION,
+      );
     });
 
     it('throws when tournament with same name exists', async () => {
@@ -114,6 +133,27 @@ describe('TournamentService', () => {
   });
 
   describe('findAll', () => {
+    it('returns cached page without hitting the database', async () => {
+      const query = { page: 1, limit: 10 };
+      const cached = {
+        data: [tournamentMock],
+        currentPage: 1,
+        nextPage: null,
+        previousPage: null,
+        totalPages: 1,
+        itemsPerPage: 10,
+      };
+      mockCache.get.mockImplementation(async (key: string) =>
+        key === CacheKeys.LIST(0, hashQuery(query)) ? cached : undefined,
+      );
+
+      const result = await service.findAll(query);
+
+      expect(result).toEqual(cached);
+      expect(mockPrisma.tournament.count).not.toHaveBeenCalled();
+      expect(mockPrisma.tournament.findMany).not.toHaveBeenCalled();
+    });
+
     it('returns paginated data', async () => {
       mockPrisma.tournament.count.mockResolvedValue(13);
       mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
@@ -134,6 +174,52 @@ describe('TournamentService', () => {
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         include: { teams: true },
       });
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.LIST(0, hashQuery({ page: 2, limit: 10 })),
+        expect.objectContaining({ data: [tournamentMock] }),
+        CACHE_TTL.LIST,
+      );
+    });
+
+    it('applies name filter to count and findMany', async () => {
+      mockPrisma.tournament.count.mockResolvedValue(1);
+      mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
+
+      await service.findAll({ page: 1, limit: 10, name: '  Cup  ' });
+
+      const expectedWhere = {
+        OR: [
+          {
+            name: { contains: 'Cup', mode: Prisma.QueryMode.insensitive },
+          },
+          { id: { contains: 'Cup' } },
+        ],
+      };
+      expect(mockPrisma.tournament.count).toHaveBeenCalledWith({
+        where: expectedWhere,
+      });
+      expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expectedWhere }),
+      );
+    });
+
+    it('applies status filter to count and findMany', async () => {
+      mockPrisma.tournament.count.mockResolvedValue(1);
+      mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
+
+      await service.findAll({
+        page: 1,
+        limit: 10,
+        status: TournamentStatus.ONGOING,
+      });
+
+      const expectedWhere = { status: TournamentStatus.ONGOING };
+      expect(mockPrisma.tournament.count).toHaveBeenCalledWith({
+        where: expectedWhere,
+      });
+      expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expectedWhere }),
+      );
     });
 
     it('throws when page number is out of range', async () => {
@@ -269,11 +355,27 @@ describe('TournamentService', () => {
   });
 
   describe('findOne', () => {
+    it('returns a tournament from cache when present', async () => {
+      mockCache.get.mockImplementation(async (key: string) =>
+        key === CacheKeys.ONE('tournament-1', 0) ? tournamentMock : undefined,
+      );
+
+      const result = await service.findOne('tournament-1');
+
+      expect(result).toEqual(tournamentMock);
+      expect(mockPrisma.tournament.findUnique).not.toHaveBeenCalled();
+    });
+
     it('returns a tournament by id', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
       const result = await service.findOne('tournament-1');
       expect(result).toEqual(tournamentMock);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.ONE('tournament-1', 0),
+        tournamentMock,
+        CACHE_TTL.ONE,
+      );
     });
 
     it('throws when tournament is not found', async () => {
@@ -336,7 +438,66 @@ describe('TournamentService', () => {
     });
   });
 
+  describe('joinTournament', () => {
+    it('connects team and bumps list and tournament cache versions', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+      const updated = { ...tournamentMock, teams: [{ id: 'team-1' }] };
+      mockPrisma.tournament.update.mockResolvedValue(updated);
+
+      const result = await service.joinTournament('tournament-1', {
+        teamId: 'team-1',
+      });
+
+      expect(result).toEqual(updated);
+      expect(mockPrisma.team.findUnique).toHaveBeenCalledWith({
+        where: { id: 'team-1' },
+      });
+      expect(mockPrisma.tournament.update).toHaveBeenCalledWith({
+        where: { id: 'tournament-1' },
+        data: { teams: { connect: { id: 'team-1' } } },
+      });
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.LIST_VERSION,
+        1,
+        CACHE_TTL.VERSION,
+      );
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.ONE_VERSION('tournament-1'),
+        1,
+        CACHE_TTL.VERSION,
+      );
+    });
+
+    it('throws when team is not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.team.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'missing' }),
+      ).rejects.toThrow(new NotFoundException('Team not found'));
+    });
+  });
+
   describe('getLeaderboard', () => {
+    it('returns cached leaderboard when present', async () => {
+      const cached = [
+        {
+          team: { id: 'team-a', name: 'Alpha' },
+          totalScore: 10,
+          tasks: [{ taskId: 'task-1', avgScore: 10 }],
+        },
+      ];
+      mockCache.get.mockImplementation(async (key: string) =>
+        key === CacheKeys.LEADERBOARD('tournament-1', 0) ? cached : undefined,
+      );
+
+      const result = await service.getLeaderboard('tournament-1');
+
+      expect(result).toEqual(cached);
+      expect(mockPrisma.tournament.findUnique).not.toHaveBeenCalled();
+    });
+
     it('computes sum of jury average scores across tasks and sorts', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue({
         id: 'tournament-1',
@@ -387,6 +548,11 @@ describe('TournamentService', () => {
         { taskId: 'task-1', avgScore: 15 },
         { taskId: 'task-2', avgScore: 0 },
       ]);
+      expect(mockCache.set).toHaveBeenCalledWith(
+        CacheKeys.LEADERBOARD('tournament-1', 0),
+        result,
+        CACHE_TTL.LEADERBOARD,
+      );
     });
 
     it('throws when tournament not found', async () => {

@@ -1,6 +1,6 @@
 STAGED_FILES=$(git diff --name-only --cached)
 
-# // Backend
+# // Backend  \\
 if echo "$STAGED_FILES" | grep -q '^apps/backend/'
 then
   cd apps/backend && pnpm run lint && pnpm test && cd ../..
@@ -8,7 +8,7 @@ else
   echo "Skipping Backend (no changes)"
 fi
 
-# // Frontend
+# // Frontend  \\
 if echo "$STAGED_FILES" | grep -q '^apps/frontend/';
 then
   cd apps/frontend && pnpm run test:e2e && cd ../..

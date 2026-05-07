@@ -22,9 +22,11 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
+import { LoggerModule } from 'pino-nestjs';
 
 @Module({
   imports: [
+    LoggerModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
