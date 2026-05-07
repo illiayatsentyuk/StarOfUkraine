@@ -4,7 +4,7 @@ header.tournament-detail__hero
     h1.title {{ name }}
     .tournament-detail__hero__actions
         NuxtLink.task-btn(
-            :to="`/tournaments/${tournamentId}/tasks`"
+            :to="tasksLink"
             @click="handleTasksClick"
         )
             i.pi.pi-list
@@ -24,10 +24,16 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const tournamentId = computed(() => route.params.id as string)
+const teamsStore = useTeamsStore()
+
+const tasksLink = computed(() => ({
+    path: `/tournaments/${tournamentId.value}/tasks`,
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+}))
 
 function handleTasksClick(e: MouseEvent) {
     if (tournamentId.value) {
-        router.push(`/tournaments/${tournamentId.value}/tasks`)
+        router.push(tasksLink.value)
     }
 }
 </script>

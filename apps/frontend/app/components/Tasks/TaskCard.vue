@@ -1,5 +1,5 @@
 <template lang="pug">
-NuxtLink.task-card(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
+NuxtLink.task-card(:to="taskLink")
     .task-card__header
         .status-badge.pending
             span.dot
@@ -29,6 +29,12 @@ const props = defineProps<{
 
 const route = useRoute()
 const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
+const teamsStore = useTeamsStore()
+
+const taskLink = computed(() => ({
+    path: `/tournaments/${tournamentId.value}/tasks/${props.task.id}`,
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+}))
 
 const maxPoints = computed(() =>
     (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),

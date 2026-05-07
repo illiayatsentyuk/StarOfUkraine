@@ -8,7 +8,7 @@ section.task-admin-page
     header.admin-header
         .info
             h1.title Перевірка робіт
-            p.subtitle {{ task?.title }}
+            p.subtitle {{ task?.name }}
         .stats(v-if="store.submissions.length")
             .stat-item
                 span.val {{ store.submissions.length }}

@@ -35,6 +35,12 @@ section.tournament-detail
                     @shuffle="shuffleTeams"
                 )
 
+                TournamentLeaderboardTable(
+                    v-if="!shouldHideTeams"
+                    :rows="leaderboardRows"
+                    :loading="loadingLeaderboard"
+                )
+
             TournamentSidebar(
                 :tournament="tournament"
                 :status="tournamentStatus"
@@ -74,6 +80,7 @@ section.tournament-detail
 
 <script setup lang="ts">
 import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
+import TournamentLeaderboardTable from '~/components/tournaments/TournamentLeaderboardTable.vue'
 
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
@@ -91,6 +98,8 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
 
 const teams = ref<any[]>([])
 const loadingTeams = ref(false)
+const leaderboardRows = ref<any[]>([])
+const loadingLeaderboard = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -114,21 +123,36 @@ const shouldHideTeams = computed(() => {
 const refreshTeams = async () => {
     if (shouldHideTeams.value) return
     loadingTeams.value = true
+    loadingLeaderboard.value = true
     try {
-        const teamsResponse = await teamsStore.loadFromDatabase(true)
-        teams.value = teamsResponse?.data || []
+        // Беремо список команд саме цього турніру через leaderboard (публічний ендпоінт)
+        const res = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
+        const rows = Array.isArray(res.data) ? res.data : []
+        leaderboardRows.value = rows
+        teams.value = rows.map((r: any) => ({
+            id: r?.team?.id,
+            name: r?.team?.name,
+            points: r?.totalScore,
+        }))
     } catch {
         console.error('Failed to refresh teams')
+        leaderboardRows.value = []
+    }
+    finally {
+        loadingTeams.value = false
+        loadingLeaderboard.value = false
     }
 }
 
 const onTeamCreated = async ({ teamId }: { teamId: string }) => {
     await tournamentStore.joinTournament(tournamentId.value, teamId)
+    await teamsStore.setActiveTeam(teamId)
     await refreshTeams()
 }
 
 onMounted(async () => {
     try {
+        await teamsStore.initActiveTeam()
         tournament.value = await tournamentStore.fetchTournamentById(route.params.id as string)
         await refreshTeams()
     } catch {
@@ -142,6 +166,10 @@ function handleDelete() {
 
 function openEditModal() {
     isEditModalOpen.value = true
+}
+
+function openTeamModal() {
+    isTeamOpen.value = true
 }
 
 async function onTournamentUpdated(updatedTournament: any) {

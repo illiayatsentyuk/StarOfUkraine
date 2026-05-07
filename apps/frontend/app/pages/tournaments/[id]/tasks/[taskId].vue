@@ -73,6 +73,7 @@ const tournamentId = computed(() => route.params.id as string)
 const task = computed(() => store.tasks.find(t => t.id === taskId.value))
 
 onMounted(async () => {
+    await teamsStore.initActiveTeam()
     const hasCurrentTournamentTasks = store.tasks.some(t => t.tournamentId === tournamentId.value)
     const hasCurrentTask = store.tasks.some(t => t.id === taskId.value)
 
@@ -83,7 +84,7 @@ onMounted(async () => {
 
 async function handleSubmit(payload: { github: string; youtube: string }) {
     if (!task.value) return
-    const teamId = (route.query.teamId as string) || teamsStore.currentTeam?.id
+    const teamId = (route.query.teamId as string) || teamsStore.activeTeamId || teamsStore.currentTeam?.id
     if (!teamId) {
         useServerSafeToast().error('Оберіть команду для відправки завдання')
         return

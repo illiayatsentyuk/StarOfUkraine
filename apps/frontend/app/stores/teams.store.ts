@@ -13,11 +13,44 @@ export const useTeamsStore = defineStore('teams', () => {
     const loading = ref(false)
     const error = ref<string | null>(null)
     const currentTeam = ref<Team | null>(null) 
+    const activeTeamId = ref<string | null>(null)
     const searchResults = ref<{ id: string; email: string; name?: string }[]>([])
     const searchingMembers = ref(false)
 
 
     const hasMore = computed(() => page.value <= totalPages.value)
+    const activeTeam = computed(() => {
+        if (currentTeam.value?.id && currentTeam.value.id === activeTeamId.value) return currentTeam.value
+        return teams.value.find(t => t.id === activeTeamId.value) || null
+    })
+
+    const initActiveTeam = async () => {
+        if (typeof window === 'undefined') return
+        const stored = window.localStorage.getItem('activeTeamId')
+        activeTeamId.value = stored || null
+        if (activeTeamId.value && !currentTeam.value) {
+            try {
+                await fetchTeamById(activeTeamId.value)
+            } catch {
+                // ignore
+            }
+        }
+    }
+
+    const setActiveTeam = async (teamId: string | null) => {
+        activeTeamId.value = teamId
+        if (typeof window !== 'undefined') {
+            if (teamId) window.localStorage.setItem('activeTeamId', teamId)
+            else window.localStorage.removeItem('activeTeamId')
+        }
+        if (teamId) {
+            try {
+                await fetchTeamById(teamId)
+            } catch {
+                // ignore
+            }
+        }
+    }
 
     const reset = () => {
         page.value = 1
@@ -75,6 +108,7 @@ export const useTeamsStore = defineStore('teams', () => {
             teams.value.push(response.data)
             toast.success('Команду успішно створено')
 
+            await setActiveTeam((response.data as Team).id)
             return response.data as Team
         } catch (err: any) {
             console.error('Помилка API при створенні команди:', err)
@@ -98,6 +132,7 @@ export const useTeamsStore = defineStore('teams', () => {
             if (!response.data) throw new Error('Не вдалося приєднатися до команди')
 
             toast.success('Ви успішно приєдналися до команди')
+            await setActiveTeam(teamId)
             return response.data as Team
         } catch (err: any) {
             console.error('Помилка API при приєднанні до команди:', err)
@@ -198,6 +233,10 @@ export const useTeamsStore = defineStore('teams', () => {
         loading,
         error,
         currentTeam,
+        activeTeamId,
+        activeTeam,
+        initActiveTeam,
+        setActiveTeam,
         hasMore,
         searchResults,
         searchingMembers,

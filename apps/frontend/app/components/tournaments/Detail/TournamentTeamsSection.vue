@@ -4,7 +4,7 @@
   p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
   template(v-else)
     p.description(v-if="loadingTeams") Завантаження команд...
-    p.description(v-else-if="!teams || !teams.length") Команди поки не додані.
+    p.description(v-else-if="!teams || !teams.length") Нікого немає. Після реєстрації команд тут зʼявиться список і таблиця лідерів.
     TournamentTeamsTable(
       v-if="teams && teams.length"
       :teams="teams"

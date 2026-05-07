@@ -8,7 +8,7 @@ aside.task-sidebar
         NuxtLink.task-item(
             v-for="(task, index) in tasks"
             :key="task.id"
-            :to="`/tournaments/${tournamentId}/tasks/${task.id}`"
+            :to="makeTaskLink(task.id)"
             :class="{ 'is-active': currentTaskId === task.id }"
         )
             .task-item__index {{ String.fromCharCode(65 + index) }}
@@ -33,6 +33,12 @@ defineProps<Props>()
 
 const route = useRoute()
 const tournamentId = computed(() => route.params.id as string)
+const teamsStore = useTeamsStore()
+
+const makeTaskLink = (id: string) => ({
+    path: `/tournaments/${tournamentId.value}/tasks/${id}`,
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+})
 </script>
 
 <style lang="scss" scoped>
