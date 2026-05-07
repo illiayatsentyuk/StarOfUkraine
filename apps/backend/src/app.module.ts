@@ -23,7 +23,6 @@ import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { RedisTestModule } from './redis-test/redis-test.module';
 
 @Module({
   imports: [
@@ -75,7 +74,6 @@ import { RedisTestModule } from './redis-test/redis-test.module';
     UsersModule,
     TasksModule,
     EmailModule,
-    RedisTestModule,
   ],
   controllers: [AppController],
   providers: [

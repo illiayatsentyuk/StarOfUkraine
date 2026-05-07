@@ -237,7 +237,6 @@ export class AuthController {
     @GetCurrentOAuthUser() user: GoogleOAuthCallbackUserDto,
     @Res() res: Response,
   ) {
-    console.log('user', user);
     const tokens = await this.authService.getTokens(
       user.sub,
       user.email,

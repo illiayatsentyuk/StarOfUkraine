@@ -61,7 +61,6 @@ async function bootstrap() {
       ].join(' '),
     )
     .setVersion('1.0')
-    // We authenticate via HttpOnly cookies, but keep Bearer as fallback.
     .addCookieAuth('access_token')
     .addCookieAuth('refresh_token')
     .addBearerAuth()
