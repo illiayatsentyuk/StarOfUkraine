@@ -16,6 +16,7 @@ import {
   JoinTournamentDto,
   UpdateTournamentDto,
 } from './dto';
+import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class TournamentService {
@@ -24,6 +25,7 @@ export class TournamentService {
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
+    @Inject('REDIS_SERVICE') private redisService: ClientProxy,
   ) {}
 
   private async syncTournamentStatuses(now = new Date()) {
@@ -145,6 +147,8 @@ export class TournamentService {
         teams: true,
       },
     });
+
+    await this.redisService.emit('test_event', { message: 'Hello, world!' });
 
     return {
       data: tournaments,

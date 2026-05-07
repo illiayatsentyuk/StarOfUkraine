@@ -1,15 +1,39 @@
-import { ValidationPipe } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import type { MicroserviceOptions } from '@nestjs/microservices';
 import {
   SubmissionListItemDto,
   SubmissionTeamSummaryDto,
 } from './tasks/dto/submission.dto';
+import { Transport } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
+import { RedisConfig } from './common/types/redis-config.type';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const logger = new Logger('bootstrap');
+
+  const configService = app.get(ConfigService);
+  const redisConfig = configService.get<RedisConfig>('redis');
+  if (redisConfig?.url) {
+    logger.log(`Connecting to Redis: ${redisConfig.url}`);
+    const redisUrl = new URL(redisConfig.url);
+    const port = redisUrl.port ? Number(redisUrl.port) : 6379;
+
+    app.connectMicroservice<MicroserviceOptions>({
+      transport: Transport.REDIS,
+      options: {
+        host: redisUrl.hostname,
+        port,
+      },
+    });
+    await app.startAllMicroservices();
+  }
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -48,6 +72,6 @@ async function bootstrap() {
   });
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(Number(process.env.PORT ?? 3000));
 }
 void bootstrap();
