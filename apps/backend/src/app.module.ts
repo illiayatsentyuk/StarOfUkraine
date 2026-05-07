@@ -22,25 +22,9 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
-    ClientsModule.registerAsync([
-      {
-        name: 'REDIS_SERVICE',
-        imports: [ConfigModule],
-        inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          name: 'REDIS_SERVICE',
-          transport: Transport.REDIS,
-          options: {
-            host: configService.getOrThrow<RedisConfig>('redis').url.split('://')[1].split(':')[0],
-            port: Number(configService.getOrThrow<RedisConfig>('redis').url.split('://')[1].split(':')[1]),
-          },
-        }),
-      },
-    ]),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [

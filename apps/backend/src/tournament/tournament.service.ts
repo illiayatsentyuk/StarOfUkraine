@@ -21,7 +21,6 @@ import {
   JoinTournamentDto,
   UpdateTournamentDto,
 } from './dto';
-import { ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
 export class TournamentService {
@@ -30,7 +29,6 @@ export class TournamentService {
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
-    @Inject('REDIS_SERVICE') private redisService: ClientProxy,
   ) {}
 
   // ─── Version helpers ──────────────────────────────────────────────────────
@@ -186,7 +184,6 @@ export class TournamentService {
       cacheKey,
     );
     if (cached) {
-      await this.redisService.emit('test_event', { message: 'Hello, world!' });
       return cached;
     }
 
@@ -242,7 +239,6 @@ export class TournamentService {
     const result = buildPage(tournaments, page, maximumPage, limit);
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.LIST);
-    await this.redisService.emit('test_event', { message: 'Hello, world!' });
 
     return result;
   }
