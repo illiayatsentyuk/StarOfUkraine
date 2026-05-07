@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, TournamentStatus } from '@prisma/client';
+import { getLoggerToken } from 'pino-nestjs';
 import {
   CACHE_TTL,
   CacheKeys,
@@ -34,6 +35,17 @@ describe('TournamentService', () => {
   const mockCache = {
     get: jest.fn().mockResolvedValue(undefined),
     set: jest.fn().mockResolvedValue(undefined),
+  };
+
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
   };
 
   const tournamentMock = {
@@ -71,6 +83,10 @@ describe('TournamentService', () => {
           useValue: { pageSize: '10' },
         },
         { provide: 'CACHE_MANAGER', useValue: mockCache },
+        {
+          provide: getLoggerToken(TournamentService.name),
+          useValue: mockPinoLogger,
+        },
       ],
     }).compile();
 

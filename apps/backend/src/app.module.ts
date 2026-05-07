@@ -3,6 +3,7 @@ import { CacheModule, type CacheOptions } from '@nestjs/cache-manager';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { LoggerModule } from 'pino-nestjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -22,11 +23,9 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
-import { LoggerModule } from 'pino-nestjs';
 
 @Module({
   imports: [
-    LoggerModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [
@@ -39,15 +38,56 @@ import { LoggerModule } from 'pino-nestjs';
         redisConfig,
       ],
     }),
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const nodeEnv =
+          configService.get<string>('NODE_ENV') ??
+          process.env.NODE_ENV ??
+          'development';
+        const isProd = nodeEnv === 'production';
+        const isTest = nodeEnv === 'test';
+
+        return {
+          pinoHttp: {
+            level: isTest ? 'silent' : isProd ? 'info' : 'debug',
+            transport:
+              !isProd && !isTest
+                ? {
+                    target: 'pino-pretty',
+                    options: { colorize: true, singleLine: true },
+                  }
+                : undefined,
+            redact: {
+              paths: [
+                'req.headers.authorization',
+                'req.headers.cookie',
+                '*.password',
+                '*.hash',
+                '*.hashedRt',
+                '*.resetToken',
+              ],
+              censor: '[REDACTED]',
+            },
+            serializers: {
+              req(req: { method?: string; url?: string; id?: string }) {
+                return { method: req.method, url: req.url, id: req.id };
+              },
+            },
+          },
+        };
+      },
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
       useFactory: (configService: ConfigService): CacheOptions => {
-        const logger = new Logger('CacheModule');
+        const nestLogger = new Logger('CacheModule');
         const url = configService.getOrThrow<RedisConfig>('redis').url;
         const ttl = Number(configService.getOrThrow<RedisConfig>('redis').ttl);
 
-        logger.log(`Connecting to Redis: ${url} (TTL ${ttl} ms)`);
+        nestLogger.log(`Redis cache configured (TTL ${ttl} ms)`);
         const stores = new KeyvRedis(url);
         return { stores, ttl };
       },

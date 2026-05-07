@@ -18,5 +18,8 @@ export const CacheKeys = {
 } as const;
 
 export function hashQuery(obj: object): string {
-  return createHash('md5').update(JSON.stringify(obj)).digest('hex').slice(0, 8);
+  return createHash('md5')
+    .update(JSON.stringify(obj))
+    .digest('hex')
+    .slice(0, 8);
 }

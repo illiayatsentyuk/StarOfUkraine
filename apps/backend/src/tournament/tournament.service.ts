@@ -7,6 +7,7 @@ import {
 import type { ConfigType } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import type { Cache } from 'cache-manager';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import {
   CACHE_TTL,
   CacheKeys,
@@ -29,6 +30,8 @@ export class TournamentService {
     @Inject(paginationConfig.KEY)
     private paginationsConfig: ConfigType<typeof paginationConfig>,
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
+    @InjectPinoLogger(TournamentService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   // ─── Version helpers ──────────────────────────────────────────────────────
@@ -91,6 +94,10 @@ export class TournamentService {
 
     await this.bumpListVersion();
 
+    this.logger.info(
+      { tournamentId: tournament.id, name: tournament.name },
+      'Tournament created',
+    );
     return tournament;
   }
 
@@ -134,6 +141,7 @@ export class TournamentService {
 
     await Promise.all([this.bumpListVersion(), this.bumpOneVersion(id)]);
 
+    this.logger.info({ tournamentId: id }, 'Tournament updated');
     return updatedTournament;
   }
 
@@ -144,6 +152,7 @@ export class TournamentService {
 
     await Promise.all([this.bumpListVersion(), this.bumpOneVersion(id)]);
 
+    this.logger.info({ tournamentId: id }, 'Tournament deleted');
     return deleted;
   }
 
@@ -171,6 +180,10 @@ export class TournamentService {
     // findAll includes teams, so both list and single views are stale
     await Promise.all([this.bumpListVersion(), this.bumpOneVersion(id)]);
 
+    this.logger.info(
+      { tournamentId: id, teamId: data.teamId },
+      'Team joined tournament',
+    );
     return result;
   }
 
@@ -180,10 +193,13 @@ export class TournamentService {
     const listV = await this.getListVersion();
     const cacheKey = CacheKeys.LIST(listV, hashQuery(query));
 
-    const cached = await this.cacheManager.get<ReturnType<typeof buildPage>>(
-      cacheKey,
-    );
+    const cached =
+      await this.cacheManager.get<ReturnType<typeof buildPage>>(cacheKey);
     if (cached) {
+      this.logger.debug(
+        { listVersion: listV, cacheKey },
+        'Tournament list cache hit',
+      );
       return cached;
     }
 
@@ -240,6 +256,10 @@ export class TournamentService {
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.LIST);
 
+    this.logger.debug(
+      { listVersion: listV, page: result.currentPage },
+      'Tournament list loaded from database',
+    );
     return result;
   }
 
@@ -247,10 +267,17 @@ export class TournamentService {
     const oneV = await this.getOneVersion(id);
     const cacheKey = CacheKeys.ONE(id, oneV);
 
-    const cached = await this.cacheManager.get<
-      Awaited<ReturnType<typeof this.prisma.tournament.findUnique>>
-    >(cacheKey);
-    if (cached) return cached;
+    const cached =
+      await this.cacheManager.get<
+        Awaited<ReturnType<typeof this.prisma.tournament.findUnique>>
+      >(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        { tournamentId: id, oneVersion: oneV },
+        'Tournament cache hit',
+      );
+      return cached;
+    }
 
     const tournament = await this.prisma.tournament.findUnique({
       where: { id },
@@ -261,6 +288,7 @@ export class TournamentService {
 
     await this.cacheManager.set(cacheKey, tournament, CACHE_TTL.ONE);
 
+    this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
     return tournament;
   }
 
@@ -268,9 +296,14 @@ export class TournamentService {
     const oneV = await this.getOneVersion(tournamentId);
     const cacheKey = CacheKeys.LEADERBOARD(tournamentId, oneV);
 
-    const cached =
-      await this.cacheManager.get<LeaderboardRow[]>(cacheKey);
-    if (cached) return cached;
+    const cached = await this.cacheManager.get<LeaderboardRow[]>(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        { tournamentId, oneVersion: oneV },
+        'Tournament leaderboard cache hit',
+      );
+      return cached;
+    }
 
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
@@ -338,6 +371,10 @@ export class TournamentService {
 
     await this.cacheManager.set(cacheKey, rows, CACHE_TTL.LEADERBOARD);
 
+    this.logger.debug(
+      { tournamentId, teamCount: rows.length },
+      'Leaderboard computed',
+    );
     return rows;
   }
 

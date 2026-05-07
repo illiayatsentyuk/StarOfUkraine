@@ -2,12 +2,12 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { Logger } from 'pino-nestjs';
 import { AppModule } from './app.module';
 import {
   SubmissionListItemDto,
   SubmissionTeamSummaryDto,
 } from './tasks/dto/submission.dto';
-import { Logger } from 'pino-nestjs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

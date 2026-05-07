@@ -1,4 +1,4 @@
-import { Injectable, Logger, UseGuards } from '@nestjs/common';
+import { Injectable, UseGuards } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -9,6 +9,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { Server, Socket } from 'socket.io';
 import { WsAuthGuard } from 'src/common/guards/ws.guard';
 import { RoomInfo } from 'src/common/types/room-info.interface';
@@ -27,22 +28,25 @@ export class TournamentGateway
 {
   @WebSocketServer() server: Server;
 
-  private logger: Logger = new Logger('TournamentGateway');
   private rooms: Map<string, RoomInfo> = new Map();
 
-  constructor(private readonly wsJwtMiddleware: WsJwtMiddleware) {}
+  constructor(
+    private readonly wsJwtMiddleware: WsJwtMiddleware,
+    @InjectPinoLogger(TournamentGateway.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   afterInit() {
     this.server.use(this.wsJwtMiddleware.apply());
-    this.logger.log('Initialized');
+    this.logger.info('WebSocket gateway initialized');
   }
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.info({ socketId: client.id }, 'WebSocket client connected');
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.info({ socketId: client.id }, 'WebSocket client disconnected');
   }
 
   @SubscribeMessage('broadcast')
@@ -62,9 +66,7 @@ export class TournamentGateway
     @MessageBody() data: string | MessagePayload,
     @ConnectedSocket() client: Socket,
   ): string {
-    this.logger.log(
-      `Received message from ${client.id}: ${JSON.stringify(data)}`,
-    );
+    this.logger.debug({ socketId: client.id }, 'WebSocket message received');
 
     let originalMsg: string | undefined;
     if (data && typeof data === 'string') {
@@ -114,7 +116,7 @@ export class TournamentGateway
       clientsInRoom: room?.clients.size || 0,
     });
 
-    this.logger.log(`Client ${client.id} joined room ${roomId}`);
+    this.logger.info({ socketId: client.id, roomId }, 'Client joined room');
 
     return {
       success: true,
@@ -150,8 +152,9 @@ export class TournamentGateway
       fromClient: client.id,
     });
 
-    this.logger.log(
-      `Client ${client.id} sent message to room ${roomId}: ${message}`,
+    this.logger.debug(
+      { socketId: client.id, roomId, messageLength: message?.length ?? 0 },
+      'Room message broadcast',
     );
 
     return {
@@ -203,6 +206,6 @@ export class TournamentGateway
     client.emit('leaveRoom', {
       roomId,
     });
-    this.logger.log(`Client ${client.id} left room ${roomId}`);
+    this.logger.info({ socketId: client.id, roomId }, 'Client left room');
   }
 }

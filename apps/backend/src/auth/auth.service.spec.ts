@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import { getLoggerToken } from 'pino-nestjs';
 import jwtTokensConfig from '../config/jwt.config';
 import { EmailService } from '../email/email.service';
 import { AuthProvider, Role } from '../enum';
@@ -46,6 +47,17 @@ describe('AuthService', () => {
   const mockEmailService = {
     sendResetPasswordLink: jest.fn(),
     decodeConfirmationToken: jest.fn(),
+  };
+
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
   };
 
   const mockUser = {
@@ -99,6 +111,10 @@ describe('AuthService', () => {
         {
           provide: EmailService,
           useValue: mockEmailService,
+        },
+        {
+          provide: getLoggerToken(AuthService.name),
+          useValue: mockPinoLogger,
         },
       ],
     }).compile();

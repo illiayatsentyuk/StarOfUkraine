@@ -9,6 +9,7 @@ import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type { SignOptions } from 'jsonwebtoken';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { OAuthUserPayload } from '../common/types';
 import jwtTokensConfig from '../config/jwt.config';
 import { EmailService } from '../email/email.service';
@@ -25,6 +26,8 @@ export class AuthService {
     @Inject(jwtTokensConfig.KEY)
     private jwtConfig: ConfigType<typeof jwtTokensConfig>,
     private emailService: EmailService,
+    @InjectPinoLogger(AuthService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   async getMe(userId: string) {
@@ -82,6 +85,7 @@ export class AuthService {
       savedUser.role,
     );
     await this.updateRtHash(savedUser.id, tokens.refresh_token);
+    this.logger.info({ userId: savedUser.id }, 'User signed up (local)');
     return tokens;
   }
 
@@ -96,6 +100,7 @@ export class AuthService {
 
     const tokens = await this.getTokens(String(user.id), user.email, user.role);
     await this.updateRtHash(String(user.id), tokens.refresh_token);
+    this.logger.info({ userId: user.id }, 'User signed in (local)');
     return tokens;
   }
 
@@ -104,6 +109,7 @@ export class AuthService {
       where: { id: String(userId) },
       data: { hashedRt: null },
     });
+    this.logger.info({ userId }, 'User logged out');
   }
 
   async refreshTokens(userId: string, rt: string) {
@@ -118,6 +124,7 @@ export class AuthService {
 
     const tokens = await this.getTokens(String(user.id), user.email, user.role);
     await this.updateRtHash(String(user.id), tokens.refresh_token);
+    this.logger.debug({ userId: user.id }, 'Access tokens refreshed');
     return tokens;
   }
 
@@ -189,11 +196,20 @@ export class AuthService {
         (!existingAccount.user.image ||
           existingAccount.user.image !== profile.picture)
       ) {
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
           where: { id: existingAccount.user.id },
           data: { image: profile.picture },
         });
+        this.logger.debug(
+          { userId: updated.id, provider: 'GOOGLE' },
+          'Google profile image synced',
+        );
+        return updated;
       }
+      this.logger.debug(
+        { userId: existingAccount.user.id, provider: 'GOOGLE' },
+        'Google sign-in (existing account)',
+      );
       return existingAccount.user;
     }
 
@@ -212,6 +228,10 @@ export class AuthService {
           resetToken: '',
         },
       });
+      this.logger.info(
+        { userId: user.id, provider: 'GOOGLE' },
+        'User created from Google OAuth',
+      );
     }
     if (
       user &&
@@ -232,6 +252,10 @@ export class AuthService {
       },
     });
 
+    this.logger.info(
+      { userId: user.id, provider: 'GOOGLE' },
+      'Linked new Google account to user',
+    );
     return user;
   }
 
@@ -243,6 +267,7 @@ export class AuthService {
       throw new NotFoundException(`No user found for email: ${email}`);
     }
     await this.emailService.sendResetPasswordLink(email);
+    this.logger.info({ userId: user.id }, 'Password reset email requested');
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
@@ -269,5 +294,6 @@ export class AuthService {
         resetToken: '',
       },
     });
+    this.logger.info({ userId: user.id }, 'Password reset completed');
   }
 }

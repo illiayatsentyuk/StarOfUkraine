@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from './email.service';
 
@@ -45,6 +46,17 @@ describe('EmailService', () => {
     },
   };
 
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
+  };
+
   beforeEach(async () => {
     mockSendMail.mockClear();
     jest.clearAllMocks();
@@ -55,6 +67,10 @@ describe('EmailService', () => {
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: PrismaService, useValue: mockPrisma },
+        {
+          provide: getLoggerToken(EmailService.name),
+          useValue: mockPinoLogger,
+        },
       ],
     }).compile();
 
