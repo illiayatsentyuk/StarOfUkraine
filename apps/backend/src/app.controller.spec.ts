@@ -16,7 +16,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return healthcheck payload', () => {
-      expect(appController.getHello()).toEqual({
+      expect(appController.getHealth()).toEqual({
         ok: true,
         message: 'Server is running',
         version: '1.0.0',

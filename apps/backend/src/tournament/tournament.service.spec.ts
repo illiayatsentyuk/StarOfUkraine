@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TournamentStatus } from '@prisma/client';
@@ -45,6 +46,7 @@ describe('TournamentService', () => {
     mockPrisma.tournament.findFirst.mockResolvedValue(null);
 
     const module: TestingModule = await Test.createTestingModule({
+      imports: [CacheModule.register()],
       providers: [
         TournamentService,
         {

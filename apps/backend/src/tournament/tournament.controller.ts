@@ -1,13 +1,14 @@
+import { CacheInterceptor } from '@nestjs/cache-manager';
 import {
   Body,
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Param,
   Patch,
   Post,
+  Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,11 +16,13 @@ import {
   ApiCookieAuth,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { TournamentStatus } from '@prisma/client';
 import { Roles } from 'src/common/decorators';
-import { Role } from 'src/enum';
+import { Role, SortOrder, TournamentsSortBy } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';
 import {
@@ -32,6 +35,7 @@ import {
 import { TournamentService } from './tournament.service';
 
 @ApiTags('Tournaments')
+@UseInterceptors(CacheInterceptor)
 @Controller('tournaments')
 export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
@@ -64,18 +68,54 @@ export class TournamentController {
   }
 
   @Public()
-  @Post('list')
-  @HttpCode(HttpStatus.OK)
+  @Get('list')
   @ApiOperation({ summary: 'List all tournaments' })
-  @ApiBody({ type: FindTournamentQueryDto })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    example: 1,
+    description: 'Page number (1-based)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    example: 10,
+    description: 'Items per page (defaults to PAGE_SIZE env var)',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: SortOrder,
+    description: 'Sort order',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: TournamentsSortBy,
+    description: 'Sort by',
+  })
+  @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Filter by name (case-insensitive contains)',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    enum: TournamentStatus,
+    description: 'Filter by tournament status',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
     schema: { example: tournamentExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
-  findAll(@Body() body: FindTournamentQueryDto) {
-    return this.tournamentService.findAll(body);
+  findAll(@Query() query: FindTournamentQueryDto) {
+    return this.tournamentService.findAll(query);
   }
 
   @Public()

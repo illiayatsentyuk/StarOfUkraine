@@ -24,14 +24,14 @@ test.describe('tournament list filters', () => {
     await page.goto('/')
 
     // `loadFromDatabase` no-ops while `loading` is true; clicking sort during the first
-    // POST would skip the second request and this test would time out.
+    // GET would skip the second request and this test would time out.
     await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
 
     const sortRequest = page.waitForRequest((req) => {
-      if (!req.url().includes('/tournaments/list') || req.method() !== 'POST') return false
+      if (!req.url().includes('/tournaments/list') || req.method() !== 'GET') return false
       try {
-        const body = req.postDataJSON() as { sortBy?: string }
-        return body.sortBy === 'name'
+        const url = new URL(req.url())
+        return url.searchParams.get('sortBy') === 'name'
       } catch {
         return false
       }

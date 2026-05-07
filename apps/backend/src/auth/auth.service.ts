@@ -186,7 +186,8 @@ export class AuthService {
     if (existingAccount) {
       if (
         profile.picture &&
-        (!existingAccount.user.image || existingAccount.user.image !== profile.picture)
+        (!existingAccount.user.image ||
+          existingAccount.user.image !== profile.picture)
       ) {
         return this.prisma.user.update({
           where: { id: existingAccount.user.id },
@@ -212,7 +213,11 @@ export class AuthService {
         },
       });
     }
-    if (user && profile.picture && (!user.image || user.image !== profile.picture)) {
+    if (
+      user &&
+      profile.picture &&
+      (!user.image || user.image !== profile.picture)
+    ) {
       user = await this.prisma.user.update({
         where: { id: user.id },
         data: { image: profile.picture },
