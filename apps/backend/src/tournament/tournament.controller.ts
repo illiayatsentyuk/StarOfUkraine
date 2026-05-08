@@ -59,7 +59,10 @@ export class TournamentController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   create(@Body() data: CreateTournamentDto) {
     return this.tournamentService.create(data);
   }
@@ -157,7 +160,7 @@ export class TournamentController {
   @ApiBody({
     type: JoinTournamentDto,
     examples: {
-      join: { value: { teamId: 'team-1' } },
+      join: { value: tournamentExamples.joinRequest },
     },
   })
   @ApiResponse({
@@ -171,6 +174,10 @@ export class TournamentController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Tournament or team not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
     return this.tournamentService.joinTournament(id, data);
   }
@@ -202,7 +209,10 @@ export class TournamentController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
     return this.tournamentService.update(id, data);
   }
@@ -224,7 +234,10 @@ export class TournamentController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   remove(@Param('id') id: string) {
     return this.tournamentService.remove(id);
   }

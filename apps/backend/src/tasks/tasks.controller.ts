@@ -73,6 +73,9 @@ export class TasksController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   createTasks(@Param('id') id: string, @Body() data: CreateTournamentTasksDto) {
     return this.tasksService.createTasks(id, data);
   }
@@ -105,6 +108,9 @@ export class TasksController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   update(@Param('id') id: string, @Body() data: UpdateTaskDto) {
     return this.tasksService.updateTask(id, data);
   }
@@ -138,6 +144,9 @@ export class TasksController {
     schema: { example: authExamples.unauthorized },
   })
   @ApiResponse({ status: 404, description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   submit(@Param('id') id: string, @Body() data: SubmitTaskDto) {
     return this.tasksService.submitTask(id, data);
   }
