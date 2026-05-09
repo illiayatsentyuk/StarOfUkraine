@@ -18,6 +18,7 @@ describe('TasksService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       findFirst: jest.fn(),
+      findMany: jest.fn(),
       update: jest.fn(),
     },
     $transaction: jest.fn((ops: Promise<unknown>[]) =>
@@ -149,6 +150,82 @@ describe('TasksService', () => {
         }),
       ).rejects.toThrow(
         new BadRequestException('Task order values must be unique'),
+      );
+    });
+  });
+
+  describe('getTasksForTournament', () => {
+    const taskRows = [
+      {
+        id: 'task-1',
+        tournamentId: tournamentMock.id,
+        name: 'Round 1',
+        description: '# A',
+        order: 1,
+        criteria: { rubric: [] },
+      },
+      {
+        id: 'task-2',
+        tournamentId: tournamentMock.id,
+        name: 'Round 2',
+        description: '# B',
+        order: 2,
+        criteria: { rubric: [] },
+      },
+    ];
+
+    it('returns tasks ordered by round when tournament exists', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.task.findMany.mockResolvedValue(taskRows);
+
+      const result = await service.getTasksForTournament(tournamentMock.id);
+
+      expect(result).toEqual(taskRows);
+      expect(mockPrisma.tournament.findUnique).toHaveBeenCalledWith({
+        where: { id: tournamentMock.id },
+      });
+      expect(mockPrisma.task.findMany).toHaveBeenCalledWith({
+        where: { tournamentId: tournamentMock.id },
+        orderBy: { order: 'asc' },
+      });
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.getTasksForTournament('missing')).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
+      expect(mockPrisma.task.findMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      name: 'Round 1',
+      description: '# A',
+      order: 1,
+      criteria: { rubric: [] },
+    };
+
+    it('returns task when found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+
+      const result = await service.getTask('task-1');
+
+      expect(result).toEqual(taskRow);
+      expect(mockPrisma.task.findUnique).toHaveBeenCalledWith({
+        where: { id: 'task-1' },
+      });
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.getTask('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
       );
     });
   });

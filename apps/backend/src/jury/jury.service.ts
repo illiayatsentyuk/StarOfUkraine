@@ -53,7 +53,12 @@ export class JuryService {
         return this.prisma.jury.update({ where: { id: juryId }, data: { tournaments: { connect: { id: tournamentId } } } });
     }
 
-    private createJury(userId: string, tournamentId: string) {
+    private async createJury(userId: string, tournamentId: string) {
+        const user = await this.usersService.updateRole(userId, Role.JURY);
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
         return this.prisma.jury.create({ data: { userId, tournaments: { connect: { id: tournamentId } } } });
     }
 }

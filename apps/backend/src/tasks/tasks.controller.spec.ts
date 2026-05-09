@@ -8,6 +8,8 @@ describe('TasksController', () => {
 
   const mockTasksService = {
     createTasks: jest.fn(),
+    getTasksForTournament: jest.fn(),
+    getTask: jest.fn(),
     updateTask: jest.fn(),
     submitTask: jest.fn(),
     getSubmissionsForTask: jest.fn(),
@@ -51,6 +53,22 @@ describe('TasksController', () => {
       { id: 'task-1' },
     ]);
     expect(mockTasksService.createTasks).toHaveBeenCalledWith('t-1', dto);
+  });
+
+  it('getTasksForTournament delegates to service', async () => {
+    const tasks = [{ id: 'task-1', order: 1 }];
+    mockTasksService.getTasksForTournament.mockResolvedValue(tasks);
+    await expect(controller.getTasksForTournament('t-1')).resolves.toEqual(
+      tasks,
+    );
+    expect(mockTasksService.getTasksForTournament).toHaveBeenCalledWith('t-1');
+  });
+
+  it('getTask delegates to service', async () => {
+    const task = { id: 'task-1', name: 'R1' };
+    mockTasksService.getTask.mockResolvedValue(task);
+    await expect(controller.getTask('task-1')).resolves.toEqual(task);
+    expect(mockTasksService.getTask).toHaveBeenCalledWith('task-1');
   });
 
   it('update delegates to service', async () => {

@@ -22,6 +22,24 @@ export const tasksExamples = {
     order: 1,
     criteria: { rubric: [] },
   },
+  tasksListResponse: [
+    {
+      id: 'clx_task_123',
+      tournamentId: 'clx_tournament_123',
+      name: 'Раунд 1 — Відбірковий',
+      description: '## Завдання\n\n',
+      order: 1,
+      criteria: { rubric: [] },
+    },
+    {
+      id: 'clx_task_124',
+      tournamentId: 'clx_tournament_123',
+      name: 'Раунд 2 — Фінал',
+      description: '## Фінал\n\n',
+      order: 2,
+      criteria: { rubric: [] },
+    },
+  ],
   updateTaskRequest: {
     name: 'Раунд 1 — Оновлена назва',
     criteria: {
