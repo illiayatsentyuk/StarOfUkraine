@@ -13,6 +13,26 @@ export const useTasksStore = defineStore('tasks', () => {
     const error = ref<string | null>(null)
     const tasks = ref<TournamentTask[]>([])
     const submissions = ref<TaskSubmission[]>([])
+    // taskId → { status, githubUrl, videoUrl } — власні подачі поточного юзера
+    const mySubmissions = ref<Record<string, { status: 'PENDING' | 'EVALUATED'; githubUrl: string; videoUrl: string }>>({})
+
+    const loadMySubmissions = () => {
+        if (typeof window === 'undefined') return
+        try {
+            const raw = window.localStorage.getItem('mySubmissions')
+            if (raw) mySubmissions.value = JSON.parse(raw)
+        } catch { /* ignore */ }
+    }
+
+    const saveMySubmissions = () => {
+        if (typeof window === 'undefined') return
+        try {
+            window.localStorage.setItem('mySubmissions', JSON.stringify(mySubmissions.value))
+        } catch { /* ignore */ }
+    }
+
+    // Ініціалізація при старті
+    loadMySubmissions()
 
     const getCacheKey = (tournamentId: string) => `tournament:${tournamentId}:tasks`
 
@@ -119,6 +139,13 @@ export const useTasksStore = defineStore('tasks', () => {
         try {
             const api = useApi()
             await api.post(`/tasks/${taskId}/submit`, payload)
+            // Зберігаємо статус власної подачі
+            mySubmissions.value[taskId] = {
+                status: 'PENDING',
+                githubUrl: payload.githubUrl,
+                videoUrl: payload.videoUrl,
+            }
+            saveMySubmissions()
             toast.success('Завдання успішно відправлено')
         } catch (err: any) {
             toast.error('Помилка відправки завдання')
@@ -145,13 +172,13 @@ export const useTasksStore = defineStore('tasks', () => {
         }
     }
 
-    const gradeSubmission = async (submissionId: string, scores: SubmissionScore[]) => {
+    const gradeSubmission = async (submissionId: string, scores: SubmissionScore[], comment: string) => {
         if (loading.value) return
         loading.value = true
         error.value = null
         try {
             const api = useApi()
-            await api.post(`/submissions/${submissionId}/evaluate`, { scores })
+            await api.post(`/submissions/${submissionId}/evaluate`, { scores, comment })
             const idx = submissions.value.findIndex(s => s.id === submissionId)
             if (idx !== -1) {
                 const current = submissions.value[idx]
@@ -175,6 +202,7 @@ export const useTasksStore = defineStore('tasks', () => {
         error,
         tasks,
         submissions,
+        mySubmissions,
         fetchTasks,
         createTask,
         submitTask,

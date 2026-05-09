@@ -1,10 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let service: UsersService;
   let mockPrisma: { user: { findMany: jest.Mock; findFirst: jest.Mock } };
+
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
+  };
 
   beforeEach(async () => {
     mockPrisma = {
@@ -19,6 +31,10 @@ describe('UsersService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: getLoggerToken(UsersService.name),
+          useValue: mockPinoLogger,
         },
       ],
     }).compile();

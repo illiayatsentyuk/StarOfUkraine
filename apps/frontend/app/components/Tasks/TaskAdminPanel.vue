@@ -28,6 +28,9 @@
                     .c-input
                         InputText(v-model="gradingData[sub.id][c.id]" type="number" :max="c.maxPoints" placeholder="0")
                 
+                .comment-area
+                    Textarea(v-model="commentsData[sub.id]" placeholder="Коментар до роботи..." rows="2" autoResize)
+
                 Button.grade-btn(
                     label="ЗБЕРЕГТИ ОЦІНКУ"
                     @click="submitGrade(sub.id)"
@@ -46,10 +49,11 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: 'grade', submissionId: string, scores: Array<{ id: string; points: number }>): void
+    (e: 'grade', submissionId: string, scores: Array<{ id: string; points: number }>, comment: string): void
 }>()
 
 const gradingData = ref<Record<string, Record<string, number>>>({})
+const commentsData = ref<Record<string, string>>({})
 
 // Initialize grading data for each submission
 watch(() => props.submissions, (newSubs) => {
@@ -70,7 +74,8 @@ function submitGrade(submissionId: string) {
         id,
         points: Number(points),
     }))
-    emit('grade', submissionId, scores)
+    const comment = commentsData.value[submissionId] || 'Оцінено суддею'
+    emit('grade', submissionId, scores, comment)
 }
 </script>
 
@@ -146,6 +151,17 @@ function submitGrade(submissionId: string) {
         .c-input {
             :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; text-align: center; }
             :deep(.p-rating) { gap: 4px; .p-rating-item .p-rating-icon { font-size: 14px; color: #f59e0b; } }
+        }
+    }
+
+    .comment-area {
+        margin-top: 8px;
+        :deep(.p-inputtextarea) {
+            width: 100%;
+            font-size: 13px;
+            border-color: var(--color-border);
+            background: var(--color-bg);
+            color: var(--color-text);
         }
     }
 

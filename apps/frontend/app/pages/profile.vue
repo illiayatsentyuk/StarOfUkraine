@@ -6,8 +6,35 @@ section.profile
 
   .profile__card(v-if="loginStore.user")
     .profile__card-inner
-      ProfileHero(:user="loginStore.user")
-      ProfileInfo(:user="loginStore.user")
+      .profile__hero
+        .profile__avatar-ring
+          .profile__avatar-wrap
+            Avatar(
+              v-if="loginStore.user?.image"
+              :image="loginStore.user.image"
+              size="xlarge"
+              shape="circle"
+            )
+            Avatar(
+              v-else
+              icon="pi pi-user"
+              size="xlarge"
+              shape="circle"
+            )
+        span.profile__role-pill {{ roleDisplayName }}
+
+      .profile__details
+        .profile__detail
+          span.profile__detail-label
+            i.pi.pi-user.profile__detail-icon(aria-hidden="true")
+            | Ім'я
+          span.profile__detail-value {{ loginStore.user.name || 'Не вказано' }}
+
+        .profile__detail
+          span.profile__detail-label
+            i.pi.pi-envelope.profile__detail-icon(aria-hidden="true")
+            | Електронна пошта
+          span.profile__detail-value {{ loginStore.user.email }}
 
       .profile__actions
         button.profile__logout(

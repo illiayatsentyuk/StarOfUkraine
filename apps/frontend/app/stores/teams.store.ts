@@ -27,7 +27,25 @@ export const useTeamsStore = defineStore('teams', () => {
     const initActiveTeam = async () => {
         if (typeof window === 'undefined') return
         const stored = window.localStorage.getItem('activeTeamId')
-        activeTeamId.value = stored || null
+        
+        let teamIdToUse = stored || null
+
+        if (!teamIdToUse) {
+            const authStore = useLoginStore()
+            if (!authStore.user && typeof authStore.fetchUser === 'function') {
+                await authStore.fetchUser()
+            }
+            const user = authStore.user
+            if (user) {
+                const firstTeam = user.teamsAsCaptain?.[0] || user.teamsAsMember?.[0]
+                if (firstTeam) {
+                    teamIdToUse = firstTeam.id
+                    window.localStorage.setItem('activeTeamId', teamIdToUse)
+                }
+            }
+        }
+
+        activeTeamId.value = teamIdToUse
         if (activeTeamId.value && !currentTeam.value) {
             try {
                 await fetchTeamById(activeTeamId.value)

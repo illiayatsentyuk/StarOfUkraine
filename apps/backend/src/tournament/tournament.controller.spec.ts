@@ -1,3 +1,4 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import type { JoinTournamentDto } from './dto/join-tournament.dto';
 import { TournamentController } from './tournament.controller';
@@ -16,6 +17,7 @@ describe('TournamentController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [CacheModule.register()],
       controllers: [TournamentController],
       providers: [
         {

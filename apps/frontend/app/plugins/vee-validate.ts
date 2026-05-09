@@ -25,15 +25,29 @@ export default defineNuxtPlugin(() => {
   configure({
     validateOnBlur: true,
     generateMessage: (ctx) => {
+      const params = ctx.rule?.params as unknown
+      const param0 =
+        Array.isArray(params) ? params[0] : undefined
+      const minLimit =
+        param0 ??
+        (params && typeof params === 'object' && params !== null && 'min' in params
+          ? (params as { min?: unknown }).min
+          : undefined)
+      const maxLimit =
+        param0 ??
+        (params && typeof params === 'object' && params !== null && 'max' in params
+          ? (params as { max?: unknown }).max
+          : undefined)
+
       const messages: Record<string, string> = {
         required: 'Це поле обов\'язкове',
         email: 'Введіть правильну електронну адресу',
-        min: `Мінімальна довжина ${(ctx.rule?.params as any[])?.[0] || ''} символів`,
+        min: `Мінімальна довжина ${param0 ?? ''} символів`,
         confirmed: 'Паролі не збігаються',
         numeric: 'Введіть число',
-        min_value: `Мінімальне значення ${(ctx.rule?.params as any[])?.[0] || ''}`,
-        max_value: `Максимальне значення ${(ctx.rule?.params as any[])?.[0] || ''}`,
-        min_date_future: `Дата повинна бути не раніше ніж через ${(ctx.rule?.params as any[])?.[0] || '3'} дні(в) від сьогодні`,
+        min_value: `Мінімальне значення ${minLimit ?? ''}`,
+        max_value: `Максимальне значення ${maxLimit ?? ''}`,
+        min_date_future: `Дата повинна бути не раніше ніж через ${param0 ?? '3'} дні(в) від сьогодні`,
       }
       return messages[ctx.rule?.name || ''] || `${ctx.field} is invalid`
     },

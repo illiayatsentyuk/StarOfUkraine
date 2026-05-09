@@ -7,6 +7,7 @@ import {
 import type { ConfigType } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import databaseConfig from '../config/database.config';
 
 @Injectable()
@@ -17,6 +18,8 @@ export class PrismaService
   constructor(
     @Inject(databaseConfig.KEY)
     private dbConfig: ConfigType<typeof databaseConfig>,
+    @InjectPinoLogger(PrismaService.name)
+    private readonly logger: PinoLogger,
   ) {
     const connectionString = dbConfig.url;
     if (!connectionString) {
@@ -27,9 +30,11 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
+    this.logger.info('Database connection established');
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
+    this.logger.info('Database connection closed');
   }
 }

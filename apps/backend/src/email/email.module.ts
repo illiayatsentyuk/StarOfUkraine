@@ -12,8 +12,7 @@ import { EmailService } from './email.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret:
-          config.get<string>('resetPassword.secret')
+        secret: config.get<string>('resetPassword.secret'),
       }),
     }),
   ],

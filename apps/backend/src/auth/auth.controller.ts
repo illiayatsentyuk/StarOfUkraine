@@ -37,7 +37,7 @@ import {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('signup')
@@ -237,7 +237,6 @@ export class AuthController {
     @GetCurrentOAuthUser() user: GoogleOAuthCallbackUserDto,
     @Res() res: Response,
   ) {
-    console.log('user', user);
     const tokens = await this.authService.getTokens(
       user.sub,
       user.email,
@@ -245,10 +244,9 @@ export class AuthController {
     );
 
     this.setAuthCookies(res, tokens.access_token, tokens.refresh_token);
-    const frontendBase = (process.env.FRONTEND_URL ?? 'http://localhost:4040').replace(
-      /\/+$/,
-      '',
-    );
+    const frontendBase = (
+      process.env.FRONTEND_URL ?? 'http://localhost:4040'
+    ).replace(/\/+$/, '');
     return res.redirect(302, `${frontendBase}/?oauth=success`);
   }
 

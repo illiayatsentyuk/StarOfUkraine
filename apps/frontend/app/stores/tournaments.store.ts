@@ -45,13 +45,17 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         try {
             const api = useApi()
-            const response = await api.post(`/tournaments/list`, {
-                page: page.value,
-                limit: LIMIT,
-                name: search.value.trim() || undefined,
-                sortBy: sortBy.value,
-                sortOrder: sortOrder.value,
-                status: statusFilter.value === 'all' ? undefined : statusFilter.value,
+            const response = await api.get(`/tournaments/list`, {
+                params: {
+                    page: page.value,
+                    limit: LIMIT,
+                    ...(search.value.trim() ? { name: search.value.trim() } : {}),
+                    sortBy: sortBy.value,
+                    sortOrder: sortOrder.value,
+                    ...(statusFilter.value !== 'all'
+                        ? { status: statusFilter.value }
+                        : {}),
+                },
             })
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')

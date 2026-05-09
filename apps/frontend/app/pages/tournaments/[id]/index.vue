@@ -45,11 +45,15 @@ section.tournament-detail
                 :tournament="tournament"
                 :status="tournamentStatus"
                 :isAdmin="authStore.isAdmin"
+                :isJury="authStore.isJury"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
-        @edit="openEditModal"
+                :isAlreadyJoined="isAlreadyJoined"
+                :hasTeam="!!teamsStore.activeTeam"
+                :joining="joining"
+                @edit="openEditModal"
                 @delete="handleDelete"
-                @createTeam="openTeamModal"
+                @joinTournament="handleJoinTournament"
             )
 
     .error-state(v-else)
@@ -103,6 +107,7 @@ const loadingLeaderboard = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
+const joining = ref(false)
 
 const tournamentStatus = computed(() => {
     if (!tournament.value) return null
@@ -118,6 +123,13 @@ const shouldHideTeams = computed(() => {
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()
+})
+
+// Перевірка чи команда юзера вже зареєстрована в цьому турнірі
+const isAlreadyJoined = computed(() => {
+    const activeTeamId = teamsStore.activeTeamId
+    if (!activeTeamId) return false
+    return teams.value.some((t: any) => t.id === activeTeamId)
 })
 
 const refreshTeams = async () => {
@@ -144,10 +156,40 @@ const refreshTeams = async () => {
     }
 }
 
+// Головна дія: вступити в турнір
+const handleJoinTournament = async () => {
+    if (!authStore.isAuthenticated) return
+
+    // Якщо немає команди — спочатку відкрити модалку створення
+    if (!teamsStore.activeTeam) {
+        isTeamOpen.value = true
+        return
+    }
+
+    // Є команда — одразу join
+    joining.value = true
+    try {
+        await tournamentStore.joinTournament(tournamentId.value, teamsStore.activeTeam.id)
+        await refreshTeams()
+    } catch {
+        // помилка вже показана в store
+    } finally {
+        joining.value = false
+    }
+}
+
+// Після створення команди — автоматично приєднуємо до турніру
 const onTeamCreated = async ({ teamId }: { teamId: string }) => {
-    await tournamentStore.joinTournament(tournamentId.value, teamId)
     await teamsStore.setActiveTeam(teamId)
-    await refreshTeams()
+    joining.value = true
+    try {
+        await tournamentStore.joinTournament(tournamentId.value, teamId)
+        await refreshTeams()
+    } catch {
+        // помилка вже показана в store
+    } finally {
+        joining.value = false
+    }
 }
 
 onMounted(async () => {
@@ -166,10 +208,6 @@ function handleDelete() {
 
 function openEditModal() {
     isEditModalOpen.value = true
-}
-
-function openTeamModal() {
-    isTeamOpen.value = true
 }
 
 async function onTournamentUpdated(updatedTournament: any) {

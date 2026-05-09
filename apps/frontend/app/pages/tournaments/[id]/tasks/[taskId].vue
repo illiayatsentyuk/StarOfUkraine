@@ -45,11 +45,12 @@ section.task-detail
                     TaskSubmissionForm(
                         :task="task"
                         :loading="store.loading"
+                        :mySubmission="store.mySubmissions[task.id] ?? null"
                         @submit="handleSubmit"
                     )
 
                     NuxtLink.admin-link(
-                        v-if="authStore.isAdmin"
+                        v-if="authStore.isJury"
                         :to="`/tournaments/${route.params.id}/tasks/${task.id}/admin`"
                     )
                         i.pi.pi-cog
@@ -84,11 +85,13 @@ onMounted(async () => {
 
 async function handleSubmit(payload: { github: string; youtube: string }) {
     if (!task.value) return
+
     const teamId = (route.query.teamId as string) || teamsStore.activeTeamId || teamsStore.currentTeam?.id
     if (!teamId) {
-        useServerSafeToast().error('Оберіть команду для відправки завдання')
+        useServerSafeToast().error('Щоб відправити роботу, потрібно мати команду та бути зареєстрованим у турнірі')
         return
     }
+
     await store.submitTask(task.value.id, {
         teamId,
         githubUrl: payload.github,

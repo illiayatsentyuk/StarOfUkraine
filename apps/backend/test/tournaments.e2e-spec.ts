@@ -1,6 +1,8 @@
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { TournamentStatus } from '@prisma/client';
+import type { Cache } from 'cache-manager';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { Role } from '../src/enum';
@@ -67,23 +69,32 @@ describe('Tournaments (e2e)', () => {
     await app.close();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     jest.clearAllMocks();
+    const cache = app.get<Cache>(CACHE_MANAGER);
+    await cache.del('tournaments');
   });
 
-  it('POST /tournaments returns paginated response', async () => {
+  it('GET /tournaments/list returns paginated response', async () => {
     mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.count.mockResolvedValue(1);
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
 
     const response = await request(app.getHttpServer())
-      .post('/tournaments/list')
-      .send({ page: 1, limit: 10 })
+      .get('/tournaments/list')
+      .query({ page: 1, limit: 10 })
       .expect(200);
 
-    expect(mockPrisma.tournament.count).toHaveBeenCalledWith({ where: undefined });
+    expect(mockPrisma.tournament.count).toHaveBeenCalledWith();
     expect(mockPrisma.tournament.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: undefined }),
+      expect.objectContaining({
+        skip: 0,
+        take: 10,
+        include: { teams: true },
+      }),
+    );
+    expect(mockPrisma.tournament.findMany.mock.calls[0][0]).not.toHaveProperty(
+      'where',
     );
 
     expect(response.body).toEqual({
@@ -96,14 +107,14 @@ describe('Tournaments (e2e)', () => {
     });
   });
 
-  it('POST /tournaments/list supports filtering by status', async () => {
+  it('GET /tournaments/list supports filtering by status', async () => {
     mockPrisma.tournament.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.tournament.count.mockResolvedValue(1);
     mockPrisma.tournament.findMany.mockResolvedValue([tournamentMock]);
 
     await request(app.getHttpServer())
-      .post('/tournaments/list')
-      .send({ page: 1, limit: 10, status: TournamentStatus.DRAFT })
+      .get('/tournaments/list')
+      .query({ page: 1, limit: 10, status: TournamentStatus.DRAFT })
       .expect(200);
 
     expect(mockPrisma.tournament.count).toHaveBeenCalledWith({

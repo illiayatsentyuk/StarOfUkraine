@@ -24,38 +24,6 @@
                 VeeField(name="city" v-slot="{ field }")
                     input.form-input(type="text" v-bind="field" placeholder="Місто")
 
-            .form-group
-                label.form-label ПОШУК ГРАВЦІВ
-                .members-tags(v-if="selectedMembers.length")
-                    span.member-tag(v-for="email in selectedMembers" :key="email")
-                        | {{ email }}
-                        button.tag-remove(type="button" @click="removeMember(email)") ×
-
-                .members-input-wrapper
-                    input.form-input(
-                        :value="memberQuery"
-                        @input="onMemberInput($event.target.value)"
-                        @focus="memberQuery.trim().length >= 2 && (showDropdown = true)"
-                        @blur="onBlur"
-                        placeholder="Пошук за email або nameId..."
-                        autocomplete="off"
-                    )
-
-                    .members-searching(v-if="store.searchingMembers && memberQuery.length >= 2")
-                        span Шукаємо...
-
-                    .members-dropdown(v-else-if="showDropdown && filteredSearchResults.length")
-                        .dropdown-item(
-                            v-for="user in filteredSearchResults"
-                            :key="user.id || user.email"
-                            @mousedown.prevent="selectMember(user.email)"
-                        )
-                            span.user-email {{ user.email }}
-                            span.user-name(v-if="user.name || user.nameId") — {{ user.name || user.nameId }}
-
-                    .members-dropdown.dropdown--empty(v-else-if="showDropdown && !store.searchingMembers && memberQuery.length >= 2")
-                        .dropdown-empty Нікого не знайдено
-
             .form-row
                 .form-group
                     label.form-label ОРГАНІЗАЦІЯ
@@ -70,6 +38,10 @@
                 label.form-label DISCORD
                 VeeField(name="discord" v-slot="{ field }")
                     input.form-input(v-bind="field" placeholder="@discord")
+
+            .members-note
+                i.pi.pi-info-circle
+                p Після створення команди поділіться її назвою з учасниками — вони зможуть знайти команду у списку та приєднатися самостійно.
 
             .modal-footer
                 button.cancel-btn(type="button" @click="closeModal") СКАСУВАТИ
@@ -157,11 +129,7 @@ watch(() => props.isTeamOpen, (opened) => {
 async function onSubmit(values: any) {
     try {
         isLoading.value = true
-        const payload = {
-            ...values,
-            members: selectedMembers.value,
-        }
-        const team = await store.createTeam(payload)
+        const team = await store.createTeam(values)
         if (!team?.id) return
         store.currentTeam = team
         emit('success', { teamId: team.id })

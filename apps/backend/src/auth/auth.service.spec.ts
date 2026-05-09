@@ -6,9 +6,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
+import { getLoggerToken } from 'pino-nestjs';
 import jwtTokensConfig from '../config/jwt.config';
-import { AuthProvider, Role } from '../enum';
 import { EmailService } from '../email/email.service';
+import { AuthProvider, Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 
@@ -48,6 +49,17 @@ describe('AuthService', () => {
     decodeConfirmationToken: jest.fn(),
   };
 
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
+  };
+
   const mockUser = {
     id: 'user-1',
     email: 'user@example.com',
@@ -77,6 +89,8 @@ describe('AuthService', () => {
       role: true,
       createdAt: true,
       updatedAt: true,
+      teamsAsCaptain: { select: { id: true, name: true } },
+      teamsAsMember: { select: { id: true, name: true } },
     },
   };
 
@@ -99,6 +113,10 @@ describe('AuthService', () => {
         {
           provide: EmailService,
           useValue: mockEmailService,
+        },
+        {
+          provide: getLoggerToken(AuthService.name),
+          useValue: mockPinoLogger,
         },
       ],
     }).compile();
@@ -440,9 +458,9 @@ describe('AuthService', () => {
     it('throws NotFoundException when user does not exist', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.forgotPassword('missing@example.com')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.forgotPassword('missing@example.com'),
+      ).rejects.toThrow(NotFoundException);
       expect(mockEmailService.sendResetPasswordLink).not.toHaveBeenCalled();
     });
   });

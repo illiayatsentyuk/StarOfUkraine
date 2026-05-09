@@ -1,10 +1,15 @@
-import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { createTransport } from 'nodemailer';
 import type { SignOptions } from 'jsonwebtoken';
 import type { Transporter } from 'nodemailer';
+import { createTransport } from 'nodemailer';
 import type Mail from 'nodemailer/lib/mailer';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 
 type SendMailConfig = {
@@ -16,16 +21,19 @@ type SendMailConfig = {
 
 @Injectable()
 export class EmailService {
-  private readonly logger = new Logger(EmailService.name);
   private readonly nodemailerTransport: Transporter;
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
+    @InjectPinoLogger(EmailService.name)
+    private readonly logger: PinoLogger,
   ) {
     const sendMail = this.configService.get<SendMailConfig>('sendMail');
     if (!sendMail?.host) {
-      throw new Error('Missing sendMail config (EMAIL_HOST / sendMail namespace)');
+      throw new Error(
+        'Missing sendMail config (EMAIL_HOST / sendMail namespace)',
+      );
     }
     this.nodemailerTransport = createTransport({
       host: sendMail.host,
@@ -37,9 +45,7 @@ export class EmailService {
 
   async sendResetPasswordLink(email: string): Promise<void> {
     const secret = this.configService.get<string>('resetPassword.secret');
-    const expiresIn = this.configService.get<string>(
-      'resetPassword.expiresIn',
-    );
+    const expiresIn = this.configService.get<string>('resetPassword.expiresIn');
     const resetUrlBase = this.configService.get<string>(
       'resetPassword.resetUrl',
     );
@@ -78,27 +84,36 @@ export class EmailService {
   }
 
   public async decodeConfirmationToken(token: string) {
-        try {
-            const payload = await this.jwtService.verify(token, {
-                secret: this.configService.get<string>('resetPassword.secret'),
-            });
+    try {
+      const payload = await this.jwtService.verify(token, {
+        secret: this.configService.get<string>('resetPassword.secret'),
+      });
 
-            if (typeof payload === 'object' && 'email' in payload) {
-                return payload.email;
-            }
-            throw new BadRequestException();
-        } catch (error) {
-            if (error?.name === 'TokenExpiredError') {
-                throw new BadRequestException(
-                    'Email confirmation token expired'
-                );
-            }
-            throw new BadRequestException('Bad confirmation token');
-        }
+      if (typeof payload === 'object' && 'email' in payload) {
+        return payload.email;
+      }
+      throw new BadRequestException();
+    } catch (err: unknown) {
+      const name =
+        err &&
+        typeof err === 'object' &&
+        'name' in err &&
+        typeof (err as { name: unknown }).name === 'string'
+          ? (err as { name: string }).name
+          : '';
+      if (name === 'TokenExpiredError') {
+        throw new BadRequestException('Email confirmation token expired');
+      }
+      this.logger.warn({ err }, 'Invalid or expired confirmation token');
+      throw new BadRequestException('Bad confirmation token');
     }
+  }
 
   private async sendMail(options: Mail.Options): Promise<void> {
-    this.logger.log(`Sending email to ${options.to} with subject ${options.subject}`);
+    this.logger.info(
+      { to: options.to, subject: options.subject },
+      'Sending email',
+    );
     await this.nodemailerTransport.sendMail(options);
   }
 }

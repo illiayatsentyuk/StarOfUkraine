@@ -1,6 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionStatus, TournamentStatus } from '@prisma/client';
+import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EvaluateSubmissionDto } from './dto';
 import { TasksService } from './tasks.service';
@@ -53,6 +54,17 @@ describe('TasksService', () => {
     hideTeamsUntilRegistrationEnds: true,
   };
 
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -60,6 +72,10 @@ describe('TasksService', () => {
         {
           provide: PrismaService,
           useValue: mockPrisma,
+        },
+        {
+          provide: getLoggerToken(TasksService.name),
+          useValue: mockPinoLogger,
         },
       ],
     }).compile();
@@ -207,7 +223,6 @@ describe('TasksService', () => {
       mockPrisma.submission.upsert.mockResolvedValue({
         id: 'sub-1',
         taskId: 'task-1',
-        teamId: 'team-1',
         ...submitDto,
         status: SubmissionStatus.PENDING,
       });
