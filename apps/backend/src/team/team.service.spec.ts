@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { getLoggerToken } from 'pino-nestjs';
 import paginationConfig from '../config/pagination.config';
 import { Role, SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -67,6 +68,17 @@ describe('TeamService', () => {
     captainName: teamMock.captainName,
   };
 
+  const mockPinoLogger = {
+    trace: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+    fatal: jest.fn(),
+    setContext: jest.fn(),
+    assign: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -79,6 +91,7 @@ describe('TeamService', () => {
           provide: paginationConfig.KEY,
           useValue: { pageSize: '10' },
         },
+        { provide: getLoggerToken(TeamService.name), useValue: mockPinoLogger },
       ],
     }).compile();
 

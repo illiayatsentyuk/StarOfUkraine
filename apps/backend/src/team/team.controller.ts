@@ -54,7 +54,10 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   create(@Body() data: CreateTeamDto, @GetCurrentUser('email') email: string) {
     return this.teamService.create(data, email);
   }
@@ -77,6 +80,10 @@ export class TeamController {
   })
   @ApiResponse({ status: 400, description: 'User is already a team member' })
   @ApiResponse({ status: 404, description: 'Team or user not found' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   join(@Param('id') id: string, @GetCurrentUser('email') email: string) {
     return this.teamService.join(id, email);
   }
@@ -85,7 +92,12 @@ export class TeamController {
   @Post('list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all teams' })
-  @ApiBody({ type: FindTeamQueryDto })
+  @ApiBody({
+    type: FindTeamQueryDto,
+    examples: {
+      list: { value: teamExamples.listRequest },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'List of teams returned',
@@ -137,7 +149,10 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
     return this.teamService.update(id, data);
   }
@@ -159,7 +174,10 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
   remove(@Param('id') id: string) {
     return this.teamService.remove(id);
   }

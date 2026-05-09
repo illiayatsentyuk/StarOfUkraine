@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -33,6 +34,8 @@ export class TeamService {
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
     private readonly paginationsConfig: ConfigType<typeof paginationConfig>,
+    @InjectPinoLogger(TeamService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   private normalizeEmail(email: string): string {
@@ -62,7 +65,7 @@ export class TeamService {
     const captainEmail = this.normalizeEmail(creatorEmail);
     await this.assertUserExistsByEmail(captainEmail);
 
-    return this.prisma.team.create({
+    const team = await this.prisma.team.create({
       data: {
         name: data.name,
         captainName: data.captainName,
@@ -79,6 +82,8 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: team.id, name: team.name }, 'Team created');
+    return team;
   }
 
   async findAll(query: FindTeamQueryDto) {
@@ -173,7 +178,7 @@ export class TeamService {
       await this.assertUserExistsByEmail(captainEmail);
     }
 
-    return this.prisma.team.update({
+    const updated = await this.prisma.team.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -192,6 +197,8 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: id }, 'Team updated');
+    return updated;
   }
 
   async join(teamId: string, userEmail: string) {
@@ -209,7 +216,7 @@ export class TeamService {
       throw new BadRequestException('User is already a team member');
     }
 
-    return this.prisma.team.update({
+    const joined = await this.prisma.team.update({
       where: { id: teamId },
       data: {
         members: {
@@ -218,13 +225,17 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: teamId }, 'User joined team');
+    return joined;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.team.delete({
+    const deleted = await this.prisma.team.delete({
       where: { id },
       include: teamInclude,
     });
+    this.logger.info({ teamId: id }, 'Team deleted');
+    return deleted;
   }
 }

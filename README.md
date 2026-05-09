@@ -1,52 +1,77 @@
 # StarOfUkraine
 
-Monorepo for **StarOfUkraine** (backend API + frontend app).
+Monorepo for **StarOfUkraine**: a NestJS API with Prisma and a Nuxt 4 frontend for tournaments and teams.
 
-## What's inside
+## Apps
 
-- **`apps/backend`**: NestJS API (Prisma, JWT/cookies, Swagger)
-- **`apps/frontend`**: Nuxt frontend
+| App | Stack | Local URL |
+| --- | --- | --- |
+| [Backend](apps/backend/README.md) | NestJS, Prisma, Postgres, Swagger | `http://localhost:3000` (default) |
+| [Frontend](apps/frontend/README.md) | Nuxt 4, Pinia, PrimeVue, Playwright E2E | `http://localhost:4040` (dev / preview) |
 
 ## Prerequisites
 
-- Node.js + pnpm
-- Postgres (for local development; tests mock Prisma)
+- **Node.js** ≥ 18 (see root `package.json` `engines`)
+- **pnpm** 9 (`packageManager` field)
+- **Postgres** for local backend (connection strings in `apps/backend/.env`)
 
-## Install
+## Installation
+
+From the repository root:
 
 ```bash
 pnpm install
 ```
 
-## Run (development)
+## Development
 
-Backend:
-
-```bash
-pnpm -C apps/backend dev
-```
-
-Frontend:
+Run **all** dev tasks via Turbo (backend + frontend in parallel):
 
 ```bash
-pnpm -C apps/frontend dev
+pnpm dev
 ```
 
-## API docs (Swagger)
-
-With backend running, open Swagger UI at `GET /api/docs` (default `http://localhost:3000/api/docs`).
-
-## Tests
-
-Backend unit tests:
+Or run a single app:
 
 ```bash
-pnpm -C apps/backend test
+pnpm --filter backend dev
+pnpm --filter frontend dev
 ```
 
-Backend e2e tests:
+## Root scripts
+
+| Script | Purpose |
+| --- | --- |
+| `pnpm dev` | `turbo run dev` — start app dev servers |
+| `pnpm build` | `turbo run build` — production builds |
+| `pnpm lint` | `turbo run lint` — lint (Biome on backend) |
+| `pnpm format` | Prettier on `**/*.{ts,tsx,md}` |
+| `pnpm check-types` | `turbo run check-types` |
+| `pnpm prepare` | Husky git hooks |
+
+## API documentation
+
+With the backend running: **Swagger UI** at [http://localhost:3000/api/docs](http://localhost:3000/api/docs) (path may differ if `PORT` is overridden).
+
+## Testing
+
+**Backend** (from root):
 
 ```bash
-pnpm -C apps/backend test:e2e
+pnpm --filter backend test
+pnpm --filter backend test:e2e
 ```
 
+**Frontend** (Playwright — install browsers once: `pnpm --filter frontend exec playwright install chromium`):
+
+```bash
+pnpm --filter frontend test:e2e
+```
+
+## Git hooks
+
+`.husky/pre-commit` runs backend **lint + unit tests**, then frontend **E2E** tests. Ensure dependencies and Playwright are set up before committing.
+
+## Contributing
+
+Use feature branches and pull requests. Do not commit real secrets; use each app’s `.env.example` as a template.

@@ -4,26 +4,32 @@ header.header-competition
         .header-competition__logo
             NuxtLink(to="/") STAR OF UKRAINE
     
-    .header-competition__center
+    .header-competition__center(v-if="showSearchBar")
         SearchBar(v-model="store.search" :loading="store.loading")
 
     .header-competition__nav
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ ТУРНІР"
-            @click="openModal"
-        )
-        Button.create-btn(
-            type="button"
-            label="СТВОРИТИ КОМАНДУ"
-            @click="openTeamModal"
-        )
+        template(v-if="loginStore.isAuthenticated")
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ ТУРНІР"
+                @click="openModal"
+            )
+            Button.create-btn(
+                type="button"
+                label="СТВОРИТИ КОМАНДУ"
+                @click="openTeamModal"
+            )
 
         .auth-section
             template(v-if="loginStore.user")
                 .user-info
                     NuxtLink.user-name-link(to="/profile")
                         span.user-name {{ loginStore.user.name || loginStore.user.email }}
+                    
+                    .user-team(v-if="teamsStore.activeTeam")
+                        span.team-label КОМАНДА:
+                        span.team-name {{ teamsStore.activeTeam.name }}
+
                     Button.logout-btn(
                         type="button"
                         icon="pi pi-sign-out"
@@ -39,11 +45,18 @@ CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { isRouteWithoutTournamentSearch } from '~/enums'
 import { useTournamentsStore } from '../../stores/tournaments.store'
+import { useTeamsStore } from '~/stores/teams.store'
 
+const route = useRoute()
 const store = useTournamentsStore()
 const loginStore = useLoginStore()
+const teamsStore = useTeamsStore()
+
+const showSearchBar = computed(
+  () => !isRouteWithoutTournamentSearch(route.path),
+)
 const isOpen = ref(false)
 const isTeamOpen = ref(false)
 
@@ -57,7 +70,6 @@ function closeModal(){
     isOpen.value=false
     isTeamOpen.value=false
 }
-
 </script>
 
 <style lang="scss" scoped>
@@ -122,6 +134,35 @@ function closeModal(){
         &:focus-visible {
             outline: 2px solid var(--color-primary);
             outline-offset: 2px;
+        }
+    }
+
+    .user-team {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border);
+        border-radius: 4px;
+        
+        .team-label {
+            font-family: var(--font-display);
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--color-text-muted);
+            letter-spacing: 1px;
+        }
+
+        .team-name {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--color-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
         }
     }
 

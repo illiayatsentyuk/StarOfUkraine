@@ -22,13 +22,13 @@
             .form-row
                 .form-group
                     label.form-label ДАТА СТАРТУ *
-                    VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage }")
-                        input.form-input(type="date" v-bind="field" :class="{ 'is-invalid': errorMessage }")
+                    VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" class="form-input")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
-                    VeeField(name="registrationStart" v-slot="{ field }")
-                        input.form-input(type="date" v-bind="field")
+                    VeeField(name="registrationStart" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid class="form-input")
             
             .form-row
                 .form-group
@@ -52,8 +52,8 @@
             
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
-                VeeField(name="registrationEnd" v-slot="{ field }")
-                    input.form-input(type="date" v-bind="field")
+                VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
+                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid class="form-input")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")

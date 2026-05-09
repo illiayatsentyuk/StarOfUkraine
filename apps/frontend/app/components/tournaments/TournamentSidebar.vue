@@ -19,37 +19,76 @@ aside.sidebar
             .status-info
                 span.label ПОТОЧНИЙ СТАТУС
                 span.value(v-if="status" :style="{ color: status.color }") {{ status.label }}
+
+            Button.sidebar__edit(
+                v-if="isAdmin"
+                type="button"
+                label="Редагувати турнір"
+                icon="pi pi-pencil"
+                @click="$emit('edit')"
+            )
+
             Button.sidebar__delete(
                 v-if="isAdmin"
                 type="button"
                 label="Видалити турнір"
                 @click="$emit('delete')"
             )
-            Button.sidebar__create(
-                v-if="isAuthenticated"
+
+            NuxtLink.sidebar__judge-link(
+                v-if="isJury"
+                :to="`/tournaments/${tournament.id}/admin`"
+            )
+                Button.sidebar__judge(
+                    type="button"
+                    label="ПАНЕЛЬ СУДДІВСТВА"
+                    icon="pi pi-users"
+                )
+
+            //- Joined state
+            Button.sidebar__joined(
+                v-if="isAuthenticated && !isAdmin && isAlreadyJoined"
                 type="button"
-                label="Створити команду"
-                icon="pi pi-plus"
-                @click="$emit('createTeam')"
-                :disabled="!isRegistrationActive && !isAdmin"
+                label="Ви вже в турнірі ✓"
+                :disabled="true"
+            )
+
+            //- Join / Create+Join button
+            Button.sidebar__create(
+                v-else-if="isAuthenticated && !isAdmin"
+                type="button"
+                :label="joinLabel"
+                icon="pi pi-arrow-right"
+                :loading="joining"
+                :disabled="(!isRegistrationActive) || joining"
+                @click="$emit('joinTournament')"
             )
 </template>
 
 <script setup lang="ts">
-import type { TournamentStatusInfo } from '~/utils/tournament-status'
+import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
-defineProps<{
+const props = defineProps<{
     tournament: any
     status: TournamentStatusInfo | null
     isAdmin: boolean
+    isJury: boolean
     isAuthenticated: boolean
     isRegistrationActive: boolean
+    isAlreadyJoined: boolean
+    hasTeam: boolean
+    joining: boolean
 }>()
 
 defineEmits<{
+    edit: []
     delete: []
-    createTeam: []
+    joinTournament: []
 }>()
+
+const joinLabel = computed(() =>
+    props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
+)
 </script>
 
 <style scoped lang="scss">
@@ -133,6 +172,33 @@ defineEmits<{
                 }
             }
 
+            .sidebar__judge-link {
+                text-decoration: none;
+                display: block;
+                width: 100%;
+            }
+
+            :deep(.sidebar__judge.p-button) {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: var(--color-text);
+                border: 1px solid var(--color-text);
+                color: #fff;
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: var(--color-primary) !important;
+                    border-color: var(--color-primary) !important;
+                }
+            }
+
             :deep(.sidebar__delete.p-button) {
                 margin-top: 0;
                 width: 100%;
@@ -162,6 +228,54 @@ defineEmits<{
                     outline: 2px solid var(--color-error);
                     outline-offset: 2px;
                 }
+            }
+
+            :deep(.sidebar__edit.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: transparent;
+                border: 1px solid var(--color-border);
+                color: var(--color-text);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition:
+                    background 0.2s ease,
+                    border-color 0.2s ease,
+                    color 0.2s ease;
+
+                &:not(:disabled):hover {
+                    background: var(--color-surface) !important;
+                    border-color: var(--color-text) !important;
+                }
+
+                &:focus-visible {
+                    outline: 2px solid var(--color-text);
+                    outline-offset: 2px;
+                }
+            }
+
+            :deep(.sidebar__joined.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                background: transparent;
+                border: 2px solid var(--color-success, #16a34a);
+                color: var(--color-success, #16a34a);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 800;
+                padding: 18px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                cursor: default;
+                opacity: 1;
             }
 
             :deep(.sidebar__create.p-button) {

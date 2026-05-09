@@ -1,17 +1,21 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
+  ApiBearerAuth,
+  ApiCookieAuth,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { usersExamples } from '../examples';
+import { authExamples, usersExamples } from '../examples';
 import { Serialize } from '../interceptors/serialize.interceptor';
 import { FindUsersDto, UserDto } from './dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
+@ApiBearerAuth()
+@ApiCookieAuth('access_token')
 @Controller('users')
 @Serialize(UserDto)
 export class UsersController {
@@ -23,6 +27,11 @@ export class UsersController {
     status: 200,
     description: 'List of users',
     schema: { example: [usersExamples.userResponse] },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
   })
   findAll() {
     return this.usersService.findAll();
@@ -42,6 +51,11 @@ export class UsersController {
     schema: { example: usersExamples.searchResponse },
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
   findUsers(@Query() query: FindUsersDto) {
     return this.usersService.findUsers(query);
   }
@@ -59,6 +73,11 @@ export class UsersController {
     schema: { example: usersExamples.userResponse },
   })
   @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
   findOne(@Param('id') identifier: string) {
     return this.usersService.findOne(identifier);
   }

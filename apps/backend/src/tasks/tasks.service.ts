@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, SubmissionStatus } from '@prisma/client';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   CreateTournamentTasksDto,
@@ -11,10 +12,16 @@ import type {
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
+import { JuryService } from 'src/jury/jury.service';
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @InjectPinoLogger(TasksService.name)
+    private readonly logger: PinoLogger,
+    private readonly juryService: JuryService,
+  ) {}
 
   async createTasks(tournamentId: string, dto: CreateTournamentTasksDto) {
     const tournament = await this.prisma.tournament.findUnique({
@@ -43,6 +50,10 @@ export class TasksService {
       ),
     );
 
+    this.logger.info(
+      { tournamentId, taskCount: created.length },
+      'Tournament tasks created',
+    );
     return created;
   }
 
@@ -76,7 +87,7 @@ export class TasksService {
       }
     }
 
-    return this.prisma.task.update({
+    const updated = await this.prisma.task.update({
       where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
@@ -87,6 +98,11 @@ export class TasksService {
         }),
       },
     });
+    this.logger.info(
+      { taskId: id, tournamentId: existing.tournamentId },
+      'Task updated',
+    );
+    return updated;
   }
 
   async submitTask(taskId: string, dto: SubmitTaskDto) {
@@ -118,7 +134,7 @@ export class TasksService {
       throw new BadRequestException('Submission already evaluated');
     }
 
-    return this.prisma.submission.upsert({
+    const submission = await this.prisma.submission.upsert({
       where: {
         taskId_teamId: { taskId, teamId: dto.teamId },
       },
@@ -133,6 +149,11 @@ export class TasksService {
         videoUrl: dto.videoUrl,
       },
     });
+    this.logger.info(
+      { taskId, teamId: dto.teamId, submissionId: submission.id },
+      'Task submission upserted',
+    );
+    return submission;
   }
 
   async getSubmissionsForTask(taskId: string) {
@@ -166,7 +187,7 @@ export class TasksService {
     userId: string,
     dto: EvaluateSubmissionDto,
   ) {
-    const jury = await this.prisma.jury.findUnique({ where: { userId } });
+    const jury = await this.juryService.findOne(userId);
     if (!jury) {
       throw new BadRequestException('Jury profile not found');
     }
@@ -262,6 +283,15 @@ export class TasksService {
       }),
     ]);
 
+    this.logger.info(
+      {
+        submissionId,
+        juryId: jury.id,
+        userId,
+        totalScore,
+      },
+      'Submission evaluated',
+    );
     return evaluation;
   }
 }

@@ -238,7 +238,7 @@ function onMatchIdChange(matchId: string, event: Event) {
         padding: var(--space-6);
         background: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: var(--radius-md, 8px);
+        border-radius: 0;
         overflow-x: auto;
         position: relative;
         min-height: 12rem;
@@ -248,11 +248,9 @@ function onMatchIdChange(matchId: string, event: Event) {
         }
         &::-webkit-scrollbar-track {
             background: var(--color-bg);
-            border-radius: 4px;
         }
         &::-webkit-scrollbar-thumb {
             background: var(--color-border);
-            border-radius: 4px;
         }
         &::-webkit-scrollbar-thumb:hover {
             background: var(--color-primary);

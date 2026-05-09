@@ -22,7 +22,7 @@ export default defineNuxtPlugin(() => {
           return api(original)  
         } catch {
           useLoginStore().user = null
-          navigateTo('/login')
+          await navigateTo('/auth')
         }
       }
 

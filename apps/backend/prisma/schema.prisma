@@ -36,10 +36,11 @@ model User {
   hashedRt  String?   @unique
   name      String?
   nameId    String?   @unique
-  image     String?
+  image     String? 
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  resetToken String?
 
   accounts       Account[]
   teamsAsCaptain Team[]    @relation("TeamCaptain")

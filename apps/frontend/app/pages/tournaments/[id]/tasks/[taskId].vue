@@ -2,153 +2,257 @@
 section.task-detail
     .task-detail__nav
         NuxtLink.back-link(:to="`/tournaments/${route.params.id}/tasks`")
-            span.icon ←
-            span.text НАЗАД ДО ЗАВДАНЬ
+            i.pi.pi-arrow-left
+            span НАЗАД ДО ЗАВДАНЬ
 
     .loading-state(v-if="store.loading && !task")
         i.pi.pi-spin.pi-spinner
         span Завантаження...
 
     template(v-else-if="task")
-        TaskDetailHero(:task="task")
-
-        .task-detail__layout
-            main.main-content
-                .content-section
-                    h3.section-label ОПИС ЗАВДАННЯ
-                    p.description {{ task.description }}
-
-                TaskSubmissionForm(
-                    :task="task"
-                    :loading="store.loading"
-                    @submit="handleSubmit"
+        .task-detail__grid
+            // Left Sidebar: Tasks List
+            aside.task-sidebar-left
+                TaskSidebar(
+                    :tasks="store.tasks"
+                    :currentTaskId="task?.id || ''"
                 )
 
-                TaskAdminPanel(
-                    v-if="authStore.isAdmin"
-                    :task="task"
-                    :submissions="store.submissions"
-                    :loading="store.loading"
-                    @grade="handleGrade"
-                )
+            // Main content: Task Description
+            main.task-main
+                TaskDetailHero(:task="task")
+                
+                .content-card
+                    .content-section
+                        h3.section-title ОПИС ЗАВДАННЯ
+                        .description-text {{ task.description }}
+                    
+                    .content-section.examples(v-if="task.examples")
+                        h3.section-title ПРИКЛАДИ
+                        .example-box(v-for="(ex, i) in task.examples" :key="i")
+                            .example-header ПРИКЛАД # {{ i + 1 }}
+                            .example-content
+                                .input
+                                    span ВХІДНІ ДАНІ
+                                    pre {{ ex.input }}
+                                .output
+                                    span ВИХІДНІ ДАНІ
+                                    pre {{ ex.output }}
+
+            // Right sidebar: Submission Form + Admin Link
+            aside.task-side-right
+                .side-sticky-wrapper
+                    TaskSubmissionForm(
+                        :task="task"
+                        :loading="store.loading"
+                        :mySubmission="store.mySubmissions[task.id] ?? null"
+                        @submit="handleSubmit"
+                    )
+
+                    NuxtLink.admin-link(
+                        v-if="authStore.isJury"
+                        :to="`/tournaments/${route.params.id}/tasks/${task.id}/admin`"
+                    )
+                        i.pi.pi-cog
+                        span ПАНЕЛЬ ПЕРЕВІРКИ
 
     .error-state(v-else)
         p Завдання не знайдено
-        NuxtLink(:to="`/tournaments/${route.params.id}/tasks`") Повернутися до списку
+        NuxtLink.retry-link(:to="`/tournaments/${route.params.id}/tasks`") Повернутися до списку
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
+
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()
+const teamsStore = useTeamsStore()
 
-const task = computed(() => store.tasks.find(t => t.id === route.params.taskId))
+const taskId = computed(() => route.params.taskId as string)
+const tournamentId = computed(() => route.params.id as string)
+const task = computed(() => store.tasks.find(t => t.id === taskId.value))
 
 onMounted(async () => {
-    const tournamentId = route.params.id as string
-    if (store.tasks.length === 0) {
-        await store.fetchTasks(tournamentId)
-    }
-    if (authStore.isAdmin) {
-        await store.fetchSubmissions(route.params.taskId as string)
+    await teamsStore.initActiveTeam()
+    const hasCurrentTournamentTasks = store.tasks.some(t => t.tournamentId === tournamentId.value)
+    const hasCurrentTask = store.tasks.some(t => t.id === taskId.value)
+
+    if (!hasCurrentTournamentTasks || !hasCurrentTask) {
+        await store.fetchTasks(tournamentId.value)
     }
 })
 
 async function handleSubmit(payload: { github: string; youtube: string }) {
     if (!task.value) return
-    await store.submitTask(task.value.id, {
-        github: payload.github,
-        youtube: payload.youtube,
-    })
-}
 
-async function handleGrade(submissionId: string, score: number) {
-    await store.gradeSubmission(submissionId, score)
+    const teamId = (route.query.teamId as string) || teamsStore.activeTeamId || teamsStore.currentTeam?.id
+    if (!teamId) {
+        useServerSafeToast().error('Щоб відправити роботу, потрібно мати команду та бути зареєстрованим у турнірі')
+        return
+    }
+
+    await store.submitTask(task.value.id, {
+        teamId,
+        githubUrl: payload.github,
+        videoUrl: payload.youtube,
+    })
 }
 </script>
 
 <style lang="scss" scoped>
 .task-detail {
-    max-width: 1440px;
+    max-width: 1800px;
     margin: 0 auto;
-    padding: 60px 48px 80px;
-    animation: fadeIn 0.4s ease-out;
+    padding: 32px;
+    background: var(--color-bg);
+    min-height: 100vh;
 
     @media (max-width: 768px) {
-        padding: 0 24px 40px;
+        padding: 16px;
     }
 
     &__nav {
-        margin-bottom: 48px;
-
+        margin-bottom: 24px;
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             text-decoration: none;
             color: var(--color-text-muted);
-            font-weight: 600;
-            font-size: 11px;
-            letter-spacing: 1.5px;
-            transition: all 0.2s ease;
+            font-size: 13px;
+            &:hover { color: var(--color-primary); }
+        }
+    }
 
-            &:hover {
-                color: var(--color-primary);
-                transform: translateX(-4px);
+    &__grid {
+        display: grid;
+        grid-template-columns: 300px 1fr 360px;
+        gap: 32px;
+        align-items: start;
+
+        @media (max-width: 1440px) {
+            grid-template-columns: 280px 1fr 320px;
+            gap: 24px;
+        }
+
+        @media (max-width: 1200px) {
+            grid-template-columns: 250px 1fr;
+            .task-side-right { grid-column: span 2; }
+        }
+
+        @media (max-width: 900px) {
+            grid-template-columns: 1fr;
+            .task-sidebar-left, .task-side-right { grid-column: auto; }
+        }
+    }
+}
+
+.task-main {
+    .content-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        padding: 40px;
+    }
+
+    .content-section {
+        margin-bottom: 40px;
+        &:last-child { margin-bottom: 0; }
+    }
+
+    .section-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--color-primary);
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        border-left: 3px solid var(--color-primary);
+        padding-left: 12px;
+    }
+
+    .description-text {
+        font-size: 16px;
+        line-height: 1.7;
+        color: var(--color-text);
+        white-space: pre-line;
+    }
+}
+
+.task-side-right {
+    .side-sticky-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        position: sticky;
+        top: 24px;
+    }
+
+    .admin-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 16px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        color: var(--color-text);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 13px;
+        transition: all 0.2s;
+
+        i { color: var(--color-primary); }
+
+        &:hover {
+            border-color: var(--color-primary);
+            background: white;
+            transform: translateY(-2px);
+        }
+    }
+}
+
+.example-box {
+    background: #1e1e1e;
+    overflow: hidden;
+    margin-bottom: 16px;
+
+    .example-header {
+        background: #2d2d2d;
+        padding: 8px 16px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #888;
+    }
+
+    .example-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        
+        .input, .output {
+            padding: 16px;
+            span {
+                display: block;
+                font-size: 10px;
+                color: #555;
+                margin-bottom: 8px;
+            }
+            pre {
+                margin: 0;
+                color: #00ff00;
+                font-family: 'Fira Code', monospace;
+                font-size: 14px;
             }
         }
-    }
-
-    &__layout {
-        display: grid;
-        grid-template-columns: 1fr 400px;
-        gap: 80px;
-
-        @media (max-width: 1024px) {
-            grid-template-columns: 1fr;
-            gap: 48px;
-        }
+        .input { border-right: 1px solid #2d2d2d; }
     }
 }
 
-.main-content {
-    .content-section {
-        margin-bottom: 64px;
-
-        .section-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--color-text-muted);
-            letter-spacing: 2px;
-            margin: 0 0 24px 0;
-        }
-
-        .description {
-            font-size: 22px;
-            line-height: 1.5;
-            color: var(--color-text);
-            margin: 0;
-            max-width: 800px;
-            font-weight: 400;
-        }
-    }
-}
-
-.loading-state,
-.error-state {
+.loading-state, .error-state {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 80px 0;
+    padding: 100px 0;
     gap: 16px;
     color: var(--color-text-muted);
-    font-weight: 500;
-    font-size: 18px;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 </style>

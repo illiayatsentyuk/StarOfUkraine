@@ -1,24 +1,10 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { CreateTournamentTaskPayload, TaskSubmission, TournamentTask } from '~/types'
 
-export interface TournamentTask {
+type SubmissionScore = {
     id: string
-    tournamentId: string
-    title: string
-    description: string
     points: number
-    status: 'pending' | 'completed' | 'failed'
-    deadline: string
-}
-
-export interface TaskSubmission {
-    id: string
-    taskId: string
-    teamName: string
-    githubUrl: string
-    youtubeUrl: string
-    status: 'pending' | 'graded'
-    score?: number
 }
 
 export const useTasksStore = defineStore('tasks', () => {
@@ -27,122 +13,185 @@ export const useTasksStore = defineStore('tasks', () => {
     const error = ref<string | null>(null)
     const tasks = ref<TournamentTask[]>([])
     const submissions = ref<TaskSubmission[]>([])
+    // taskId → { status, githubUrl, videoUrl } — власні подачі поточного юзера
+    const mySubmissions = ref<Record<string, { status: 'PENDING' | 'EVALUATED'; githubUrl: string; videoUrl: string }>>({})
+
+    const loadMySubmissions = () => {
+        if (typeof window === 'undefined') return
+        try {
+            const raw = window.localStorage.getItem('mySubmissions')
+            if (raw) mySubmissions.value = JSON.parse(raw)
+        } catch { /* ignore */ }
+    }
+
+    const saveMySubmissions = () => {
+        if (typeof window === 'undefined') return
+        try {
+            window.localStorage.setItem('mySubmissions', JSON.stringify(mySubmissions.value))
+        } catch { /* ignore */ }
+    }
+
+    // Ініціалізація при старті
+    loadMySubmissions()
+
+    const getCacheKey = (tournamentId: string) => `tournament:${tournamentId}:tasks`
+
+    const readCachedTasks = (tournamentId: string): TournamentTask[] => {
+        if (typeof window === 'undefined') return []
+        try {
+            const raw = window.localStorage.getItem(getCacheKey(tournamentId))
+            if (!raw) return []
+            const parsed = JSON.parse(raw)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    }
+
+    const writeCachedTasks = (tournamentId: string, next: TournamentTask[]) => {
+        if (typeof window === 'undefined') return
+        try {
+            window.localStorage.setItem(getCacheKey(tournamentId), JSON.stringify(next))
+        } catch {
+            // ignore quota / privacy mode
+        }
+    }
 
     const fetchTasks = async (tournamentId: string) => {
+        if (loading.value) return
         loading.value = true
         error.value = null
-        
+
         try {
-            // Mocking API call for tasks
-            await new Promise(resolve => setTimeout(resolve, 800))
-            
-            // Dummy data for IT / Hackathon Tasks
-            tasks.value = [
-                {
-                    id: '1',
-                    tournamentId,
-                    title: 'Створити вебсайт команди',
-                    description: 'Розробіть лендінг для вашого продукту. Він має бути адаптивним, мати форму зворотнього зв\'язку та секцію з перевагами.',
-                    points: 100,
-                    status: 'pending',
-                    deadline: new Date(Date.now() + 86400000 * 3).toISOString()
-                },
-                {
-                    id: '2',
-                    tournamentId,
-                    title: 'Реалізувати CI/CD pipeline',
-                    description: 'Налаштуйте автоматичний деплой вашого проєкту (Vercel/Netlify/Heroku) та додайте посилання на GitHub репозиторій з Actions/Workflows.',
-                    points: 50,
-                    status: 'completed',
-                    deadline: new Date(Date.now() + 86400000 * 5).toISOString()
-                }
-            ]
-        } catch (err: any) {
-            const message = err?.message || 'Помилка завантаження завдань'
+            const api = useApi()
+            const response = await api.get(`/tournaments/${tournamentId}`)
+            const tournament = response.data
+            const rawTasks = Array.isArray(tournament?.tasks) ? tournament.tasks : []
+            const serverTasks = rawTasks.sort(
+                (a: TournamentTask, b: TournamentTask) => (a.order ?? 0) - (b.order ?? 0),
+            )
+
+            // Якщо бек не повертає tasks у `GET /tournaments/:id`, підхоплюємо кеш (щоб адмінські задачі не "зникали").
+            const cached = readCachedTasks(tournamentId)
+            tasks.value = serverTasks.length ? serverTasks : cached
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Помилка завантаження завдань'
             error.value = message
             toast.error(message)
+            // fallback to cache on network errors
+            tasks.value = readCachedTasks(tournamentId)
         } finally {
             loading.value = false
         }
     }
 
-    const createTask = async (payload: Omit<TournamentTask, 'id' | 'status'>) => {
+    const createTask = async (payload: CreateTournamentTaskPayload) => {
+        if (loading.value) return
         loading.value = true
+        error.value = null
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 800))
-            const newTask: TournamentTask = {
-                ...payload,
-                id: Math.random().toString(36).substring(7),
-                status: 'pending'
-            }
-            tasks.value.push(newTask)
-            toast.success('Завдання успішно створено!')
+            const api = useApi()
+            const response = await api.post(`/tournaments/${payload.tournamentId}/tasks`, {
+                tasks: [
+                    {
+                        name: payload.name,
+                        description: payload.description,
+                        order: payload.order,
+                        criteria: {
+                            rubric: payload.criteria?.length
+                                ? payload.criteria
+                                : [
+                                    {
+                                        id: 'total',
+                                        label: 'Загальна оцінка',
+                                        maxPoints: payload.maxPoints ?? 100,
+                                    },
+                                ],
+                        },
+                    },
+                ],
+            })
+
+            const createdTasks = Array.isArray(response.data) ? response.data : []
+            if (!createdTasks.length) throw new Error('Не вдалося створити завдання')
+
+            tasks.value = [...tasks.value, ...createdTasks].sort((a, b) => a.order - b.order)
+            writeCachedTasks(payload.tournamentId, tasks.value)
+            toast.success('Завдання успішно створено')
+            return createdTasks[0] as TournamentTask
         } catch (err: any) {
-            toast.error('Помилка створення завдання')
+            toast.error('Не вдалося створити завдання')
+            error.value = err?.message || 'Помилка створення'
+            throw err
         } finally {
             loading.value = false
         }
     }
 
-    const submitTask = async (taskId: string, payload: any) => {
+    const submitTask = async (
+        taskId: string,
+        payload: { teamId: string; githubUrl: string; videoUrl: string },
+    ) => {
+        if (loading.value) return
         loading.value = true
+        error.value = null
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000))
-            const task = tasks.value.find(t => t.id === taskId)
-            if (task) {
-                task.status = 'completed'
+            const api = useApi()
+            await api.post(`/tasks/${taskId}/submit`, payload)
+            // Зберігаємо статус власної подачі
+            mySubmissions.value[taskId] = {
+                status: 'PENDING',
+                githubUrl: payload.githubUrl,
+                videoUrl: payload.videoUrl,
             }
-            toast.success('Завдання успішно виконано!')
+            saveMySubmissions()
+            toast.success('Завдання успішно відправлено')
         } catch (err: any) {
             toast.error('Помилка відправки завдання')
+            error.value = err?.message || 'Помилка відправки'
+            throw err
         } finally {
             loading.value = false
         }
     }
 
     const fetchSubmissions = async (taskId: string) => {
+        if (loading.value) return
         loading.value = true
+        error.value = null
         try {
-            await new Promise(resolve => setTimeout(resolve, 500))
-            // Mock dummy submissions
-            submissions.value = [
-                {
-                    id: 'sub_1',
-                    taskId,
-                    teamName: 'Команда "КіберКозаки"',
-                    githubUrl: 'https://github.com/cyber-cossacks',
-                    youtubeUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
-                    status: 'pending'
-                },
-                {
-                    id: 'sub_2',
-                    taskId,
-                    teamName: 'Команда "CyberTractors"',
-                    githubUrl: 'https://github.com/cybertractors',
-                    youtubeUrl: '',
-                    status: 'graded',
-                    score: 85
-                }
-            ]
-        } catch (err) {
+            const api = useApi()
+            const response = await api.get(`/tasks/${taskId}/submissions`)
+            submissions.value = Array.isArray(response.data) ? response.data : []
+        } catch (err: any) {
             toast.error('Помилка завантаження робіт')
+            error.value = err?.message || 'Помилка завантаження робіт'
         } finally {
             loading.value = false
         }
     }
 
-    const gradeSubmission = async (submissionId: string, score: number) => {
+    const gradeSubmission = async (submissionId: string, scores: SubmissionScore[], comment: string) => {
+        if (loading.value) return
         loading.value = true
+        error.value = null
         try {
-            await new Promise(resolve => setTimeout(resolve, 600))
-            const sub = submissions.value.find(s => s.id === submissionId)
-            if (sub) {
-                sub.status = 'graded'
-                sub.score = score
+            const api = useApi()
+            await api.post(`/submissions/${submissionId}/evaluate`, { scores, comment })
+            const idx = submissions.value.findIndex(s => s.id === submissionId)
+            if (idx !== -1) {
+                const current = submissions.value[idx]
+                if (!current) return
+                submissions.value[idx] = {
+                    ...current,
+                    status: 'EVALUATED',
+                }
             }
-            toast.success('Роботу оцінено!')
-        } catch (err) {
+            toast.success('Роботу оцінено')
+        } catch (err: any) {
             toast.error('Помилка при оцінюванні')
+            error.value = err?.message || 'Помилка оцінювання'
         } finally {
             loading.value = false
         }
@@ -153,6 +202,7 @@ export const useTasksStore = defineStore('tasks', () => {
         error,
         tasks,
         submissions,
+        mySubmissions,
         fetchTasks,
         createTask,
         submitTask,

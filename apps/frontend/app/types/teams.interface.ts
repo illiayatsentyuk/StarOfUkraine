@@ -10,3 +10,13 @@ export interface Team {
     discord: string;
     createdAt?: string
 }
+
+export type CreateTeamPayload = {
+    name: string
+    captainName: string
+    city?: string
+    organization?: string
+    telegram?: string
+    discord?: string
+    members?: string[]
+}

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TournamentStatus } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
@@ -29,6 +30,7 @@ export class CreateTournamentDto {
     format: 'date-time',
     example: '2026-04-01T12:00:00.000Z',
   })
+  @Type(() => Date)
   @IsDate()
   startDate: Date;
 
@@ -37,6 +39,7 @@ export class CreateTournamentDto {
     format: 'date-time',
     example: '2026-03-20T00:00:00.000Z',
   })
+  @Type(() => Date)
   @IsDate()
   registrationStart: Date;
 
@@ -45,6 +48,7 @@ export class CreateTournamentDto {
     format: 'date-time',
     example: '2026-03-30T23:59:59.000Z',
   })
+  @Type(() => Date)
   @IsDate()
   registrationEnd: Date;
 

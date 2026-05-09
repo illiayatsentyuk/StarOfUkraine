@@ -11,7 +11,7 @@ section.tournament-detail
 
         TournamentHero(
             :name="tournament.name"
-            :tournamentId="tournamentId"
+            :tournamentId="route.params.id"
             :status="tournamentStatus"
         )
 
@@ -27,22 +27,33 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-                TournamentTeamsSection(
-                    :teams="teams"
-                    :loadingTeams="loadingTeams"
-                    :shouldHideTeams="shouldHideTeams"
-                    :isAdmin="authStore.isAdmin"
-                    @shuffle="shuffleTeams"
+                //- TournamentTeamsSection(
+                //-     :teams="teams"
+                //-     :loadingTeams="loadingTeams"
+                //-     :shouldHideTeams="shouldHideTeams"
+                //-     :isAdmin="authStore.isAdmin"
+                //-     @shuffle="shuffleTeams"
+                //- )
+
+                TournamentLeaderboardTable(
+                    v-if="!shouldHideTeams"
+                    :rows="leaderboardRows"
+                    :loading="loadingLeaderboard"
                 )
 
             TournamentSidebar(
                 :tournament="tournament"
                 :status="tournamentStatus"
                 :isAdmin="authStore.isAdmin"
+                :isJury="authStore.isJury"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
-                @delete="isDeleteModalOpen = true"
-                @createTeam="isTeamOpen = true"
+                :isAlreadyJoined="isAlreadyJoined"
+                :hasTeam="!!teamsStore.activeTeam"
+                :joining="joining"
+                @edit="openEditModal"
+                @delete="handleDelete"
+                @joinTournament="handleJoinTournament"
             )
 
     .error-state(v-else)
@@ -56,16 +67,24 @@ section.tournament-detail
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
+    EditTournamentModal(
+        v-if="tournament && authStore.isAdmin"
+        :isOpen="isEditModalOpen"
+        :tournament="tournament"
+        @close="isEditModalOpen = false"
+        @updated="onTournamentUpdated"
+    )
     CreateTeamModal(
         v-if="tournament && authStore.isAuthenticated"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
-        @success="refreshTeams"
+        @success="onTeamCreated"
     )
 </template>
 
 <script setup lang="ts">
-import { calculateTournamentStatus } from '~/utils/tournament-status'
+import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
+import TournamentLeaderboardTable from '~/components/tournaments/TournamentLeaderboardTable.vue'
 
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
@@ -83,17 +102,20 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
 
 const teams = ref<any[]>([])
 const loadingTeams = ref(false)
+const leaderboardRows = ref<any[]>([])
+const loadingLeaderboard = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
+const isEditModalOpen = ref(false)
+const joining = ref(false)
 
 const tournamentStatus = computed(() => {
     if (!tournament.value) return null
-    return calculateTournamentStatus(tournament.value)
+    return getTournamentStatusInfo(tournament.value?.status)
 })
 
 const isRegistrationActive = computed(() => {
-    const code = tournamentStatus.value?.code
-    return code === 'registration' || code === 'planned'
+    return tournament.value?.status === 'REGISTRATION_OPEN'
 })
 
 const shouldHideTeams = computed(() => {
@@ -103,30 +125,97 @@ const shouldHideTeams = computed(() => {
     return new Date(tournament.value.registrationEnd) > new Date()
 })
 
+// Перевірка чи команда юзера вже зареєстрована в цьому турнірі
+const isAlreadyJoined = computed(() => {
+    const activeTeamId = teamsStore.activeTeamId
+    if (!activeTeamId) return false
+    return teams.value.some((t: any) => t.id === activeTeamId)
+})
+
 const refreshTeams = async () => {
     if (shouldHideTeams.value) return
     loadingTeams.value = true
+    loadingLeaderboard.value = true
     try {
-        const response = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
-        if (response.data && Array.isArray(response.data)) {
-            teams.value = response.data.map((row: any) => ({
-                ...row.team,
-                points: row.totalScore
-            }))
-        }
-    } catch (err) {
-        console.error('Failed to fetch teams:', err)
-    } finally {
+        // Беремо список команд саме цього турніру через leaderboard (публічний ендпоінт)
+        const res = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
+        const rows = Array.isArray(res.data) ? res.data : []
+        leaderboardRows.value = rows
+        teams.value = rows.map((r: any) => ({
+            id: r?.team?.id,
+            name: r?.team?.name,
+            points: r?.totalScore,
+        }))
+    } catch {
+        console.error('Failed to refresh teams')
+        leaderboardRows.value = []
+    }
+    finally {
         loadingTeams.value = false
+        loadingLeaderboard.value = false
     }
 }
 
-onMounted(() => {
-    refreshTeams()
+// Головна дія: вступити в турнір
+const handleJoinTournament = async () => {
+    if (!authStore.isAuthenticated) return
+
+    // Якщо немає команди — спочатку відкрити модалку створення
+    if (!teamsStore.activeTeam) {
+        isTeamOpen.value = true
+        return
+    }
+
+    // Є команда — одразу join
+    joining.value = true
+    try {
+        await tournamentStore.joinTournament(tournamentId.value, teamsStore.activeTeam.id)
+        await refreshTeams()
+    } catch {
+        // помилка вже показана в store
+    } finally {
+        joining.value = false
+    }
+}
+
+// Після створення команди — автоматично приєднуємо до турніру
+const onTeamCreated = async ({ teamId }: { teamId: string }) => {
+    await teamsStore.setActiveTeam(teamId)
+    joining.value = true
+    try {
+        await tournamentStore.joinTournament(tournamentId.value, teamId)
+        await refreshTeams()
+    } catch {
+        // помилка вже показана в store
+    } finally {
+        joining.value = false
+    }
+}
+
+onMounted(async () => {
+    try {
+        await teamsStore.initActiveTeam()
+        tournament.value = await tournamentStore.fetchTournamentById(route.params.id as string)
+        await refreshTeams()
+    } catch {
+        console.error('Failed to load tournament detail')
+    }
 })
 
-const onTournamentDeleted = () => {
-    navigateTo('/')
+function handleDelete() {
+    isDeleteModalOpen.value = true
+}
+
+function openEditModal() {
+    isEditModalOpen.value = true
+}
+
+async function onTournamentUpdated(updatedTournament: any) {
+    tournament.value = updatedTournament
+}
+
+async function onTournamentDeleted() {
+    await navigateTo('/')
 }
 
 const shuffleTeams = () => {

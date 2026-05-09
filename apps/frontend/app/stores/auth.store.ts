@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { useApi } from '~/composables/useApi'
 import type { Form } from '~/types'
 
@@ -7,8 +6,10 @@ export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
     const toast = useServerSafeToast()
     const user = ref<any>(null)
+    const image = ref<string | null>(null)
     const authenticated = ref(false)
     const isAdmin = ref(false)
+    const isJury = ref(false)
     const loading = ref(false)
 
     const loginByGoogle = () => {
@@ -20,11 +21,8 @@ export const useLoginStore = defineStore('login', () => {
     const signupByEmail = async (userData: any) => {
         loading.value = true
         try {
-            const response = await useApi().post('/auth/signup', userData)
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-            }
+            await useApi().post('/auth/signup', userData)
+            await fetchUser()
         } catch {
             user.value = null
             isAdmin.value = false
@@ -42,11 +40,8 @@ export const useLoginStore = defineStore('login', () => {
     const loginByEmail = async (credentials: any) => {
         loading.value = true
         try {
-            const response = await useApi().post('/auth/signin', credentials)
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-            }
+            await useApi().post('/auth/signin', credentials)
+            await fetchUser()
         } catch {
             user.value = null
             isAdmin.value = false
@@ -61,7 +56,6 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    // Просто запитуємо профіль — cookies браузер надішле сам
     const fetchUser = async () => {
         loading.value = true
         try {
@@ -69,7 +63,11 @@ export const useLoginStore = defineStore('login', () => {
             if (response.data?.user) {
                 user.value = response.data.user
                 isAdmin.value = response.data.user.role === 'ADMIN'
+                isJury.value = response.data.user.role === 'JURY'
+                image.value = response.data.user.image
+                console.log(user.value?.image)
             }
+
         } catch {
             user.value = null
             isAdmin.value = false
@@ -78,9 +76,8 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    // Ініціалізація при старті
     const init = async () => {
-        await fetchUser()  // просто пробуємо, без refresh спочатку
+        await fetchUser()
     }
 
     const logout = async () => {
@@ -93,12 +90,15 @@ export const useLoginStore = defineStore('login', () => {
             isAdmin.value = false
             authenticated.value = false
             if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('activeTeamId')
                 window.location.reload()
             }
         }
     }
 
     const isAuthenticated = computed(() => !!user.value)
+ 
+    
 
-    return { user, isAdmin, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
+    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
 })

@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { Logger } from 'pino-nestjs';
 import { AppModule } from './app.module';
 import {
   SubmissionListItemDto,
@@ -9,7 +10,8 @@ import {
 } from './tasks/dto/submission.dto';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -19,7 +21,10 @@ async function bootstrap() {
   );
   app.use(cookieParser());
   app.enableCors({
-    origin: ['http://localhost:4040','https://star-of-ukraine-frontend.vercel.app'],
+    origin: [
+      'http://localhost:4040',
+      'https://star-of-ukraine-frontend.vercel.app',
+    ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   });
@@ -34,7 +39,6 @@ async function bootstrap() {
       ].join(' '),
     )
     .setVersion('1.0')
-    // We authenticate via HttpOnly cookies, but keep Bearer as fallback.
     .addCookieAuth('access_token')
     .addCookieAuth('refresh_token')
     .addBearerAuth()
@@ -45,6 +49,6 @@ async function bootstrap() {
   });
   SwaggerModule.setup('api/docs', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(Number(process.env.PORT ?? 3000));
 }
 void bootstrap();

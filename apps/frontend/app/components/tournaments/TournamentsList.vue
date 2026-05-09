@@ -1,7 +1,10 @@
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
-        h2.tournaments-list__title НАЙБЛИЖЧІ ТУРНІРИ
+        h2.tournaments-list__title АКТИВНІ ТУРНІРИ
+        NuxtLink.archive-link(to="/tournaments/archive")
+            i.pi.pi-box
+            span АРХІВ ТУРНІРІВ
 
     .filter-bar
         button.filter-btn(
@@ -40,38 +43,30 @@ section.tournaments-list
                 )
                     polyline(points="18 15 12 9 6 15")
 
+    .filter-bar
+        button.filter-btn(
+            v-for="s in statusFilters"
+            :key="s.key"
+            :class="{ 'filter-btn--active': store.statusFilter === s.key }"
+            type="button"
+            @click="store.statusFilter = s.key; store.loadFromDatabase(true)"
+        )
+            span {{ s.label }}
+
     .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
         Loader
 
-    .tournaments-list__grid(v-else-if="store.tournaments.length > 0")
-        NuxtLink.tournament-card(
-            v-for="tournament in store.tournaments"
+    .tournaments-list__grid(v-else-if="store.filteredTournaments.length > 0")
+        TournamentCard(
+            v-for="tournament in store.filteredTournaments"
             :key="tournament.id || tournament.name"
-            :to="`/tournaments/${tournament.id}`"
+            :tournament="tournament"
         )
-            .tournament-card__status(:style="{ backgroundColor: getTournamentStatus(tournament).color }")
-                span {{ getTournamentStatus(tournament).label }}
-
-            h3.tournament-card__title {{ tournament.name }}
-
-            .tournament-card__details
-                .detail-group
-                    span.detail-label
-                        i.pi.pi-calendar.mr-2
-                        | ДАТА СТАРТУ
-                    span.detail-value {{ formatDate(tournament.startDate) }}
-                .detail-group
-                    span.detail-label
-                        i.pi.pi-users.mr-2
-                        | МАКС. КОМАНД
-                    span.detail-value {{ tournament.maxTeams }}
-
-            p.tournament-card__description {{ tournament.description }}
 
     .no-data(v-else-if="!store.loading")
         p Турнірів поки немає.
 
-    .tournaments-list__footer(v-if="store.tournaments.length > 0")
+    .tournaments-list__footer(v-if="store.filteredTournaments.length > 0")
         button.load-more(
             @click="store.loadFromDatabase()"
             :disabled="!store.hasMore || store.loading"
@@ -82,8 +77,6 @@ section.tournaments-list
 </template>
 
 <script lang="ts" setup>
-import { calculateTournamentStatus } from '~/utils/tournament-status'
-
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
@@ -99,14 +92,14 @@ const filters = [
     { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
 ]
 
-const formatDate = (dateString: string) => {
-    if (!dateString) return ''
-    return new Date(dateString).toLocaleDateString('uk-UA')
-}
-
-const getTournamentStatus = (tournament: any) => {
-    return calculateTournamentStatus(tournament)
-}
+const statusFilters = [
+    { key: 'all', label: 'Всі статуси' },
+    { key: 'DRAFT', label: 'Очікування' },
+    { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
+    { key: 'ONGOING', label: 'Триває' },
+    { key: 'COMPLETED', label: 'Завершено' },
+    { key: 'CANCELLED', label: 'Скасовано' },
+] as const
 
 onMounted(() => {
     store.loadFromDatabase(true)
@@ -122,7 +115,32 @@ onMounted(() => {
     min-height: 400px;
 
     &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
         margin-bottom: var(--space-4);
+
+        .archive-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--color-text-muted);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 10px 20px;
+            border: 1px solid var(--color-border);
+            border-radius: 0;
+            transition: all 0.2s;
+
+            &:hover {
+                color: var(--color-primary);
+                border-color: var(--color-primary);
+                transform: translateY(-2px);
+            }
+
+            i { font-size: 16px; }
+        }
     }
 
     &__title {
@@ -157,118 +175,6 @@ onMounted(() => {
         display: flex;
         justify-content: center;
         margin-top: 64px;
-    }
-}
-
-.tournament-card {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-    padding: 40px;
-    background: white;
-    border: 1px solid var(--color-border);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: var(--color-primary);
-        transform: translateY(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    &:hover {
-        border-color: var(--color-text);
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.04);
-        transform: translateY(-4px);
-
-        &::before {
-            transform: translateY(0);
-        }
-    }
-
-    &__status {
-        width: fit-content;
-        padding: 6px 12px;
-        background-color: var(--color-primary);
-        
-        span {
-            font-family: var(--font-display);
-            font-size: 10px;
-            font-weight: 800;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-    }
-
-    &__title {
-        font-family: var(--font-display);
-        font-size: 32px;
-        font-weight: 700;
-        color: var(--color-text);
-        line-height: 1.1;
-        letter-spacing: -0.5px;
-        margin: 0;
-    }
-
-    &__details {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        padding: 24px 0;
-        border-top: 1px solid var(--color-border);
-        border-bottom: 1px solid var(--color-border);
-    }
-
-    .detail-group {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .detail-label {
-        font-family: var(--font-sans);
-        font-size: 10px;
-        font-weight: 700;
-        color: var(--color-text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        display: flex;
-        align-items: center;
-
-        i {
-            font-size: 12px;
-            margin-right: 8px;
-            color: var(--color-primary);
-        }
-    }
-
-    .detail-value {
-        font-family: var(--font-display);
-        font-size: 18px;
-        font-weight: 700;
-        color: var(--color-text);
-    }
-
-    &__description {
-        font-family: var(--font-sans);
-        font-size: 15px;
-        color: var(--color-text-muted);
-        line-height: 1.6;
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        margin: 0;
     }
 }
 

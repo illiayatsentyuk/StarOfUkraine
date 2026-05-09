@@ -6,6 +6,8 @@ import type { Tournament } from '~/types'
 
 const LIMIT = 5
 
+type TournamentStatusFilter = 'all' | 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])
@@ -16,8 +18,13 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const search = ref('')
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
+    const statusFilter = ref<TournamentStatusFilter>('all')
 
     const hasMore = computed(() => page.value <= totalPages.value)
+    const filteredTournaments = computed(() => {
+        if (statusFilter.value === 'all') return tournaments.value
+        return tournaments.value.filter((t) => t.status === statusFilter.value)
+    })
 
     const reset = () => {
         page.value = 1
@@ -38,12 +45,17 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         try {
             const api = useApi()
-            const response = await api.post(`/tournaments/list`, {
-                page: page.value,
-                limit: LIMIT,
-                name: search.value.trim() || undefined,
-                sortBy: sortBy.value,
-                sortOrder: sortOrder.value,
+            const response = await api.get(`/tournaments/list`, {
+                params: {
+                    page: page.value,
+                    limit: LIMIT,
+                    ...(search.value.trim() ? { name: search.value.trim() } : {}),
+                    sortBy: sortBy.value,
+                    sortOrder: sortOrder.value,
+                    ...(statusFilter.value !== 'all'
+                        ? { status: statusFilter.value }
+                        : {}),
+                },
             })
 
             if (!response.data) throw new Error('Не вдалося завантажити турніри')
@@ -118,6 +130,37 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const updateTournament = async (id: string, tournament: Partial<Tournament>) => {
+        try {
+            const api = useApi()
+            const response = await api.patch(`/tournaments/${id}`, tournament)
+            if (!response.data) throw new Error('Не вдалося оновити турнір')
+
+            const updatedTournament = response.data
+            tournaments.value = tournaments.value.map((t) => (t.id === id ? updatedTournament : t))
+            toast.success('Турнір успішно оновлено')
+            return updatedTournament
+        } catch (error: unknown) {
+            console.error('Помилка API при оновленні турніру:', error)
+            toast.error('Помилка API при оновленні турніру')
+            throw error
+        }
+    }
+
+    const joinTournament = async (tournamentId: string, teamId: string) => {
+        try {
+            const api = useApi()
+            const response = await api.patch(`/tournaments/join/${tournamentId}`, { teamId })
+            if (!response.data) throw new Error('Не вдалося зареєструвати команду в турнір')
+            toast.success('Команду зареєстровано в турнірі')
+            return response.data
+        } catch (err: unknown) {
+            console.error('Помилка API при реєстрації команди в турнірі:', err)
+            toast.error('Не вдалося зареєструвати команду в турнірі')
+            throw err
+        }
+    }
+
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -126,16 +169,20 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
     return {
         tournaments,
+        filteredTournaments,
         loading,
         error,
         hasMore,
         search,
         sortBy,
         sortOrder,
+        statusFilter,
         reset,
         loadFromDatabase,
         fetchTournamentById,
         addTournament,
+        joinTournament,
+        updateTournament,
         deleteTournament,
     }
 })

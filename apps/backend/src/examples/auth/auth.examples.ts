@@ -50,4 +50,11 @@ export const authExamples = {
     message: 'Access Denied',
     error: 'Forbidden',
   },
+  forgotPasswordRequest: {
+    email: 'user@example.com',
+  },
+  resetPasswordRequest: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    password: 'N3wP@ssw0rd!',
+  },
 } as const;

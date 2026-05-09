@@ -1,8 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { IoAdapter } from '@nestjs/platform-socket.io';
 import * as cookie from 'cookie';
-import { ServerOptions, Socket } from 'socket.io';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
+import { Socket } from 'socket.io';
 
 export interface AuthenticatedSocket extends Socket {
   data: {
@@ -16,9 +16,11 @@ export interface AuthenticatedSocket extends Socket {
 
 @Injectable()
 export class WsJwtMiddleware {
-  private readonly logger = new Logger(WsJwtMiddleware.name);
-
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    @InjectPinoLogger(WsJwtMiddleware.name)
+    private readonly logger: PinoLogger,
+  ) {}
 
   // Call this inside your gateway's afterInit()
   apply() {
@@ -30,6 +32,10 @@ export class WsJwtMiddleware {
         const token = cookies['access_token'];
 
         if (!token) {
+          this.logger.warn(
+            { socketId: socket.id },
+            'WebSocket handshake missing access_token',
+          );
           return next(new Error('No auth token'));
         }
 
@@ -44,10 +50,16 @@ export class WsJwtMiddleware {
           roles: payload.roles ?? [],
         };
 
-        this.logger.debug(`WS connected: ${payload.email}`);
+        this.logger.debug(
+          { socketId: socket.id, userId: payload.sub },
+          'WebSocket JWT verified',
+        );
         next();
-      } catch (err) {
-        this.logger.warn(`WS auth failed: ${err.message}`);
+      } catch (err: unknown) {
+        this.logger.warn(
+          { err, socketId: socket.id },
+          'WebSocket JWT verification failed',
+        );
         // Returning an Error to next() causes Socket.io to reject the upgrade
         next(new Error('Unauthorized'));
       }

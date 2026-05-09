@@ -1,94 +1,115 @@
 <template lang="pug">
-.task-card
+NuxtLink.task-card(:to="taskLink")
     .task-card__header
-        .status-badge(:class="`status-${task.status}`")
-            template(v-if="task.status === 'completed'") ВИКОНАНО
-            template(v-else-if="task.status === 'pending'") В ОЧІКУВАННІ
-            template(v-else) НЕ ВИКОНАНО
-        .points {{ task.points }} БАЛІВ
+        .status-badge.pending
+            span.dot
+            span ВІДКРИТО
+        .points {{ maxPoints }} pts
 
-    h3.task-title {{ task.title }}
+    h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer
-        span.deadline Дедлайн: {{ formatDate(task.deadline) }}
-        NuxtLink.detail-btn(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
+        .deadline
+            i.pi.pi-calendar
+            span Раунд {{ task.order }}
+        .detail-btn
             span ДЕТАЛІ
             i.pi.pi-arrow-right
 </template>
 
 <script setup lang="ts">
-defineProps<{
-    task: any
-    tournamentId: string
+import { computed } from 'vue'
+import type { TournamentTask } from '~/types'
+
+const props = defineProps<{
+    task: TournamentTask
+    tournamentId?: string
 }>()
+
+const route = useRoute()
+const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
+const teamsStore = useTeamsStore()
+
+const taskLink = computed(() => ({
+    path: `/tournaments/${tournamentId.value}/tasks/${props.task.id}`,
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+}))
+
+const maxPoints = computed(() =>
+    (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),
+)
 </script>
 
 <style scoped lang="scss">
 .task-card {
     background: var(--color-surface);
-    border: 2px solid var(--color-border);
-    padding: 32px;
+    border: 1px solid var(--color-border);
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
 
     &:hover {
-        transform: translateY(-4px);
-        box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.1);
         border-color: var(--color-primary);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: translateY(-2px);
     }
 
     &__header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 24px;
+        align-items: center;
+        margin-bottom: 20px;
 
         .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
             font-size: 10px;
             font-weight: 700;
             padding: 4px 10px;
-            letter-spacing: 1.5px;
+            background: var(--color-bg-secondary);
+            border-radius: 0;
 
-            &.status-completed {
-                background: var(--color-primary);
-                color: white;
+            .dot {
+                width: 5px;
+                height: 5px;
+                border-radius: 50%;
+                background: #666;
             }
 
-            &.status-pending {
-                background: var(--color-text);
-                color: white;
-            }
-
-            &.status-failed {
-                background: var(--color-error, #ef4444);
-                color: white;
-            }
+            &.completed { color: #10b981; .dot { background: #10b981; } }
+            &.failed { color: #ef4444; .dot { background: #ef4444; } }
+            &.pending { color: #f59e0b; .dot { background: #f59e0b; } }
         }
 
         .points {
-            font-weight: 700;
-            font-size: 14px;
+            font-weight: 800;
+            font-size: 13px;
             color: var(--color-primary);
         }
     }
 
     .task-title {
         font-family: var(--font-display);
-        font-size: 24px;
-        margin: 0 0 16px 0;
-        line-height: 1.2;
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0 0 12px 0;
+        line-height: 1.3;
+        color: var(--color-text);
     }
 
     .task-desc {
         color: var(--color-text-muted);
-        font-size: 15px;
+        font-size: 14px;
         line-height: 1.6;
-        margin: 0 0 32px 0;
+        margin: 0 0 24px 0;
         flex-grow: 1;
         display: -webkit-box;
-        -webkit-line-clamp: 3;
+        -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
     }
@@ -98,28 +119,24 @@ defineProps<{
         justify-content: space-between;
         align-items: center;
         border-top: 1px solid var(--color-border);
-        padding-top: 24px;
+        padding-top: 16px;
 
         .deadline {
-            font-size: 12px;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
             color: var(--color-text-muted);
+            i { font-size: 10px; }
         }
 
         .detail-btn {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: var(--color-text);
-            text-decoration: none;
+            gap: 6px;
             font-weight: 700;
-            font-size: 12px;
-            letter-spacing: 1px;
-            transition: color 0.2s;
-
-            &:hover {
-                color: var(--color-primary);
-            }
+            font-size: 11px;
+            color: var(--color-primary);
         }
     }
 }

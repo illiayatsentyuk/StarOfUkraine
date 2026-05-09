@@ -1,19 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Team } from '~/types/teams.interface'
+import type { Team, CreateTeamPayload } from '~/types'
 import { useApi } from '~/composables/useApi';
 
-
 const LIMIT = 16
-type CreateTeamPayload = {
-    name: string
-    captainName: string
-    city?: string
-    organization?: string
-    telegram?: string
-    discord?: string
-    members?: string[]
-}
 
 export const useTeamsStore = defineStore('teams', () => {
     const toast = useServerSafeToast()
@@ -22,12 +12,71 @@ export const useTeamsStore = defineStore('teams', () => {
     const totalPages = ref(0)
     const loading = ref(false)
     const error = ref<string | null>(null)
-    const currentTeam = ref<Team | null>(null) // ⚠️ було `id` — перейменовано щоб не конфліктувало
+    const currentTeam = ref<Team | null>(null) 
+    const activeTeamId = ref<string | null>(null)
     const searchResults = ref<{ id: string; email: string; name?: string }[]>([])
     const searchingMembers = ref(false)
 
 
     const hasMore = computed(() => page.value <= totalPages.value)
+    const activeTeam = computed(() => {
+        if (currentTeam.value?.id && currentTeam.value.id === activeTeamId.value) return currentTeam.value
+        return teams.value.find(t => t.id === activeTeamId.value) || null
+    })
+
+    const initActiveTeam = async () => {
+        if (typeof window === 'undefined') return
+        const stored = window.localStorage.getItem('activeTeamId')
+        
+        let teamIdToUse = stored || null
+        
+        const authStore = useLoginStore()
+        if (!authStore.user && typeof authStore.fetchUser === 'function') {
+            await authStore.fetchUser()
+        }
+        const user = authStore.user
+
+        if (teamIdToUse && user) {
+            const allTeams = [...(user.teamsAsCaptain || []), ...(user.teamsAsMember || [])]
+            const isMember = allTeams.some(t => t.id === teamIdToUse)
+            if (!isMember) {
+                teamIdToUse = null
+                window.localStorage.removeItem('activeTeamId')
+            }
+        }
+
+        if (!teamIdToUse && user) {
+            const firstTeam = user.teamsAsCaptain?.[0] || user.teamsAsMember?.[0]
+            if (firstTeam) {
+                teamIdToUse = firstTeam.id
+                window.localStorage.setItem('activeTeamId', teamIdToUse)
+            }
+        }
+
+        activeTeamId.value = teamIdToUse
+        if (activeTeamId.value && !currentTeam.value) {
+            try {
+                await fetchTeamById(activeTeamId.value)
+            } catch {
+                // ignore
+            }
+        }
+    }
+
+    const setActiveTeam = async (teamId: string | null) => {
+        activeTeamId.value = teamId
+        if (typeof window !== 'undefined') {
+            if (teamId) window.localStorage.setItem('activeTeamId', teamId)
+            else window.localStorage.removeItem('activeTeamId')
+        }
+        if (teamId) {
+            try {
+                await fetchTeamById(teamId)
+            } catch {
+                // ignore
+            }
+        }
+    }
 
     const reset = () => {
         page.value = 1
@@ -61,7 +110,7 @@ export const useTeamsStore = defineStore('teams', () => {
             }
 
             return data
-        } catch (err: any) { // ⚠️ перейменовано з `error` — уникаємо shadowing ref
+        } catch (err: any) { 
             console.error('Помилка API при завантаженні команд:', err)
             toast.error('Не вдалося завантажити команди')
             error.value = err.message || 'Помилка завантаження'
@@ -85,6 +134,7 @@ export const useTeamsStore = defineStore('teams', () => {
             teams.value.push(response.data)
             toast.success('Команду успішно створено')
 
+            await setActiveTeam((response.data as Team).id)
             return response.data as Team
         } catch (err: any) {
             console.error('Помилка API при створенні команди:', err)
@@ -108,6 +158,7 @@ export const useTeamsStore = defineStore('teams', () => {
             if (!response.data) throw new Error('Не вдалося приєднатися до команди')
 
             toast.success('Ви успішно приєдналися до команди')
+            await setActiveTeam(teamId)
             return response.data as Team
         } catch (err: any) {
             console.error('Помилка API при приєднанні до команди:', err)
@@ -208,6 +259,10 @@ export const useTeamsStore = defineStore('teams', () => {
         loading,
         error,
         currentTeam,
+        activeTeamId,
+        activeTeam,
+        initActiveTeam,
+        setActiveTeam,
         hasMore,
         searchResults,
         searchingMembers,
