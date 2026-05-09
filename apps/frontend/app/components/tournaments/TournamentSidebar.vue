@@ -172,13 +172,13 @@ const joinLabel = computed(() =>
                 }
             }
 
-            .sidebar__tasks-link {
+            .sidebar__judge-link {
                 text-decoration: none;
                 display: block;
                 width: 100%;
             }
 
-            :deep(.sidebar__tasks.p-button) {
+            :deep(.sidebar__judge.p-button) {
                 width: 100%;
                 justify-content: center;
                 gap: var(--space-2);

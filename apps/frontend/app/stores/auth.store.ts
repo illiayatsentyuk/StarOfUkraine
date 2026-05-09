@@ -90,6 +90,7 @@ export const useLoginStore = defineStore('login', () => {
             isAdmin.value = false
             authenticated.value = false
             if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('activeTeamId')
                 window.location.reload()
             }
         }

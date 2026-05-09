@@ -6,7 +6,7 @@ header.tasks-page__hero
   Button.create-btn(
     v-if="isAdmin"
     type="button"
-    label="СТВОРИТИ ЗАВДАННЯ"
+    label=" СТВОРИТИ ЗАВДАННЯ"
     icon="pi pi-plus"
     @click="$emit('create')"
   )

@@ -498,11 +498,10 @@ async function handleGrade(submission: any, task: any) {
             }
 
             .comment-input {
-                :deep(.p-inputtextarea) {
+                :deep(textarea) {
                     width: 100%;
                     min-height: 80px;
                     background: var(--color-bg);
-                    border: 1px solid var(--color-border);
                     color: var(--color-text);
                     padding: 12px;
                     font-size: 13px;

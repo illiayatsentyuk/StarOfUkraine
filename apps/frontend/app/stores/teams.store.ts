@@ -29,19 +29,27 @@ export const useTeamsStore = defineStore('teams', () => {
         const stored = window.localStorage.getItem('activeTeamId')
         
         let teamIdToUse = stored || null
+        
+        const authStore = useLoginStore()
+        if (!authStore.user && typeof authStore.fetchUser === 'function') {
+            await authStore.fetchUser()
+        }
+        const user = authStore.user
 
-        if (!teamIdToUse) {
-            const authStore = useLoginStore()
-            if (!authStore.user && typeof authStore.fetchUser === 'function') {
-                await authStore.fetchUser()
+        if (teamIdToUse && user) {
+            const allTeams = [...(user.teamsAsCaptain || []), ...(user.teamsAsMember || [])]
+            const isMember = allTeams.some(t => t.id === teamIdToUse)
+            if (!isMember) {
+                teamIdToUse = null
+                window.localStorage.removeItem('activeTeamId')
             }
-            const user = authStore.user
-            if (user) {
-                const firstTeam = user.teamsAsCaptain?.[0] || user.teamsAsMember?.[0]
-                if (firstTeam) {
-                    teamIdToUse = firstTeam.id
-                    window.localStorage.setItem('activeTeamId', teamIdToUse)
-                }
+        }
+
+        if (!teamIdToUse && user) {
+            const firstTeam = user.teamsAsCaptain?.[0] || user.teamsAsMember?.[0]
+            if (firstTeam) {
+                teamIdToUse = firstTeam.id
+                window.localStorage.setItem('activeTeamId', teamIdToUse)
             }
         }
 
