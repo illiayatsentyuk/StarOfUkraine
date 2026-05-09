@@ -12,7 +12,7 @@ test.describe('tournaments list', () => {
 
     await page.goto('/')
 
-    await expect(page.getByRole('heading', { name: 'НАЙБЛИЖЧІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
   })
 
@@ -21,7 +21,7 @@ test.describe('tournaments list', () => {
 
     await page.goto('/tournaments')
 
-    await expect(page.getByRole('heading', { name: 'НАЙБЛИЖЧІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
   })
 
@@ -60,6 +60,6 @@ test.describe('tournament detail', () => {
     await expect(page.getByText('ПРО ТУРНІР')).toBeVisible()
 
     await page.locator('section.tournament-detail a.back-link').click()
-    await expect(page.getByRole('heading', { name: 'НАЙБЛИЖЧІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
   })
 })
