@@ -35,11 +35,7 @@ section.tournament-detail
                 //-     @shuffle="shuffleTeams"
                 //- )
 
-                TournamentLeaderboardTable(
-                    v-if="!shouldHideTeams"
-                    :rows="leaderboardRows"
-                    :loading="loadingLeaderboard"
-                )
+                
 
             TournamentSidebar(
                 :tournament="tournament"

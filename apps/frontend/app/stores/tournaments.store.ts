@@ -5,9 +5,9 @@ import { useApi } from '~/composables/useApi'
 import type { Tournament } from '~/types'
 
 const LIMIT = 5
-
+//env
 type TournamentStatusFilter = 'all' | 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-
+//enum
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])
@@ -19,7 +19,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
     const statusFilter = ref<TournamentStatusFilter>('all')
-
+    
+    //think about delete
     const hasMore = computed(() => page.value <= totalPages.value)
     const filteredTournaments = computed(() => {
         if (statusFilter.value === 'all') return tournaments.value
@@ -46,6 +47,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const api = useApi()
             const response = await api.get(`/tournaments/list`, {
+                //think about query or params
                 params: {
                     page: page.value,
                     limit: LIMIT,

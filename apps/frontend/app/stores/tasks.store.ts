@@ -34,28 +34,7 @@ export const useTasksStore = defineStore('tasks', () => {
     // Ініціалізація при старті
     loadMySubmissions()
 
-    const getCacheKey = (tournamentId: string) => `tournament:${tournamentId}:tasks`
 
-    const readCachedTasks = (tournamentId: string): TournamentTask[] => {
-        if (typeof window === 'undefined') return []
-        try {
-            const raw = window.localStorage.getItem(getCacheKey(tournamentId))
-            if (!raw) return []
-            const parsed = JSON.parse(raw)
-            return Array.isArray(parsed) ? parsed : []
-        } catch {
-            return []
-        }
-    }
-
-    const writeCachedTasks = (tournamentId: string, next: TournamentTask[]) => {
-        if (typeof window === 'undefined') return
-        try {
-            window.localStorage.setItem(getCacheKey(tournamentId), JSON.stringify(next))
-        } catch {
-            // ignore quota / privacy mode
-        }
-    }
 
     const fetchTasks = async (tournamentId: string) => {
         if (loading.value) return
@@ -64,22 +43,11 @@ export const useTasksStore = defineStore('tasks', () => {
 
         try {
             const api = useApi()
-            const response = await api.get(`/tournaments/${tournamentId}`)
-            const tournament = response.data
-            const rawTasks = Array.isArray(tournament?.tasks) ? tournament.tasks : []
-            const serverTasks = rawTasks.sort(
-                (a: TournamentTask, b: TournamentTask) => (a.order ?? 0) - (b.order ?? 0),
-            )
-
-            // Якщо бек не повертає tasks у `GET /tournaments/:id`, підхоплюємо кеш (щоб адмінські задачі не "зникали").
-            const cached = readCachedTasks(tournamentId)
-            tasks.value = serverTasks.length ? serverTasks : cached
-        } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Помилка завантаження завдань'
-            error.value = message
-            toast.error(message)
-            // fallback to cache on network errors
-            tasks.value = readCachedTasks(tournamentId)
+            const response = await api.get(`/tournaments/${tournamentId}/tasks`)
+            tasks.value = response.data
+        } catch (err: any) {
+            toast.error('Помилка завантаження завдань')
+            error.value = err.message || 'Помилка завантаження завдань'
         } finally {
             loading.value = false
         }
@@ -117,7 +85,6 @@ export const useTasksStore = defineStore('tasks', () => {
             if (!createdTasks.length) throw new Error('Не вдалося створити завдання')
 
             tasks.value = [...tasks.value, ...createdTasks].sort((a, b) => a.order - b.order)
-            writeCachedTasks(payload.tournamentId, tasks.value)
             toast.success('Завдання успішно створено')
             return createdTasks[0] as TournamentTask
         } catch (err: any) {

@@ -31,7 +31,7 @@ export const useTeamsStore = defineStore('teams', () => {
         let teamIdToUse = stored || null
         
         const authStore = useLoginStore()
-        if (!authStore.user && typeof authStore.fetchUser === 'function') {
+        if (!authStore.user) {
             await authStore.fetchUser()
         }
         const user = authStore.user

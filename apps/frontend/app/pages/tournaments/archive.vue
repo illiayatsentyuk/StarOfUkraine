@@ -46,8 +46,6 @@ onMounted(async () => {
 })
 
 const completedTournaments = computed(() => {
-    // Mock: filtering by date or status if available
-    // In real app, we'd pass { status: 'COMPLETED' } to API
     return store.tournaments.filter(t => {
         const endDate = new Date(t.registrationEnd)
         return endDate < new Date() || t.status === 'completed'
