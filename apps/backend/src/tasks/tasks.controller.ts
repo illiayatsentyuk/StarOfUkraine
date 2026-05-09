@@ -36,10 +36,6 @@ import {
 } from './dto';
 import { TasksService } from './tasks.service';
 
-/**
- * Task-scoped routes use full paths on `@Controller()`:
- * `GET|POST /tournaments/:id/tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
- */
 @ApiTags('Tournaments', 'Tasks')
 @ApiExtraModels(SubmissionListItemDto, SubmissionTeamSummaryDto)
 @Controller()
