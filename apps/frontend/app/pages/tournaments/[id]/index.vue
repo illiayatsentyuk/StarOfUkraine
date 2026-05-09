@@ -131,20 +131,17 @@ const refreshTeams = async () => {
     loadingTeams.value = true
     loadingLeaderboard.value = true
     try {
-        // Беремо список команд саме цього турніру через leaderboard (публічний ендпоінт)
-        const res = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
-        const rows = Array.isArray(res.data) ? res.data : []
+        const rows = await tournamentStore.fetchLeaderboard(tournamentId.value)
         leaderboardRows.value = rows
-        teams.value = rows.map((r: any) => ({
-            id: r?.team?.id,
-            name: r?.team?.name,
-            points: r?.totalScore,
+        teams.value = rows.map((r) => ({
+            id: r.team.id,
+            name: r.team.name,
+            points: r.totalScore,
         }))
-    } catch {
-        console.error('Failed to refresh teams')
+    } catch (e) {
+        console.error('Failed to refresh teams', e)
         leaderboardRows.value = []
-    }
-    finally {
+    } finally {
         loadingTeams.value = false
         loadingLeaderboard.value = false
     }
@@ -270,7 +267,6 @@ const shuffleTeams = () => {
     .leaderboard-action {
         background: var(--color-surface, #ffffff);
         padding: 32px;
-        border-radius: 16px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         display: flex;
         flex-direction: column;
@@ -297,7 +293,6 @@ const shuffleTeams = () => {
             background-color: var(--color-primary, #007bff);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
             font-weight: 600;
             font-size: 15px;
             transition: background-color 0.2s, transform 0.2s;

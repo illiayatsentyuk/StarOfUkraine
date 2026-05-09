@@ -1,7 +1,9 @@
 <script lang="ts" setup>
+import type { Tournament } from '~/types'
+
 const props = defineProps<{
     isOpen: boolean
-    tournament: any | null
+    tournament: Tournament | null
 }>()
 
 const emit = defineEmits<{
@@ -27,9 +29,9 @@ const initialValues = computed(() => {
             name: '',
             description: '',
             status: 'DRAFT',
-            startDate: '',
-            registrationStart: '',
-            registrationEnd: '',
+            startDate: null,
+            registrationStart: null,
+            registrationEnd: null,
             rounds: null,
             maxTeams: null,
             teamSizeMin: 2,
@@ -39,8 +41,8 @@ const initialValues = computed(() => {
     }
 
     const toDateInput = (value?: string) => {
-        if (!value) return ''
-        return new Date(value).toISOString().slice(0, 10)
+        if (!value) return null
+        return new Date(value)
     }
 
     return {
@@ -58,7 +60,7 @@ const initialValues = computed(() => {
     }
 })
 
-async function onSubmit(values: any) {
+async function onSubmit(values: Partial<Tournament>) {
     if (!props.tournament?.id) return
     try {
         isLoading.value = true
@@ -120,12 +122,12 @@ function closeModal() {
                 .form-group
                     label.form-label ДАТА СТАРТУ *
                     VeeField(name="startDate" rules="required" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }")
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" appendTo="body")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
                     VeeField(name="registrationStart" v-slot="{ field, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid)
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
             
             .form-row
                 .form-group
@@ -150,7 +152,7 @@ function closeModal() {
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
                 VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
-                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid)
+                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
@@ -168,7 +170,7 @@ function closeModal() {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1100;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;

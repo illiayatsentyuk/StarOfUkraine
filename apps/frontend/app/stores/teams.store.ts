@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Team, CreateTeamPayload } from '~/types'
+import type { Team, CreateTeamPayload, TeamSearchResult } from '~/types'
 import { useApi } from '~/composables/useApi';
 
 const LIMIT = 16
@@ -14,7 +14,7 @@ export const useTeamsStore = defineStore('teams', () => {
     const error = ref<string | null>(null)
     const currentTeam = ref<Team | null>(null) 
     const activeTeamId = ref<string | null>(null)
-    const searchResults = ref<{ id: string; email: string; name?: string }[]>([])
+    const searchResults = ref<TeamSearchResult[]>([])
     const searchingMembers = ref(false)
 
 

@@ -77,9 +77,10 @@ aside.sidebar
 
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
+import type { Tournament } from '~/types'
 
 const props = defineProps<{
-    tournament: any
+    tournament: Tournament
     status: TournamentStatusInfo | null
     isAdmin: boolean
     isJury: boolean

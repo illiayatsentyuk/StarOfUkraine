@@ -1,3 +1,5 @@
+export type TournamentStatus = 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+
 export interface Tournament {
     id?: string
     name: string
@@ -5,11 +7,20 @@ export interface Tournament {
     startDate: string
     registrationStart: string
     registrationEnd: string
-    rounds: string | number
-    maxTeams: string | number
-    teamSizeMin: string | number
-    teamSizeMax: string | number
-    status?: string
+    rounds: number
+    maxTeams: number
+    teamSizeMin: number
+    teamSizeMax: number
+    status?: TournamentStatus
     hideTeamsUntilRegistrationEnds: boolean
     createdAt?: string
 }
+
+export interface LeaderboardRow {
+    team: {
+        id: string
+        name: string
+    }
+    totalScore: number
+    rank?: number
+}

@@ -23,7 +23,6 @@ import { computed, onMounted, ref } from 'vue'
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
 const authStore = useLoginStore()
-const api = useApi()
 
 const tournamentId = computed(() => route.params.id as string)
 
@@ -45,8 +44,7 @@ const refreshTeams = async () => {
     }
     loadingLeaderboard.value = true
     try {
-        const res = await api.get(`/tournaments/${tournamentId.value}/leaderboard`)
-        leaderboardRows.value = Array.isArray(res.data) ? res.data : []
+        leaderboardRows.value = await tournamentStore.fetchLeaderboard(tournamentId.value)
     } catch (e) {
         console.error('Failed to load leaderboard', e)
         leaderboardRows.value = []

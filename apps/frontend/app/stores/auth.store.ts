@@ -1,11 +1,11 @@
 import { defineStore } from 'pinia'
 import { useApi } from '~/composables/useApi'
-import type { Form } from '~/types'
+import type { Form, User } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
     const toast = useServerSafeToast()
-    const user = ref<any>(null)
+    const user = ref<User | null>(null)
     const image = ref<string | null>(null)
     const authenticated = ref(false)
     const isAdmin = ref(false)
@@ -18,7 +18,7 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    const signupByEmail = async (userData: any) => {
+    const signupByEmail = async (userData: Partial<User> & { password?: string }) => {
         loading.value = true
         try {
             await useApi().post('/auth/signup', userData)

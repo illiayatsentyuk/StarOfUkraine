@@ -20,15 +20,13 @@
                     textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
             
             .form-row
-                .form-group
-                    label.form-label ДАТА СТАРТУ *
                     VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" class="form-input")
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" appendTo="body")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
                     VeeField(name="registrationStart" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid class="form-input")
+                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
             
             .form-row
                 .form-group
@@ -53,7 +51,7 @@
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
                 VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
-                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid class="form-input")
+                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
@@ -64,6 +62,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { Tournament } from '~/types'
+
 const props = defineProps<{
   isOpen: boolean
 }>()
@@ -77,9 +77,9 @@ const store = useTournamentsStore()
 const initialValues = {
     name: "",
     description: "",
-    startDate: "",
-    registrationStart: "",
-    registrationEnd: "",
+    startDate: null,
+    registrationStart: null,
+    registrationEnd: null,
     rounds: null,
     maxTeams: null,
     teamSizeMin: 2,
@@ -89,7 +89,7 @@ const initialValues = {
 
 const isLoading = ref(false)
 
-async function onSubmit(values: any) {
+async function onSubmit(values: Tournament) {
     try {
         isLoading.value = true
         const payload = {
@@ -121,7 +121,7 @@ function closeModal() {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1100;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;

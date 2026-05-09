@@ -2,12 +2,9 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useApi } from '~/composables/useApi'
-import type { Tournament } from '~/types'
+import type { Tournament, LeaderboardRow, TournamentStatus } from '~/types'
 
-const LIMIT = 5
-//env
-type TournamentStatusFilter = 'all' | 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-//enum
+type TournamentStatusFilter = 'all' | TournamentStatus
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])
@@ -163,6 +160,18 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const fetchLeaderboard = async (tournamentId: string): Promise<LeaderboardRow[]> => {
+        try {
+            const api = useApi()
+            const response = await api.get(`/tournaments/${tournamentId}/leaderboard`)
+            if (!response.data) throw new Error('Не вдалося завантажити лідерборд')
+            return Array.isArray(response.data) ? response.data : []
+        } catch (error) {
+            console.error('Помилка API при завантаженні лідерборду:', error)
+            throw error
+        }
+    }
+
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -186,5 +195,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         joinTournament,
         updateTournament,
         deleteTournament,
+        fetchLeaderboard,
     }
 })

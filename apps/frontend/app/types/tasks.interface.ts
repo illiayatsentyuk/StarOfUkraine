@@ -38,3 +38,9 @@ export interface TaskSubmission {
     videoUrl: string
     status: 'PENDING' | 'EVALUATED'
 }
+
+export interface SubmissionScore {
+    id: string
+    points: number
+}
+

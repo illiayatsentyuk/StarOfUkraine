@@ -1,11 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { CreateTournamentTaskPayload, TaskSubmission, TournamentTask } from '~/types'
-
-type SubmissionScore = {
-    id: string
-    points: number
-}
+import type { CreateTournamentTaskPayload, TaskSubmission, TournamentTask, SubmissionScore } from '~/types'
 
 export const useTasksStore = defineStore('tasks', () => {
     const toast = useServerSafeToast()

@@ -20,3 +20,9 @@ export type CreateTeamPayload = {
     discord?: string
     members?: string[]
 }
+
+export interface TeamSearchResult {
+    id: string
+    email: string
+    name?: string
+}
