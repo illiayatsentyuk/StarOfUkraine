@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindUsersDto } from './dto';
+import { Role } from 'src/enum';
 
 @Injectable()
 export class UsersService {
@@ -42,5 +43,9 @@ export class UsersService {
         ],
       },
     });
+  }
+
+  updateRole(userId: string, role: Role) {
+    return this.prisma.user.update({ where: { id: userId }, data: { role } });
   }
 }
