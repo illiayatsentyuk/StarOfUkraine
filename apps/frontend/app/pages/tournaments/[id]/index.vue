@@ -27,15 +27,12 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-                //- TournamentTeamsSection(
-                //-     :teams="teams"
-                //-     :loadingTeams="loadingTeams"
-                //-     :shouldHideTeams="shouldHideTeams"
-                //-     :isAdmin="authStore.isAdmin"
-                //-     @shuffle="shuffleTeams"
-                //- )
-
-                
+                .content-section.leaderboard-action(v-if="!shouldHideTeams")
+                    h2 Рейтинг команд
+                    p.desc Перегляньте поточний лідерборд турніру та результати оцінювання.
+                    NuxtLink.leaderboard-btn(:to="`/tournaments/${tournamentId}/leaderboard`")
+                        span Переглянути лідерборд
+                        span.icon →
 
             TournamentSidebar(
                 :tournament="tournament"
@@ -47,6 +44,7 @@ section.tournament-detail
                 :isAlreadyJoined="isAlreadyJoined"
                 :hasTeam="!!teamsStore.activeTeam"
                 :joining="joining"
+                :shouldHideTeams="shouldHideTeams"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @joinTournament="handleJoinTournament"
@@ -267,6 +265,48 @@ const shuffleTeams = () => {
 .main-content {
     .content-section {
         margin-bottom: 64px;
+    }
+
+    .leaderboard-action {
+        background: var(--color-surface, #ffffff);
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+
+        h2 {
+            margin: 0;
+            font-size: 24px;
+            color: var(--color-text-main);
+        }
+
+        .desc {
+            margin: 0;
+            color: var(--color-text-muted);
+            font-size: 15px;
+        }
+
+        .leaderboard-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background-color: var(--color-primary, #007bff);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 15px;
+            transition: background-color 0.2s, transform 0.2s;
+
+            &:hover {
+                background-color: var(--color-primary-dark, #0056b3);
+                transform: translateY(-2px);
+            }
+        }
     }
 }
 

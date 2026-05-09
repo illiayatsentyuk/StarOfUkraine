@@ -36,6 +36,16 @@ aside.sidebar
             )
 
             NuxtLink.sidebar__judge-link(
+                v-if="!shouldHideTeams"
+                :to="`/tournaments/${tournament.id}/leaderboard`"
+            )
+                Button.sidebar__leaderboard(
+                    type="button"
+                    label="ПЕРЕГЛЯНУТИ РЕЙТИНГ"
+                    icon="pi pi-chart-bar"
+                )
+
+            NuxtLink.sidebar__judge-link(
                 v-if="isJury"
                 :to="`/tournaments/${tournament.id}/admin`"
             )
@@ -78,6 +88,7 @@ const props = defineProps<{
     isAlreadyJoined: boolean
     hasTeam: boolean
     joining: boolean
+    shouldHideTeams: boolean
 }>()
 
 defineEmits<{
@@ -169,6 +180,27 @@ const joinLabel = computed(() =>
                     font-size: 20px;
                     font-weight: 700;
                     color: var(--color-text);
+                }
+            }
+
+            :deep(.sidebar__leaderboard.p-button) {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: transparent;
+                border: 1px solid var(--color-border);
+                color: var(--color-text);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    border-color: var(--color-text);
+                    background: var(--color-surface);
                 }
             }
 
