@@ -200,6 +200,36 @@ describe('TasksService', () => {
     });
   });
 
+  describe('getTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      name: 'Round 1',
+      description: '# A',
+      order: 1,
+      criteria: { rubric: [] },
+    };
+
+    it('returns task when found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+
+      const result = await service.getTask('task-1');
+
+      expect(result).toEqual(taskRow);
+      expect(mockPrisma.task.findUnique).toHaveBeenCalledWith({
+        where: { id: 'task-1' },
+      });
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.getTask('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+  });
+
   describe('updateTask', () => {
     const taskRow = {
       id: 'task-1',

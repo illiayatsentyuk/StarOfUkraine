@@ -38,7 +38,7 @@ import { TasksService } from './tasks.service';
 
 /**
  * Task-scoped routes use full paths on `@Controller()`:
- * `GET|POST /tournaments/:id/tasks`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
+ * `GET|POST /tournaments/:id/tasks`, `GET /tasks/:id`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
  */
 @ApiTags('Tournaments', 'Tasks')
 @ApiExtraModels(SubmissionListItemDto, SubmissionTeamSummaryDto)
@@ -136,6 +136,29 @@ export class TasksController {
   })
   update(@Param('id') id: string, @Body() data: UpdateTaskDto) {
     return this.tasksService.updateTask(id, data);
+  }
+
+  @Get('tasks/:id')
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiOperation({ summary: 'Get a single task (round) by id' })
+  @ApiOkResponse({
+    description: 'Task returned',
+    schema: { example: tasksExamples.taskResponse },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  getTask(@Param('id') id: string) {
+    return this.tasksService.getTask(id);
   }
 
   @Post('tasks/:id/submit')
