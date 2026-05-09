@@ -31,7 +31,7 @@ const leaderboardRows = ref<any[]>([])
 const loadingLeaderboard = ref(true)
 
 const shouldHideTeams = computed(() => {
-    if (authStore.isAdmin) return false
+    if (authStore.isAdmin || authStore.isJury) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()

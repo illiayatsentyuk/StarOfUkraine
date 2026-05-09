@@ -53,6 +53,8 @@ import { ref, reactive, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useTeamsStore } from '~/stores/teams.store'
 
+import type { CreateTeamPayload } from '~/types'
+
 const props = defineProps<{ isTeamOpen: boolean }>()
 const emit = defineEmits<{
   (e: 'close'): void
@@ -126,7 +128,7 @@ watch(() => props.isTeamOpen, (opened) => {
 })
 
 
-async function onSubmit(values: any) {
+async function onSubmit(values: CreateTeamPayload) {
     try {
         isLoading.value = true
         const team = await store.createTeam(values)

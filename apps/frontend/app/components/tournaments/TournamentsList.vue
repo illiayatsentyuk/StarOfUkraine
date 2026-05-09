@@ -80,6 +80,7 @@ section.tournaments-list
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
+
 const filters = [
     { key: 'all', label: 'Всі' },
     { key: 'byDate', label: 'За датою' },

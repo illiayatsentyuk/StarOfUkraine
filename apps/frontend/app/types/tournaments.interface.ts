@@ -23,4 +23,23 @@ export interface LeaderboardRow {
     }
     totalScore: number
     rank?: number
-}
+}
+
+export interface BracketMatch {
+    id: string | number
+    team1?: {
+        name: string
+        side?: 'radiant' | 'dire' | string
+    }
+    team2?: {
+        name: string
+        side?: 'radiant' | 'dire' | string
+    }
+    title?: string
+    dotaMatchId?: string
+    winner?: number
+}
+
+export interface BracketRound {
+    matchs: BracketMatch[]
+}

@@ -76,7 +76,7 @@ section.judge-dashboard
                                 i.pi.pi-check-circle
                                 span ОЦІНЕНО
 
-                            .grading-form(v-else)
+                            .grading-form(v-else-if="authStore.isJury")
                                 .criteria-list(v-if="task.criteria?.rubric?.length")
                                     .criterion-row(v-for="c in task.criteria.rubric" :key="c.id")
                                         span.c-label {{ c.label }}
@@ -101,6 +101,10 @@ section.judge-dashboard
                                     @click="handleGrade(getSubmission(selectedTeam.id, task.id), task)"
                                     :loading="grading[getSubmission(selectedTeam.id, task.id).id]"
                                 )
+                            
+                            .view-only-notice(v-else-if="authStore.isAdmin")
+                                i.pi.pi-eye
+                                span Тільки перегляд (Оцінювання доступне лише для Журі)
 
                         .no-submission(v-else)
                             i.pi.pi-clock
@@ -532,6 +536,21 @@ async function handleGrade(submission: any, task: any) {
             font-weight: 600;
             padding: 12px;
             background: var(--color-bg);
+        }
+
+        .view-only-notice {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 16px;
+            padding: 12px;
+            background: rgba(228, 35, 19, 0.05);
+            border: 1px dashed var(--color-primary);
+            color: var(--color-primary);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            i { font-size: 16px; }
         }
     }
 }

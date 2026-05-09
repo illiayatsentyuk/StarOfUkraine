@@ -43,6 +43,7 @@ section.task-detail
             aside.task-side-right
                 .side-sticky-wrapper
                     TaskSubmissionForm(
+                        v-if="authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury"
                         :task="task"
                         :loading="store.loading"
                         :mySubmission="store.mySubmissions[task.id] ?? null"

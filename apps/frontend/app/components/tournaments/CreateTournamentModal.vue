@@ -20,6 +20,8 @@
                     textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
             
             .form-row
+                .form-group
+                    label.form-label ДАТА СТАРТУ *
                     VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
                         DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" appendTo="body")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}

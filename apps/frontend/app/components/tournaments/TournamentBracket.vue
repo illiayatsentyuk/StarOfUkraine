@@ -61,20 +61,22 @@ import { TournamentBracket as VueTournamentBracket } from 'vue3-tournament'
 import 'vue3-tournament/style.css'
 import { useLoginStore } from '../../stores/auth.store'
 
+import type { BracketRound, BracketMatch } from '~/types'
+
 const authStore = useLoginStore()
 const isAdmin = computed(() => authStore.isAdmin)
 
 const props = defineProps<{
-    rounds: any[]
+    rounds: BracketRound[]
 }>()
 
 const emit = defineEmits<{
-    (e: 'update:rounds', value: any[]): void
-    (e: 'matchClick', match: any): void
+    (e: 'update:rounds', value: BracketRound[]): void
+    (e: 'matchClick', match: BracketMatch): void
     (e: 'participantClick', participant: any): void
 }>()
 
-const localRounds = ref<any[]>([])
+const localRounds = ref<BracketRound[]>([])
 const wrapperRef = ref<HTMLElement | null>(null)
 
 interface TeamLocation {

@@ -69,7 +69,7 @@ section.tournament-detail
         @updated="onTournamentUpdated"
     )
     CreateTeamModal(
-        v-if="tournament && authStore.isAuthenticated"
+        v-if="tournament && authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
         @success="onTeamCreated"
@@ -77,6 +77,7 @@ section.tournament-detail
 </template>
 
 <script setup lang="ts">
+import type { LeaderboardRow, Tournament, Team } from '~/types'
 import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 import TournamentLeaderboardTable from '~/components/tournaments/TournamentLeaderboardTable.vue'
 
@@ -94,9 +95,9 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
     () => tournamentStore.fetchTournamentById(tournamentId.value)
 )
 
-const teams = ref<any[]>([])
+const teams = ref<(Partial<Team> & { points?: number })[]>([])
 const loadingTeams = ref(false)
-const leaderboardRows = ref<any[]>([])
+const leaderboardRows = ref<LeaderboardRow[]>([])
 const loadingLeaderboard = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
@@ -113,7 +114,7 @@ const isRegistrationActive = computed(() => {
 })
 
 const shouldHideTeams = computed(() => {
-    if (authStore.isAdmin) return false
+    if (authStore.isAdmin || authStore.isJury) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()
@@ -123,7 +124,7 @@ const shouldHideTeams = computed(() => {
 const isAlreadyJoined = computed(() => {
     const activeTeamId = teamsStore.activeTeamId
     if (!activeTeamId) return false
-    return teams.value.some((t: any) => t.id === activeTeamId)
+    return teams.value.some((t) => t.id === activeTeamId)
 })
 
 const refreshTeams = async () => {

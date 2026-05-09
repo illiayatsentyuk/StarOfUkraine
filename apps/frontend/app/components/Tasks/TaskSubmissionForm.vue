@@ -67,8 +67,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
+import type { TournamentTask } from '~/types'
+
 const props = defineProps<{
-    task: any
+    task: TournamentTask
     loading: boolean
     mySubmission?: { status: 'PENDING' | 'EVALUATED'; githubUrl: string; videoUrl: string } | null
 }>()

@@ -5,6 +5,8 @@ import { useApi } from '~/composables/useApi'
 import type { Tournament, LeaderboardRow, TournamentStatus } from '~/types'
 
 type TournamentStatusFilter = 'all' | TournamentStatus
+const LIMIT = 6
+
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
     const tournaments = ref<Tournament[]>([])

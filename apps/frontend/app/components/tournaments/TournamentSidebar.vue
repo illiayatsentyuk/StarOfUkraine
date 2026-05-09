@@ -65,7 +65,7 @@ aside.sidebar
 
             //- Join / Create+Join button
             Button.sidebar__create(
-                v-else-if="isAuthenticated && !isAdmin"
+                v-if="isAuthenticated && !isAdmin && !isJury && !isAlreadyJoined"
                 type="button"
                 :label="joinLabel"
                 icon="pi pi-arrow-right"
