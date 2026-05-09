@@ -195,7 +195,6 @@ export class AuthController {
     schema: { example: authExamples.userNotFound },
   })
   me(@GetCurrentUserId() userId: string) {
-    console.log('userId', userId);
     return this.authService.getMe(userId);
   }
 
@@ -253,8 +252,14 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset email' })
-  @ApiBody({ type: ForgotPasswordDto })
+  @ApiBody({
+    type: ForgotPasswordDto,
+    examples: {
+      forgot: { value: authExamples.forgotPasswordRequest },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Reset email sent if user exists' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
   forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
     return this.authService.forgotPassword(dto.email);
   }
@@ -262,8 +267,14 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @ApiOperation({ summary: 'Set new password using reset token' })
-  @ApiBody({ type: ResetPasswordDto })
+  @ApiBody({
+    type: ResetPasswordDto,
+    examples: {
+      reset: { value: authExamples.resetPasswordRequest },
+    },
+  })
   @ApiResponse({ status: 200, description: 'Password updated' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
   resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
     return this.authService.resetPassword(dto.token, dto.password);
   }

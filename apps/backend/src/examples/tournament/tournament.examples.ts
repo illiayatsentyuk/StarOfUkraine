@@ -1,6 +1,9 @@
 import { TournamentStatus } from '@prisma/client';
 
 export const tournamentExamples = {
+  joinRequest: {
+    teamId: 'clx_team_123',
+  },
   createRequest: {
     name: 'Star of Ukraine Cup 2026',
     description: 'Open tournament for teams across Ukraine.',

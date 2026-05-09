@@ -12,6 +12,7 @@ import type {
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
+import { JuryService } from 'src/jury/jury.service';
 
 @Injectable()
 export class TasksService {
@@ -19,6 +20,7 @@ export class TasksService {
     private readonly prisma: PrismaService,
     @InjectPinoLogger(TasksService.name)
     private readonly logger: PinoLogger,
+    private readonly juryService: JuryService,
   ) {}
 
   async createTasks(tournamentId: string, dto: CreateTournamentTasksDto) {
@@ -185,7 +187,7 @@ export class TasksService {
     userId: string,
     dto: EvaluateSubmissionDto,
   ) {
-    const jury = await this.prisma.jury.findUnique({ where: { userId } });
+    const jury = await this.juryService.findOne(userId);
     if (!jury) {
       throw new BadRequestException('Jury profile not found');
     }

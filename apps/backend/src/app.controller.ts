@@ -2,6 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
 import { Public } from './common/decorators';
+import { appExamples } from './examples';
 
 @ApiTags('Root')
 @Controller()
@@ -14,13 +15,7 @@ export class AppController {
   @ApiResponse({
     status: 200,
     description: 'Service is reachable',
-    schema: {
-      example: {
-        ok: true,
-        message: 'Server is running',
-        version: '1.0.0',
-      },
-    },
+    schema: { example: appExamples.healthResponse },
   })
   getHealth() {
     return this.appService.getHealth();

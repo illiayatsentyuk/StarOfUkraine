@@ -23,6 +23,11 @@ const memberUserExample2 = {
 };
 
 export const teamExamples = {
+  listRequest: {
+    page: 1,
+    limit: 10,
+    name: 'Kyiv',
+  },
   createRequest: {
     name: 'Star of Ukraine',
     captainName: 'Olena Kovalenko',

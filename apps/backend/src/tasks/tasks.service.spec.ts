@@ -5,6 +5,7 @@ import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EvaluateSubmissionDto } from './dto';
 import { TasksService } from './tasks.service';
+import { JuryService } from '../jury/jury.service';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -22,9 +23,6 @@ describe('TasksService', () => {
     $transaction: jest.fn((ops: Promise<unknown>[]) =>
       Promise.all(ops),
     ) as jest.MockedFunction<(ops: Promise<unknown>[]) => Promise<unknown[]>>,
-    jury: {
-      findUnique: jest.fn(),
-    },
     evaluation: {
       upsert: jest.fn(),
     },
@@ -65,6 +63,10 @@ describe('TasksService', () => {
     assign: jest.fn(),
   };
 
+  const mockJuryService = {
+    findOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -76,6 +78,10 @@ describe('TasksService', () => {
         {
           provide: getLoggerToken(TasksService.name),
           useValue: mockPinoLogger,
+        },
+        {
+          provide: JuryService,
+          useValue: mockJuryService,
         },
       ],
     }).compile();
@@ -339,7 +345,7 @@ describe('TasksService', () => {
     };
 
     it('upserts evaluation and finalizes submission', async () => {
-      mockPrisma.jury.findUnique.mockResolvedValue(juryRow);
+      mockJuryService.findOne.mockResolvedValue(juryRow);
       mockPrisma.submission.findUnique.mockResolvedValue({
         id: 'sub-1',
         task: {
@@ -375,7 +381,7 @@ describe('TasksService', () => {
     });
 
     it('throws when jury profile not found', async () => {
-      mockPrisma.jury.findUnique.mockResolvedValue(null);
+      mockJuryService.findOne.mockResolvedValue(null);
 
       await expect(
         service.evaluateSubmission('sub-1', userId, dto),
@@ -383,7 +389,7 @@ describe('TasksService', () => {
     });
 
     it('throws when rubric score exceeds maxPoints', async () => {
-      mockPrisma.jury.findUnique.mockResolvedValue(juryRow);
+      mockJuryService.findOne.mockResolvedValue(juryRow);
       mockPrisma.submission.findUnique.mockResolvedValue({
         id: 'sub-1',
         task: {

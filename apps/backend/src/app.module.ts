@@ -23,6 +23,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
+import { JuryModule } from './jury/jury.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     TasksModule,
     EmailModule,
+    JuryModule,
   ],
   controllers: [AppController],
   providers: [
