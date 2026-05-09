@@ -12,14 +12,8 @@ export class JuryService {
         return this.prisma.jury.findMany();
     }
 
-    async findOne(id: string) {
-        const jury = await this.prisma.jury.findUnique({ where: { id } });
-
-        if (!jury) {
-            throw new NotFoundException('Jury not found');
-        }
-
-        return jury;
+    findOne(id: string) {
+        return this.prisma.jury.findUnique({ where: { userId: id } });
     }
 
     async addToJury(body: AddToJuryDto) {
