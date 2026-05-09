@@ -57,6 +57,20 @@ export class TasksService {
     return created;
   }
 
+  async getTasksForTournament(tournamentId: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    return this.prisma.task.findMany({
+      where: { tournamentId },
+      orderBy: { order: 'asc' },
+    });
+  }
+
   async updateTask(id: string, dto: UpdateTaskDto) {
     const existing = await this.prisma.task.findUnique({ where: { id } });
     if (!existing) {

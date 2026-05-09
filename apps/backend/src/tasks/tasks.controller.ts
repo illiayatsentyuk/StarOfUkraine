@@ -38,13 +38,36 @@ import { TasksService } from './tasks.service';
 
 /**
  * Task-scoped routes use full paths on `@Controller()`:
- * `POST /tournaments/:id/tasks`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
+ * `GET|POST /tournaments/:id/tasks`, `PATCH /tasks/:id`, `POST /tasks/:id/submit`, `GET /tasks/:id/submissions`.
  */
 @ApiTags('Tournaments', 'Tasks')
 @ApiExtraModels(SubmissionListItemDto, SubmissionTeamSummaryDto)
 @Controller()
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
+
+  @Get('tournaments/:id/tasks')
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({ summary: 'List tournament rounds (tasks) ordered by round' })
+  @ApiOkResponse({
+    description: 'Tasks for the tournament',
+    schema: { example: tasksExamples.tasksListResponse },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @ApiForbiddenResponse({
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  getTasksForTournament(@Param('id') id: string) {
+    return this.tasksService.getTasksForTournament(id);
+  }
 
   @Post('tournaments/:id/tasks')
   @Roles(Role.USER, Role.JURY, Role.ADMIN)
