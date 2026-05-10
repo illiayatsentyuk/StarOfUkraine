@@ -26,6 +26,8 @@ import {
 import { GoogleAuthGuard } from '../common/guards';
 import { RtGuard } from '../common/guards/rt.guard';
 import { authExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
+import { UserDto } from '../users/dto/user.dto';
 import { AuthService } from './auth.service';
 import {
   ForgotPasswordDto,
@@ -194,6 +196,7 @@ export class AuthController {
     description: 'User not found',
     schema: { example: authExamples.userNotFound },
   })
+  @Serialize(UserDto)
   me(@GetCurrentUserId() userId: string) {
     return this.authService.getMe(userId);
   }

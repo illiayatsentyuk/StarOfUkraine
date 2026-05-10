@@ -3,20 +3,29 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiCookieAuth,
+  ApiExtraModels,
   ApiOperation,
   ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { JuryService } from './jury.service';
-import { AddToJuryDto, AssignJuryDto } from './dto';
+import {
+  AddToJuryDto,
+  AssignJuryDto,
+  AssignJuryResultDto,
+  JuryRecordDto,
+  JuryRemoveResponseDto,
+} from './dto';
 import { GetCurrentUserId, Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
 import { authExamples, juryExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
 
 @ApiTags('Jury')
 @ApiBearerAuth()
 @ApiCookieAuth('access_token')
+@ApiExtraModels(JuryRecordDto, JuryRemoveResponseDto, AssignJuryResultDto)
 @Controller('jury')
 export class JuryController {
   constructor(private readonly juryService: JuryService) {}
@@ -27,6 +36,7 @@ export class JuryController {
   @ApiResponse({ status: 200, description: 'Jury profiles returned' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires JURY or ADMIN' })
+  @Serialize(JuryRecordDto)
   findAll() {
     return this.juryService.findAll();
   }
@@ -39,6 +49,7 @@ export class JuryController {
   @ApiResponse({ status: 404, description: 'Jury not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires JURY or ADMIN' })
+  @Serialize(JuryRecordDto)
   findOne(@Param('id') id: string) {
     return this.juryService.findOne(id);
   }
@@ -53,6 +64,7 @@ export class JuryController {
   @ApiResponse({ status: 201, description: 'Jury created/updated and connected to tournament', schema: { example: juryExamples.juryResponse } })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(JuryRecordDto)
   addToJury(@Body() body: AddToJuryDto) {
     return this.juryService.addToJury(body);
   }
@@ -65,6 +77,7 @@ export class JuryController {
   @ApiResponse({ status: 404, description: 'Jury not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(JuryRemoveResponseDto)
   removeFromJury(
     @Param('id') id: string,
     @GetCurrentUserId() userId: string,
@@ -99,6 +112,7 @@ export class JuryController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(AssignJuryResultDto)
   assignJury(
     @Param('tournamentId') tournamentId: string,
     @Body() dto: AssignJuryDto,

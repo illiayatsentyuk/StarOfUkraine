@@ -29,15 +29,24 @@ import { Serialize } from '../interceptors/serialize.interceptor';
 import {
   CreateTournamentTasksDto,
   EvaluateSubmissionDto,
+  EvaluationResponseDto,
   SubmissionListItemDto,
+  SubmissionResponseDto,
   SubmissionTeamSummaryDto,
   SubmitTaskDto,
+  TaskResponseDto,
   UpdateTaskDto,
 } from './dto';
 import { TasksService } from './tasks.service';
 
 @ApiTags('Tournaments', 'Tasks')
-@ApiExtraModels(SubmissionListItemDto, SubmissionTeamSummaryDto)
+@ApiExtraModels(
+  SubmissionListItemDto,
+  SubmissionTeamSummaryDto,
+  TaskResponseDto,
+  SubmissionResponseDto,
+  EvaluationResponseDto,
+)
 @Controller()
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
@@ -55,6 +64,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires USER, JURY, or ADMIN' })
+  @Serialize(TaskResponseDto)
   getTasksForTournament(@Param('id') id: string) {
     return this.tasksService.getTasksForTournament(id);
   }
@@ -72,6 +82,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires USER, JURY, or ADMIN' })
+  @Serialize(TaskResponseDto)
   getTask(@Param('id') id: string) {
     return this.tasksService.getTask(id);
   }
@@ -114,6 +125,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires ADMIN' })
+  @Serialize(TaskResponseDto)
   createTasks(@Param('id') id: string, @Body() data: CreateTournamentTasksDto) {
     return this.tasksService.createTasks(id, data);
   }
@@ -136,6 +148,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires ADMIN' })
+  @Serialize(TaskResponseDto)
   update(@Param('id') id: string, @Body() data: UpdateTaskDto) {
     return this.tasksService.updateTask(id, data);
   }
@@ -155,6 +168,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires ADMIN' })
+  @Serialize(TaskResponseDto)
   activateTask(@Param('id') id: string) {
     return this.tasksService.activateTask(id);
   }
@@ -174,6 +188,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires ADMIN' })
+  @Serialize(TaskResponseDto)
   closeSubmissions(@Param('id') id: string) {
     return this.tasksService.closeSubmissions(id);
   }
@@ -197,6 +212,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Task not found' })
   @ApiForbiddenResponse({ description: 'Forbidden — requires USER (team member)' })
+  @Serialize(SubmissionResponseDto)
   submit(@Param('id') id: string, @Body() data: SubmitTaskDto) {
     return this.tasksService.submitTask(id, data);
   }
@@ -220,6 +236,7 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Jury not assigned to this submission' })
   @ApiResponse({ status: 404, description: 'Submission not found' })
+  @Serialize(EvaluationResponseDto)
   evaluateSubmission(
     @Param('id') id: string,
     @Body() dto: EvaluateSubmissionDto,

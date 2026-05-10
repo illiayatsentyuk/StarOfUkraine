@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiCookieAuth,
+  ApiExtraModels,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -25,16 +26,24 @@ import { Roles } from 'src/common/decorators';
 import { Role, SortOrder, TournamentsSortBy } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
 import {
   CreateTournamentDto,
   FindTournamentQueryDto,
   JoinTournamentDto,
   LeaderboardRowDto,
+  PaginatedTournamentsResponseDto,
+  TournamentResponseDto,
   UpdateTournamentDto,
 } from './dto';
 import { TournamentService } from './tournament.service';
 
 @ApiTags('Tournaments')
+@ApiExtraModels(
+  TournamentResponseDto,
+  PaginatedTournamentsResponseDto,
+  LeaderboardRowDto,
+)
 @Controller('tournaments')
 export class TournamentController {
   constructor(private readonly tournamentService: TournamentService) {}
@@ -52,6 +61,7 @@ export class TournamentController {
   @ApiResponse({ status: 400, description: 'Tournament already exists' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(TournamentResponseDto)
   create(@Body() data: CreateTournamentDto) {
     return this.tournamentService.create(data);
   }
@@ -71,6 +81,7 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(TournamentResponseDto)
   update(@Param('id') id: string, @Body() data: UpdateTournamentDto) {
     return this.tournamentService.update(id, data);
   }
@@ -85,6 +96,7 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(TournamentResponseDto)
   remove(@Param('id') id: string) {
     return this.tournamentService.remove(id);
   }
@@ -107,6 +119,7 @@ export class TournamentController {
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
+  @Serialize(TournamentResponseDto)
   finishEvaluation(@Param('id') id: string) {
     return this.tournamentService.finishEvaluation(id);
   }
@@ -126,6 +139,7 @@ export class TournamentController {
   @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
   @ApiResponse({ status: 404, description: 'Tournament or team not found' })
   @ApiResponse({ status: 403, description: 'Forbidden — requires USER or ADMIN' })
+  @Serialize(TournamentResponseDto)
   joinTournament(@Param('id') id: string, @Body() data: JoinTournamentDto) {
     return this.tournamentService.joinTournament(id, data);
   }
@@ -141,6 +155,7 @@ export class TournamentController {
   @ApiQuery({ name: 'status', required: false, enum: TournamentStatus, description: 'Filter by tournament status' })
   @ApiResponse({ status: 200, description: 'List of tournaments returned', schema: { example: tournamentExamples.paginatedResponse } })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
+  @Serialize(PaginatedTournamentsResponseDto)
   findAll(@Query() query: FindTournamentQueryDto) {
     return this.tournamentService.findAll(query);
   }
@@ -151,6 +166,7 @@ export class TournamentController {
   @ApiOperation({ summary: 'Get a tournament by id' })
   @ApiResponse({ status: 200, description: 'Tournament returned', schema: { example: tournamentExamples.response } })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @Serialize(TournamentResponseDto)
   findOne(@Param('id') id: string) {
     return this.tournamentService.findOne(id);
   }
@@ -170,6 +186,7 @@ export class TournamentController {
   })
   @ApiResponse({ status: 400, description: 'Evaluation not yet finalised' })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @Serialize(LeaderboardRowDto)
   leaderboard(@Param('id') id: string) {
     return this.tournamentService.getLeaderboard(id);
   }

@@ -22,8 +22,13 @@ import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
 import { GetCurrentUser, Public } from '../common/decorators';
 import { authExamples, teamExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamQueryDto } from './dto/find-team-query.dto';
+import {
+  PaginatedTeamsResponseDto,
+  TeamResponseDto,
+} from './dto/team-response.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { TeamService } from './team.service';
 
@@ -58,6 +63,7 @@ export class TeamController {
     status: 403,
     description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
   })
+  @Serialize(TeamResponseDto)
   create(@Body() data: CreateTeamDto, @GetCurrentUser('email') email: string) {
     return this.teamService.create(data, email);
   }
@@ -84,6 +90,7 @@ export class TeamController {
     status: 403,
     description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
   })
+  @Serialize(TeamResponseDto)
   join(@Param('id') id: string, @GetCurrentUser('email') email: string) {
     return this.teamService.join(id, email);
   }
@@ -104,6 +111,7 @@ export class TeamController {
     schema: { example: teamExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
+  @Serialize(PaginatedTeamsResponseDto)
   findAll(@Body() body: FindTeamQueryDto) {
     return this.teamService.findAll(body);
   }
@@ -118,6 +126,7 @@ export class TeamController {
     schema: { example: teamExamples.response },
   })
   @ApiResponse({ status: 404, description: 'Team not found' })
+  @Serialize(TeamResponseDto)
   findOne(@Param('id') id: string) {
     return this.teamService.findOne(id);
   }
@@ -153,6 +162,7 @@ export class TeamController {
     status: 403,
     description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
   })
+  @Serialize(TeamResponseDto)
   update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
     return this.teamService.update(id, data);
   }
@@ -178,6 +188,7 @@ export class TeamController {
     status: 403,
     description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
   })
+  @Serialize(TeamResponseDto)
   remove(@Param('id') id: string) {
     return this.teamService.remove(id);
   }
