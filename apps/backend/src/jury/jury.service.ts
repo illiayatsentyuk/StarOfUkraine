@@ -49,7 +49,7 @@ export class JuryService {
         return { message: 'Jury removed successfully' };
     }
 
-    private async addJuryToTournament(juryId: string, tournamentId: string) {
+    private addJuryToTournament(juryId: string, tournamentId: string) {
         return this.prisma.jury.update({ where: { id: juryId }, data: { tournaments: { connect: { id: tournamentId } } } });
     }
 
