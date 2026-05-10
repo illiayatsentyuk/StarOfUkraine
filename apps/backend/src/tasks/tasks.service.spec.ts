@@ -6,10 +6,10 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubmissionStatus, TaskStatus, TournamentStatus } from '@prisma/client';
 import { getLoggerToken } from 'pino-nestjs';
+import { JuryService } from '../jury/jury.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EvaluateSubmissionDto } from './dto';
 import { TasksService } from './tasks.service';
-import { JuryService } from '../jury/jury.service';
 
 describe('TasksService', () => {
   let service: TasksService;
@@ -649,9 +649,9 @@ describe('TasksService', () => {
         },
       });
 
-      await expect(service.evaluateSubmission('sub-1', userId, dto)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.evaluateSubmission('sub-1', userId, dto),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 });

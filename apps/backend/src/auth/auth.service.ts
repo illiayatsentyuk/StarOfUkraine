@@ -37,6 +37,7 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        nameId: true,
         image: true,
         role: true,
         createdAt: true,
@@ -46,18 +47,7 @@ export class AuthService {
       },
     });
     if (!user) throw new NotFoundException('No user found');
-    if (user.role === Role.ADMIN) {
-      return {
-        user,
-        message: 'Authenticated' as const,
-        role: 'admin' as const,
-      };
-    }
-    return {
-      user,
-      message: 'Authenticated' as const,
-      role: user.role,
-    };
+    return user;
   }
 
   async signupLocal(dto: SignupDto): Promise<Tokens> {

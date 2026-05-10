@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
+import { Role } from 'src/enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { FindUsersDto } from './dto';
-import { Role } from 'src/enum';
 
 @Injectable()
 export class UsersService {

@@ -88,6 +88,8 @@ export const tasksExamples = {
       teamId: 'clx_team_abc',
       githubUrl: 'https://github.com/org/project',
       videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      liveUrl: 'https://my-app.vercel.app',
+      summary: null as string | null,
       status: 'PENDING',
       team: {
         id: 'clx_team_abc',

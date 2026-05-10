@@ -25,4 +25,3 @@ export const juryExamples = {
     juryCount: 6,
   },
 } as const;
-

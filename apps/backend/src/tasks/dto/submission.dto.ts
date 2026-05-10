@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { SubmissionStatus } from '@prisma/client';
 import { Expose, Type } from 'class-transformer';
 import { tasksExamples } from '../../examples/tasks/tasks.examples';
@@ -52,6 +52,14 @@ export class SubmissionListItemDto {
   @Expose()
   @ApiProperty({ example: rowEx.videoUrl })
   videoUrl: string;
+
+  @Expose()
+  @ApiPropertyOptional({ nullable: true, example: rowEx.liveUrl })
+  liveUrl: string | null;
+
+  @Expose()
+  @ApiPropertyOptional({ nullable: true, example: rowEx.summary })
+  summary: string | null;
 
   @Expose()
   @ApiProperty({

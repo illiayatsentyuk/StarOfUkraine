@@ -5,9 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
+import { Role } from 'src/enum';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UsersService } from 'src/users/users.service';
-import { Role } from 'src/enum';
 import type { AddToJuryDto, AssignJuryDto } from './dto';
 
 @Injectable()
@@ -172,7 +172,8 @@ function buildAssignments(
     let assigned = coverage.get(subId) ?? 0;
     const availableJury = shuffle(
       jury.filter(
-        (jId) => (jurorSlots.get(jId) ?? 0) > 0 && !pairs.has(`${subId}|${jId}`),
+        (jId) =>
+          (jurorSlots.get(jId) ?? 0) > 0 && !pairs.has(`${subId}|${jId}`),
       ),
     );
     for (const jId of availableJury) {

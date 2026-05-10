@@ -161,8 +161,17 @@ describe('Tournaments (e2e)', () => {
   });
 
   it('PATCH /tournaments/join/:id connects team to tournament', async () => {
-    mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
-    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
+    const now = new Date();
+    mockPrisma.tournament.findUnique.mockResolvedValue({
+      ...tournamentMock,
+      registrationStart: new Date(now.getTime() - 60_000),
+      registrationEnd: new Date(now.getTime() + 60_000),
+      teams: [] as { id: string }[],
+    });
+    mockPrisma.team.findUnique.mockResolvedValue({
+      id: 'team-1',
+      members: Array.from({ length: 5 }, (_, i) => ({ id: `member-${i}` })),
+    });
     mockPrisma.tournament.update.mockResolvedValue(tournamentMock);
 
     const response = await request(app.getHttpServer())

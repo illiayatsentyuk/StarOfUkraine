@@ -73,6 +73,7 @@ describe('AuthService', () => {
     id: 'user-1',
     email: 'user@example.com',
     name: 'Ivan Petrenko',
+    nameId: null as string | null,
     image: null as string | null,
     role: Role.USER,
     createdAt: new Date('2025-01-01'),
@@ -85,6 +86,7 @@ describe('AuthService', () => {
       id: true,
       email: true,
       name: true,
+      nameId: true,
       image: true,
       role: true,
       createdAt: true,
@@ -258,30 +260,22 @@ describe('AuthService', () => {
   });
 
   describe('getMe', () => {
-    it('returns user and role for a regular user', async () => {
+    it('returns public user fields for a regular user', async () => {
       mockPrisma.user.findUnique.mockResolvedValue(publicUserFields);
 
       const result = await service.getMe('user-1');
 
       expect(mockPrisma.user.findUnique).toHaveBeenCalledWith(userSelectArgs);
-      expect(result).toEqual({
-        user: publicUserFields,
-        message: 'Authenticated',
-        role: Role.USER,
-      });
+      expect(result).toEqual(publicUserFields);
     });
 
-    it('returns role "admin" for an admin user', async () => {
+    it('returns public fields for an admin user', async () => {
       const adminPublic = { ...publicUserFields, role: Role.ADMIN };
       mockPrisma.user.findUnique.mockResolvedValue(adminPublic);
 
       const result = await service.getMe('user-1');
 
-      expect(result).toEqual({
-        user: adminPublic,
-        message: 'Authenticated',
-        role: 'admin',
-      });
+      expect(result).toEqual(adminPublic);
     });
 
     it('throws NotFoundException when user does not exist', async () => {

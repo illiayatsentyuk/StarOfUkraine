@@ -165,15 +165,20 @@ export class TournamentService {
       throw new NotFoundException('Tournament not found');
     }
 
-    if (now < tournament.registrationStart) {
+    const registrationStart = new Date(tournament.registrationStart);
+    const registrationEnd = new Date(tournament.registrationEnd);
+    if (now < registrationStart) {
       throw new BadRequestException('Registration has not started yet');
     }
-    if (now > tournament.registrationEnd) {
+    if (now > registrationEnd) {
       throw new BadRequestException('Registration is closed');
     }
 
-    if (tournament.teams.length >= tournament.maxTeams) {
-      throw new BadRequestException('Tournament is full — maximum teams reached');
+    const teams = tournament.teams ?? [];
+    if (teams.length >= tournament.maxTeams) {
+      throw new BadRequestException(
+        'Tournament is full — maximum teams reached',
+      );
     }
 
     const team = await this.prisma.team.findUnique({
@@ -184,7 +189,7 @@ export class TournamentService {
       throw new NotFoundException('Team not found');
     }
 
-    const memberCount = team.members.length;
+    const memberCount = team.members?.length ?? 0;
     if (memberCount < tournament.teamSizeMin) {
       throw new BadRequestException(
         `Team must have at least ${tournament.teamSizeMin} member(s) to register`,
@@ -196,9 +201,11 @@ export class TournamentService {
       );
     }
 
-    const alreadyJoined = tournament.teams.some((t) => t.id === team.id);
+    const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {
-      throw new BadRequestException('Team is already registered for this tournament');
+      throw new BadRequestException(
+        'Team is already registered for this tournament',
+      );
     }
 
     const result = await this.prisma.tournament.update({
@@ -231,7 +238,10 @@ export class TournamentService {
       data: { evaluationFinishedAt: new Date() },
     });
 
-    await Promise.all([this.bumpListVersion(), this.bumpOneVersion(tournamentId)]);
+    await Promise.all([
+      this.bumpListVersion(),
+      this.bumpOneVersion(tournamentId),
+    ]);
 
     this.logger.info({ tournamentId }, 'Evaluation marked as finished');
     return updated;
