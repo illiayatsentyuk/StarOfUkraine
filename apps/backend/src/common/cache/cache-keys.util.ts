@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 
 export const CACHE_TTL = {
-  VERSION: 24 * 60 * 60 * 1000, // 24 h – must outlive LIST / ONE / LEADERBOARD
-  LIST: 5 * 60 * 1000, // 5 min
-  ONE: 2 * 60 * 1000, // 2 min
-  LEADERBOARD: 30 * 1000, // 30 s
+  VERSION: 24 * 60 * 60 * 1000,
+  LIST: 5 * 60 * 1000,
+  ONE: 2 * 60 * 1000,
+  LEADERBOARD: 30 * 1000,
 } as const;
 
 export const CacheKeys = {

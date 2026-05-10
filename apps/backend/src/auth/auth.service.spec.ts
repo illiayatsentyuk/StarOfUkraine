@@ -132,7 +132,6 @@ describe('AuthService', () => {
 
   describe('signupLocal', () => {
     it('creates user, returns tokens, and stores refresh token hash', async () => {
-      // 1st bcrypt.hash -> password, 2nd bcrypt.hash -> refresh token hash
       (bcrypt.hash as jest.Mock)
         .mockResolvedValueOnce('hashed-password')
         .mockResolvedValueOnce('hashed-rt');

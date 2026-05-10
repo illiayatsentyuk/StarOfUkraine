@@ -6,7 +6,6 @@ import { tasksExamples } from '../../examples/tasks/tasks.examples';
 const teamEx = tasksExamples.submissionsListResponse[0].team;
 const rowEx = tasksExamples.submissionsListResponse[0];
 
-/** Команда в контексті списку робіт для журі. */
 export class SubmissionTeamSummaryDto {
   @Expose()
   @ApiProperty({ example: teamEx.id })
@@ -33,7 +32,6 @@ export class SubmissionTeamSummaryDto {
   organization: string | null;
 }
 
-/** Один рядок у відповіді `GET /tasks/:id/submissions`. */
 export class SubmissionListItemDto {
   @Expose()
   @ApiProperty({ example: rowEx.id })

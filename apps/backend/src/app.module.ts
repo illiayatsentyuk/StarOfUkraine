@@ -1,9 +1,9 @@
 import KeyvRedis from '@keyv/redis';
 import { CacheModule, type CacheOptions } from '@nestjs/cache-manager';
-import { Logger, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
-import { LoggerModule } from 'pino-nestjs';
+import { Logger, LoggerModule } from 'pino-nestjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -83,16 +83,18 @@ import { JuryModule } from './jury/jury.module';
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService): CacheOptions => {
-        const nestLogger = new Logger('CacheModule');
+      useFactory: (
+        configService: ConfigService,
+        logger: Logger,
+      ): CacheOptions => {
         const url = configService.getOrThrow<RedisConfig>('redis').url;
         const ttl = Number(configService.getOrThrow<RedisConfig>('redis').ttl);
 
-        nestLogger.log(`Redis cache configured (TTL ${ttl} ms)`);
+        logger.log(`Redis cache configured (TTL ${ttl} ms)`);
         const stores = new KeyvRedis(url);
         return { stores, ttl };
       },
-      inject: [ConfigService],
+      inject: [ConfigService, Logger],
     }),
     AuthModule,
     TeamModule,

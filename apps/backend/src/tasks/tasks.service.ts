@@ -1,9 +1,10 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, SubmissionStatus } from '@prisma/client';
+import { Prisma, SubmissionStatus, TaskStatus } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
@@ -44,6 +45,9 @@ export class TasksService {
             name: task.name,
             description: task.description,
             order: task.order,
+            startsAt: task.startsAt ?? null,
+            deadline: task.deadline ?? null,
+            materialUrls: task.materialUrls ?? [],
             criteria: task.criteria as Prisma.InputJsonValue,
           },
         }),
@@ -89,7 +93,10 @@ export class TasksService {
       dto.name !== undefined ||
       dto.description !== undefined ||
       dto.order !== undefined ||
-      dto.criteria !== undefined;
+      dto.criteria !== undefined ||
+      dto.startsAt !== undefined ||
+      dto.deadline !== undefined ||
+      dto.materialUrls !== undefined;
     if (!hasAny) {
       throw new BadRequestException('At least one field must be provided');
     }
@@ -118,6 +125,9 @@ export class TasksService {
         ...(dto.criteria !== undefined && {
           criteria: dto.criteria as Prisma.InputJsonValue,
         }),
+        ...(dto.startsAt !== undefined && { startsAt: dto.startsAt }),
+        ...(dto.deadline !== undefined && { deadline: dto.deadline }),
+        ...(dto.materialUrls !== undefined && { materialUrls: dto.materialUrls }),
       },
     });
     this.logger.info(
@@ -127,12 +137,49 @@ export class TasksService {
     return updated;
   }
 
-  async submitTask(taskId: string, dto: SubmitTaskDto) {
-    const task = await this.prisma.task.findUnique({
-      where: { id: taskId },
+  async activateTask(id: string) {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('Task not found');
+    if (task.status !== TaskStatus.DRAFT) {
+      throw new BadRequestException(
+        `Task cannot be activated from status "${task.status}"`,
+      );
+    }
+    const updated = await this.prisma.task.update({
+      where: { id },
+      data: { status: TaskStatus.ACTIVE, startsAt: task.startsAt ?? new Date() },
     });
-    if (!task) {
-      throw new NotFoundException('Task not found');
+    this.logger.info({ taskId: id }, 'Task activated');
+    return updated;
+  }
+
+  async closeSubmissions(id: string) {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('Task not found');
+    if (task.status !== TaskStatus.ACTIVE) {
+      throw new BadRequestException(
+        `Submissions can only be closed on an ACTIVE task (current: "${task.status}")`,
+      );
+    }
+    const updated = await this.prisma.task.update({
+      where: { id },
+      data: { status: TaskStatus.SUBMISSION_CLOSED },
+    });
+    this.logger.info({ taskId: id }, 'Task submissions closed');
+    return updated;
+  }
+
+  async submitTask(taskId: string, dto: SubmitTaskDto) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+
+    if (task.status !== TaskStatus.ACTIVE) {
+      throw new BadRequestException(
+        `Submissions are not accepted — task status is "${task.status}"`,
+      );
+    }
+    if (task.deadline && new Date() > task.deadline) {
+      throw new BadRequestException('Submission deadline has passed');
     }
 
     const team = await this.prisma.team.findFirst({
@@ -148,27 +195,27 @@ export class TasksService {
     }
 
     const existing = await this.prisma.submission.findUnique({
-      where: {
-        taskId_teamId: { taskId, teamId: dto.teamId },
-      },
+      where: { taskId_teamId: { taskId, teamId: dto.teamId } },
     });
     if (existing?.status === SubmissionStatus.EVALUATED) {
-      throw new BadRequestException('Submission already evaluated');
+      throw new BadRequestException('Submission is already fully evaluated');
     }
 
     const submission = await this.prisma.submission.upsert({
-      where: {
-        taskId_teamId: { taskId, teamId: dto.teamId },
-      },
+      where: { taskId_teamId: { taskId, teamId: dto.teamId } },
       create: {
         taskId,
         teamId: dto.teamId,
         githubUrl: dto.githubUrl,
         videoUrl: dto.videoUrl,
+        liveUrl: dto.liveUrl ?? null,
+        summary: dto.summary ?? null,
       },
       update: {
         githubUrl: dto.githubUrl,
         videoUrl: dto.videoUrl,
+        liveUrl: dto.liveUrl ?? null,
+        summary: dto.summary ?? null,
       },
     });
     this.logger.info(
@@ -179,12 +226,8 @@ export class TasksService {
   }
 
   async getSubmissionsForTask(taskId: string) {
-    const task = await this.prisma.task.findUnique({
-      where: { id: taskId },
-    });
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
 
     return this.prisma.submission.findMany({
       where: { taskId },
@@ -210,16 +253,39 @@ export class TasksService {
     dto: EvaluateSubmissionDto,
   ) {
     const jury = await this.juryService.findOne(userId);
-    if (!jury) {
-      throw new BadRequestException('Jury profile not found');
-    }
+    if (!jury) throw new BadRequestException('Jury profile not found');
 
     const submission = await this.prisma.submission.findUnique({
       where: { id: submissionId },
-      include: { task: { select: { criteria: true } } },
+      include: {
+        task: {
+          select: {
+            criteria: true,
+            tournamentId: true,
+            status: true,
+          },
+        },
+        assignments: { select: { juryId: true } },
+      },
     });
-    if (!submission) {
-      throw new NotFoundException('Submission not found');
+    if (!submission) throw new NotFoundException('Submission not found');
+
+    if (submission.task.status === TaskStatus.ACTIVE) {
+      throw new BadRequestException(
+        'Submissions are still open — evaluation is not allowed while the task is ACTIVE',
+      );
+    }
+
+    const hasAssignments = submission.assignments.length > 0;
+    if (hasAssignments) {
+      const isAssigned = submission.assignments.some(
+        (a) => a.juryId === jury.id,
+      );
+      if (!isAssigned) {
+        throw new ForbiddenException(
+          'You are not assigned to evaluate this submission',
+        );
+      }
     }
 
     const criteriaUnknown: unknown = submission.task.criteria;
@@ -281,39 +347,50 @@ export class TasksService {
       rubric: dto.scores.map((s) => ({ id: s.id, points: s.points })),
     };
 
-    const [evaluation] = await this.prisma.$transaction([
-      this.prisma.evaluation.upsert({
-        where: {
-          submissionId_juryId: { submissionId, juryId: jury.id },
-        },
-        create: {
-          submissionId,
-          juryId: jury.id,
-          scores: scoresJson,
-          totalScore,
-          comment: dto.comment,
-        },
-        update: {
-          scores: scoresJson,
-          totalScore,
-          comment: dto.comment,
-        },
-      }),
-      this.prisma.submission.update({
-        where: { id: submissionId },
-        data: { status: SubmissionStatus.EVALUATED },
-      }),
-    ]);
-
-    this.logger.info(
-      {
+    const evaluation = await this.prisma.evaluation.upsert({
+      where: { submissionId_juryId: { submissionId, juryId: jury.id } },
+      create: {
         submissionId,
         juryId: jury.id,
-        userId,
+        scores: scoresJson,
         totalScore,
+        comment: dto.comment,
       },
+      update: { scores: scoresJson, totalScore, comment: dto.comment },
+    });
+
+    await this.maybeFinaliseSubmission(submissionId, submission.task.tournamentId);
+
+    this.logger.info(
+      { submissionId, juryId: jury.id, userId, totalScore },
       'Submission evaluated',
     );
     return evaluation;
+  }
+
+  private async maybeFinaliseSubmission(
+    submissionId: string,
+    tournamentId: string,
+  ) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      select: { minJuryPerSubmission: true },
+    });
+    if (!tournament) return;
+
+    const evalCount = await this.prisma.evaluation.count({
+      where: { submissionId },
+    });
+
+    if (evalCount >= tournament.minJuryPerSubmission) {
+      await this.prisma.submission.update({
+        where: { id: submissionId },
+        data: { status: SubmissionStatus.EVALUATED },
+      });
+      this.logger.info(
+        { submissionId, evalCount, required: tournament.minJuryPerSubmission },
+        'Submission marked EVALUATED',
+      );
+    }
   }
 }

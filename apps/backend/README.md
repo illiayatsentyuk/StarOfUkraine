@@ -35,6 +35,8 @@ Copy `.env.example` to `.env` and fill in real values. Never commit `.env`.
 | `PAGE_SIZE` | Default list page size | `10` |
 | `PORT` | HTTP port | `3000` |
 
+`NODE_ENV` (`development` \| `production` \| `test`) controls **log level** (see below) and whether HTTP logs use pretty-printing vs JSON.
+
 Prisma CLI uses **`DIRECT_URL`** for migrations (see `prisma.config.ts`).
 
 ## Run
@@ -60,7 +62,18 @@ Use your team’s workflow for `migrate deploy` in production.
 
 ## Swagger
 
-**Swagger UI**: `GET /api/docs` — e.g. [http://localhost:3000/api/docs](http://localhost:3000/api/docs).
+**Swagger UI**: `GET /api/docs` — e.g. [http://localhost:3000/api/docs](http://localhost:3000/api/docs). Use **Authorize** with either HttpOnly `access_token` (browser) or Bearer JWT where documented.
+
+## Tournaments, tasks, jury, leaderboard
+
+- **Registration**: teams join via `PATCH /tournaments/join/:id` during the registration window (capacity and duplicate rules enforced server-side).
+- **Tasks (rounds)**: created under a tournament (`POST /tournaments/:id/tasks`). Lifecycle: **DRAFT → ACTIVE** (`POST /tasks/:id/activate`) → **SUBMISSION_CLOSED** (`POST /tasks/:id/close-submissions`). Teams submit links while the task is **ACTIVE** and before the deadline (`POST /tasks/:id/submit`).
+- **Jury**: admins add jurors and can **randomly assign** submissions (`POST /jury/tournaments/:tournamentId/assign`). Jurors evaluate assigned submissions (`POST /submissions/:id/evaluate`).
+- **Leaderboard**: `GET /tournaments/:id/leaderboard` returns data only after an admin calls **`POST /tournaments/:id/finish-evaluation`** (sets `evaluationFinishedAt`).
+
+## Logging
+
+HTTP and service logs use **pino** via `pino-nestjs`. In **development**, logs are pretty-printed; in **production**, JSON to stdout. Set **`NODE_ENV=test`** for silent logs during Jest. Sensitive fields (Authorization, cookies, password hashes, refresh tokens) are redacted.
 
 ## Auth (overview)
 

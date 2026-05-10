@@ -6,7 +6,6 @@ import { AuthenticatedSocket } from '../../middleware';
 
 export const Roles = (...roles: string[]) => Reflect.metadata('roles', roles);
 
-// Attach with @UseGuards(WsAuthGuard) on a gateway or individual @SubscribeMessage
 @Injectable()
 export class WsAuthGuard implements CanActivate {
   constructor(
@@ -27,7 +26,6 @@ export class WsAuthGuard implements CanActivate {
       throw new WsException('Unauthorized');
     }
 
-    // Check @Roles() decorator if present on this handler
     const requiredRoles = this.reflector.get<string[]>(
       'roles',
       context.getHandler(),

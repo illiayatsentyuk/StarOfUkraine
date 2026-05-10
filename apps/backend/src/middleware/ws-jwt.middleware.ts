@@ -22,11 +22,9 @@ export class WsJwtMiddleware {
     private readonly logger: PinoLogger,
   ) {}
 
-  // Call this inside your gateway's afterInit()
   apply() {
     return async (socket: AuthenticatedSocket, next: (err?: Error) => void) => {
       try {
-        // Socket.io handshake is an HTTP request — cookie arrives here
         const rawCookie = socket.handshake.headers.cookie ?? '';
         const cookies = cookie.parse(rawCookie);
         const token = cookies['access_token'];
@@ -43,7 +41,6 @@ export class WsJwtMiddleware {
           secret: process.env.JWT_SECRET,
         });
 
-        // Attach user to socket for use in all event handlers
         socket.data.user = {
           id: payload.sub,
           email: payload.email,
@@ -60,7 +57,6 @@ export class WsJwtMiddleware {
           { err, socketId: socket.id },
           'WebSocket JWT verification failed',
         );
-        // Returning an Error to next() causes Socket.io to reject the upgrade
         next(new Error('Unauthorized'));
       }
     };

@@ -51,7 +51,7 @@ pnpm --filter frontend dev
 
 ## API documentation
 
-With the backend running: **Swagger UI** at [http://localhost:3000/api/docs](http://localhost:3000/api/docs) (path may differ if `PORT` is overridden).
+With the backend running: **Swagger UI** at [http://localhost:3000/api/docs](http://localhost:3000/api/docs) (path may differ if `PORT` is overridden). Tournament flows (tasks, jury assignment, leaderboard gating) are summarized in the [backend README](apps/backend/README.md).
 
 ## Testing
 

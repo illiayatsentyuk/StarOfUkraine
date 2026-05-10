@@ -34,8 +34,6 @@ export class TournamentService {
     private readonly logger: PinoLogger,
   ) {}
 
-  // ─── Version helpers ──────────────────────────────────────────────────────
-
   private async getListVersion(): Promise<number> {
     return (await this.cacheManager.get<number>(CacheKeys.LIST_VERSION)) ?? 0;
   }
@@ -64,8 +62,6 @@ export class TournamentService {
     );
   }
 
-  // ─── Mutations ───────────────────────────────────────────────────────────
-
   async create(data: CreateTournamentDto) {
     const existingTournament = await this.prisma.tournament.findFirst({
       where: {
@@ -89,6 +85,7 @@ export class TournamentService {
         status: data.status,
         hideTeamsUntilRegistrationEnds:
           data.hideTeamsUntilRegistrationEnds ?? false,
+        minJuryPerSubmission: data.minJuryPerSubmission ?? 2,
       },
     });
 
@@ -136,6 +133,7 @@ export class TournamentService {
         teamSizeMax: data.teamSizeMax,
         status: data.status,
         hideTeamsUntilRegistrationEnds: data.hideTeamsUntilRegistrationEnds,
+        minJuryPerSubmission: data.minJuryPerSubmission,
       },
     });
 
@@ -157,27 +155,57 @@ export class TournamentService {
   }
 
   async joinTournament(id: string, data: JoinTournamentDto) {
-    const tournament = await this.findOne(id);
+    const now = new Date();
+
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id },
+      include: { teams: { select: { id: true } } },
+    });
     if (!tournament) {
       throw new NotFoundException('Tournament not found');
     }
+
+    if (now < tournament.registrationStart) {
+      throw new BadRequestException('Registration has not started yet');
+    }
+    if (now > tournament.registrationEnd) {
+      throw new BadRequestException('Registration is closed');
+    }
+
+    if (tournament.teams.length >= tournament.maxTeams) {
+      throw new BadRequestException('Tournament is full — maximum teams reached');
+    }
+
     const team = await this.prisma.team.findUnique({
       where: { id: data.teamId },
+      include: { members: { select: { id: true } } },
     });
     if (!team) {
       throw new NotFoundException('Team not found');
     }
 
+    const memberCount = team.members.length;
+    if (memberCount < tournament.teamSizeMin) {
+      throw new BadRequestException(
+        `Team must have at least ${tournament.teamSizeMin} member(s) to register`,
+      );
+    }
+    if (memberCount > tournament.teamSizeMax) {
+      throw new BadRequestException(
+        `Team exceeds the maximum of ${tournament.teamSizeMax} member(s)`,
+      );
+    }
+
+    const alreadyJoined = tournament.teams.some((t) => t.id === team.id);
+    if (alreadyJoined) {
+      throw new BadRequestException('Team is already registered for this tournament');
+    }
+
     const result = await this.prisma.tournament.update({
       where: { id },
-      data: {
-        teams: {
-          connect: { id: team.id },
-        },
-      },
+      data: { teams: { connect: { id: team.id } } },
     });
 
-    // findAll includes teams, so both list and single views are stale
     await Promise.all([this.bumpListVersion(), this.bumpOneVersion(id)]);
 
     this.logger.info(
@@ -187,7 +215,27 @@ export class TournamentService {
     return result;
   }
 
-  // ─── Queries (cache-aside) ────────────────────────────────────────────────
+  async finishEvaluation(tournamentId: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+    });
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+    if (tournament.evaluationFinishedAt) {
+      throw new BadRequestException('Evaluation is already marked as finished');
+    }
+
+    const updated = await this.prisma.tournament.update({
+      where: { id: tournamentId },
+      data: { evaluationFinishedAt: new Date() },
+    });
+
+    await Promise.all([this.bumpListVersion(), this.bumpOneVersion(tournamentId)]);
+
+    this.logger.info({ tournamentId }, 'Evaluation marked as finished');
+    return updated;
+  }
 
   async findAll(query: FindTournamentQueryDto) {
     const listV = await this.getListVersion();
@@ -309,11 +357,18 @@ export class TournamentService {
       where: { id: tournamentId },
       select: {
         id: true,
+        evaluationFinishedAt: true,
         tasks: { select: { id: true, order: true }, orderBy: { order: 'asc' } },
       },
     });
     if (!tournament) {
       throw new NotFoundException('Tournament not found');
+    }
+
+    if (!tournament.evaluationFinishedAt) {
+      throw new BadRequestException(
+        'Leaderboard is not available yet — evaluation has not been finalised by the admin',
+      );
     }
 
     const taskIds = tournament.tasks.map((t) => t.id);
@@ -378,8 +433,6 @@ export class TournamentService {
     return rows;
   }
 
-  // ─── Private helpers ─────────────────────────────────────────────────────
-
   private buildTournamentOrderBy(
     sortBy: TournamentsSortBy,
     sortOrder: SortOrder,
@@ -430,8 +483,6 @@ export class TournamentService {
     return [primary, { id: 'asc' }];
   }
 }
-
-// ─── Local types ─────────────────────────────────────────────────────────────
 
 type LeaderboardRow = {
   team: { id: string; name: string };

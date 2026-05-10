@@ -1,6 +1,10 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { SubmissionStatus, TournamentStatus } from '@prisma/client';
+import { SubmissionStatus, TaskStatus, TournamentStatus } from '@prisma/client';
 import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EvaluateSubmissionDto } from './dto';
@@ -26,6 +30,7 @@ describe('TasksService', () => {
     ) as jest.MockedFunction<(ops: Promise<unknown>[]) => Promise<unknown[]>>,
     evaluation: {
       upsert: jest.fn(),
+      count: jest.fn().mockResolvedValue(1),
     },
     team: {
       findFirst: jest.fn(),
@@ -283,6 +288,93 @@ describe('TasksService', () => {
     });
   });
 
+  describe('activateTask', () => {
+    it('sets ACTIVE when task is DRAFT', async () => {
+      const activatedAt = new Date('2026-04-15T10:00:00.000Z');
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.DRAFT,
+        startsAt: null,
+      });
+      mockPrisma.task.update.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.ACTIVE,
+        startsAt: activatedAt,
+      });
+
+      const result = await service.activateTask('task-1');
+
+      expect(result.status).toBe(TaskStatus.ACTIVE);
+      expect(mockPrisma.task.update).toHaveBeenCalledWith({
+        where: { id: 'task-1' },
+        data: { status: TaskStatus.ACTIVE, startsAt: expect.any(Date) },
+      });
+      expect(mockPinoLogger.info).toHaveBeenCalledWith(
+        { taskId: 'task-1' },
+        'Task activated',
+      );
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.activateTask('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+
+    it('throws when task is not DRAFT', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.ACTIVE,
+      });
+
+      await expect(service.activateTask('task-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe('closeSubmissions', () => {
+    it('sets SUBMISSION_CLOSED when task is ACTIVE', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.ACTIVE,
+      });
+      mockPrisma.task.update.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.SUBMISSION_CLOSED,
+      });
+
+      const result = await service.closeSubmissions('task-1');
+
+      expect(result.status).toBe(TaskStatus.SUBMISSION_CLOSED);
+      expect(mockPinoLogger.info).toHaveBeenCalledWith(
+        { taskId: 'task-1' },
+        'Task submissions closed',
+      );
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.closeSubmissions('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+
+    it('throws when task is not ACTIVE', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        id: 'task-1',
+        status: TaskStatus.DRAFT,
+      });
+
+      await expect(service.closeSubmissions('task-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
   describe('submitTask', () => {
     const taskRow = {
       id: 'task-1',
@@ -290,6 +382,8 @@ describe('TasksService', () => {
       name: 'Round 1',
       description: '# Desc',
       order: 1,
+      status: TaskStatus.ACTIVE,
+      deadline: null,
       criteria: { rubric: [] },
     };
 
@@ -342,7 +436,30 @@ describe('TasksService', () => {
       });
 
       await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
-        new BadRequestException('Submission already evaluated'),
+        new BadRequestException('Submission is already fully evaluated'),
+      );
+    });
+
+    it('throws when task is not ACTIVE', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        ...taskRow,
+        status: TaskStatus.DRAFT,
+      });
+
+      await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+
+    it('throws when deadline has passed', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        ...taskRow,
+        deadline: new Date(Date.now() - 60_000),
+      });
+      mockPrisma.team.findFirst.mockResolvedValue({ id: 'team-1' });
+
+      await expect(service.submitTask('task-1', submitDto)).rejects.toThrow(
+        new BadRequestException('Submission deadline has passed'),
       );
     });
   });
@@ -421,10 +538,11 @@ describe('TasksService', () => {
       comment: 'ok',
     };
 
-    it('upserts evaluation and finalizes submission', async () => {
+    it('upserts evaluation and marks submission EVALUATED when minJuryPerSubmission reached', async () => {
       mockJuryService.findOne.mockResolvedValue(juryRow);
       mockPrisma.submission.findUnique.mockResolvedValue({
         id: 'sub-1',
+        assignments: [],
         task: {
           criteria: {
             rubric: [
@@ -432,9 +550,16 @@ describe('TasksService', () => {
               { id: 'code', maxPoints: 30 },
             ],
           },
+          tournamentId: 'tournament-1',
+          status: 'SUBMISSION_CLOSED',
         },
       });
       mockPrisma.evaluation.upsert.mockResolvedValue({ id: 'eval-1' });
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        id: 'tournament-1',
+        minJuryPerSubmission: 1,
+      });
+      mockPrisma.evaluation.count.mockResolvedValue(1);
       mockPrisma.submission.update.mockResolvedValue({
         id: 'sub-1',
         status: SubmissionStatus.EVALUATED,
@@ -443,7 +568,6 @@ describe('TasksService', () => {
       const result = await service.evaluateSubmission('sub-1', userId, dto);
 
       expect(result).toEqual({ id: 'eval-1' });
-      expect(mockPrisma.$transaction).toHaveBeenCalled();
       expect(mockPrisma.evaluation.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
@@ -469,10 +593,13 @@ describe('TasksService', () => {
       mockJuryService.findOne.mockResolvedValue(juryRow);
       mockPrisma.submission.findUnique.mockResolvedValue({
         id: 'sub-1',
+        assignments: [],
         task: {
           criteria: {
             rubric: [{ id: 'code', maxPoints: 10 }],
           },
+          tournamentId: 'tournament-1',
+          status: 'SUBMISSION_CLOSED',
         },
       });
 
@@ -483,6 +610,47 @@ describe('TasksService', () => {
         } satisfies EvaluateSubmissionDto),
       ).rejects.toThrow(
         new BadRequestException('Points for "code" exceed maxPoints (11 > 10)'),
+      );
+    });
+
+    it('throws when task is still ACTIVE', async () => {
+      mockJuryService.findOne.mockResolvedValue(juryRow);
+      mockPrisma.submission.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        assignments: [],
+        task: {
+          criteria: {
+            rubric: [{ id: 'code', maxPoints: 10 }],
+          },
+          tournamentId: 'tournament-1',
+          status: TaskStatus.ACTIVE,
+        },
+      });
+
+      await expect(
+        service.evaluateSubmission('sub-1', userId, dto),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws when jury is not assigned to submission', async () => {
+      mockJuryService.findOne.mockResolvedValue(juryRow);
+      mockPrisma.submission.findUnique.mockResolvedValue({
+        id: 'sub-1',
+        assignments: [{ juryId: 'other-jury' }],
+        task: {
+          criteria: {
+            rubric: [
+              { id: 'functionality', maxPoints: 40 },
+              { id: 'code', maxPoints: 30 },
+            ],
+          },
+          tournamentId: 'tournament-1',
+          status: TaskStatus.SUBMISSION_CLOSED,
+        },
+      });
+
+      await expect(service.evaluateSubmission('sub-1', userId, dto)).rejects.toThrow(
+        ForbiddenException,
       );
     });
   });
