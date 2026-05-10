@@ -158,6 +158,7 @@ describe('Auth (e2e)', () => {
             id: userMock.id,
             email: userMock.email,
             name: userMock.name,
+            nameId: null,
             image: null,
             role: userMock.role,
             createdAt: new Date('2025-01-01'),
@@ -181,16 +182,13 @@ describe('Auth (e2e)', () => {
 
     const me = await agent.post('/auth/me').expect(200);
     expect(me.body).toMatchObject({
-      message: 'Authenticated',
-      role: userMock.role,
-    });
-    expect(me.body.user).toMatchObject({
       id: userMock.id,
       email: userMock.email,
       name: userMock.name,
+      role: userMock.role,
     });
-    expect(me.body.user).not.toHaveProperty('hash');
-    expect(me.body.user).not.toHaveProperty('hashedRt');
+    expect(me.body).not.toHaveProperty('hash');
+    expect(me.body).not.toHaveProperty('hashedRt');
   });
 
   it('POST /auth/refresh returns 403 when stored refresh hash is missing', async () => {

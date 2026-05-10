@@ -165,14 +165,17 @@ export class TournamentService {
       throw new NotFoundException('Tournament not found');
     }
 
-    if (now < tournament.registrationStart) {
+    const registrationStart = new Date(tournament.registrationStart);
+    const registrationEnd = new Date(tournament.registrationEnd);
+    if (now < registrationStart) {
       throw new BadRequestException('Registration has not started yet');
     }
-    if (now > tournament.registrationEnd) {
+    if (now > registrationEnd) {
       throw new BadRequestException('Registration is closed');
     }
 
-    if (tournament.teams.length >= tournament.maxTeams) {
+    const teams = tournament.teams ?? [];
+    if (teams.length >= tournament.maxTeams) {
       throw new BadRequestException('Tournament is full — maximum teams reached');
     }
 
@@ -184,7 +187,7 @@ export class TournamentService {
       throw new NotFoundException('Team not found');
     }
 
-    const memberCount = team.members.length;
+    const memberCount = team.members?.length ?? 0;
     if (memberCount < tournament.teamSizeMin) {
       throw new BadRequestException(
         `Team must have at least ${tournament.teamSizeMin} member(s) to register`,
@@ -196,7 +199,7 @@ export class TournamentService {
       );
     }
 
-    const alreadyJoined = tournament.teams.some((t) => t.id === team.id);
+    const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {
       throw new BadRequestException('Team is already registered for this tournament');
     }
