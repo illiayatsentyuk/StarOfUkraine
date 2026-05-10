@@ -40,7 +40,7 @@
     //- Ще не відправлено
     form.submission-form(v-else @submit.prevent="handleSubmit")
         .field
-            label(for="github") Посилання на GitHub
+            label(for="github") Посилання на GitHub *
             .input-wrapper
                 i.pi.pi-github
                 InputText#github.custom-input(
@@ -49,13 +49,28 @@
                     required
                 )
         .field
-            label(for="youtube") Посилання на YouTube (Demo)
+            label(for="youtube") Відео-демо (YouTube) *
             .input-wrapper
                 i.pi.pi-youtube
                 InputText#youtube.custom-input(
                     v-model="submissionYoutube"
                     placeholder="https://youtube.com/..."
                 )
+        .field
+            label(for="live") Live Demo (опціонально)
+            .input-wrapper
+                i.pi.pi-globe
+                InputText#live.custom-input(
+                    v-model="submissionLive"
+                    placeholder="https://myapp.vercel.app"
+                )
+        .field
+            label(for="summary") Короткий опис (опціонально)
+            textarea#summary.summary-input(
+                v-model="submissionSummary"
+                placeholder="Що зробили, як запустити..."
+                rows="3"
+            )
         Button.submit-btn(
             type="submit"
             label="ВІДПРАВИТИ НА ПЕРЕВІРКУ"
@@ -76,11 +91,13 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (e: 'submit', payload: { github: string; youtube: string }): void
+    (e: 'submit', payload: { github: string; youtube: string; liveUrl?: string; summary?: string }): void
 }>()
 
 const submissionGithub = ref(props.mySubmission?.githubUrl ?? '')
 const submissionYoutube = ref(props.mySubmission?.videoUrl ?? '')
+const submissionLive = ref((props.mySubmission as any)?.liveUrl ?? '')
+const submissionSummary = ref((props.mySubmission as any)?.summary ?? '')
 const showResubmit = ref(false)
 
 function handleSubmit() {
@@ -88,6 +105,8 @@ function handleSubmit() {
     emit('submit', {
         github: submissionGithub.value,
         youtube: submissionYoutube.value,
+        liveUrl: submissionLive.value || undefined,
+        summary: submissionSummary.value || undefined,
     })
     showResubmit.value = false
 }
@@ -194,6 +213,25 @@ function handleSubmit() {
                     background: white !important;
                     outline: none;
                 }
+            }
+        }
+
+        .summary-input {
+            width: 100%;
+            padding: 12px !important;
+            background: var(--color-bg-secondary) !important;
+            border: 1px solid var(--color-border) !important;
+            font-size: 13px !important;
+            color: var(--color-text) !important;
+            transition: all 0.2s;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
+
+            &:focus {
+                border-color: var(--color-primary) !important;
+                background: white !important;
+                outline: none;
             }
         }
     }

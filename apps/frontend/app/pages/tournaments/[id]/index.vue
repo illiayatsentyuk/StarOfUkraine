@@ -27,6 +27,9 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
+                .content-section(v-if="authStore.isAdmin")
+                    TournamentJuryManager(:tournamentId="tournamentId")
+
                 .content-section.leaderboard-action(v-if="!shouldHideTeams")
                     h2 Рейтинг команд
                     p.desc Перегляньте поточний лідерборд турніру та результати оцінювання.
@@ -80,6 +83,7 @@ section.tournament-detail
 import type { LeaderboardRow, Tournament, Team } from '~/types'
 import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 import TournamentLeaderboardTable from '~/components/tournaments/TournamentLeaderboardTable.vue'
+import TournamentJuryManager from '~/components/tournaments/TournamentJuryManager.vue'
 
 const route = useRoute()
 const tournamentStore = useTournamentsStore()

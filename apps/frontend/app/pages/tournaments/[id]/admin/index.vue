@@ -71,6 +71,17 @@ section.judge-dashboard
                                 )
                                     i.pi.pi-youtube
                                     span Demo
+                                a.link-btn(
+                                    v-if="getSubmission(selectedTeam.id, task.id).liveUrl"
+                                    :href="getSubmission(selectedTeam.id, task.id).liveUrl"
+                                    target="_blank"
+                                )
+                                    i.pi.pi-globe
+                                    span Live
+
+                            .submission-summary(v-if="getSubmission(selectedTeam.id, task.id).summary")
+                                h4 Опис від команди:
+                                p {{ getSubmission(selectedTeam.id, task.id).summary }}
 
                             .graded-info(v-if="getSubmission(selectedTeam.id, task.id).status === 'EVALUATED'")
                                 i.pi.pi-check-circle
@@ -455,6 +466,28 @@ async function handleGrade(submission: any, task: any) {
                 color: var(--color-text);
                 transition: all 0.2s;
                 &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+            }
+        }
+
+        .submission-summary {
+            margin-bottom: 16px;
+            padding: 12px;
+            background: var(--color-bg);
+            border-left: 3px solid var(--color-primary);
+            h4 {
+                font-size: 11px;
+                font-weight: 800;
+                color: var(--color-primary);
+                text-transform: uppercase;
+                margin: 0 0 6px 0;
+                letter-spacing: 0.5px;
+            }
+            p {
+                font-size: 13px;
+                line-height: 1.5;
+                margin: 0;
+                color: var(--color-text);
+                white-space: pre-wrap;
             }
         }
 

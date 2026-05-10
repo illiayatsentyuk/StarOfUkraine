@@ -12,6 +12,9 @@ header.task-detail__hero
     .meta-item
         i.pi.pi-calendar
         span Раунд: {{ task.order }}
+    .meta-item(v-if="task.deadline")
+        i.pi.pi-clock
+        span Дедлайн: {{ formatDate(task.deadline) }}
 </template>
 
 <script setup lang="ts">
@@ -21,6 +24,16 @@ import type { TournamentTask } from '~/types'
 const props = defineProps<{
   task: TournamentTask
 }>()
+
+const formatDate = (date: string | Date) => {
+    return new Date(date).toLocaleString('uk-UA', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    })
+}
 
 const maxPoints = computed(() =>
     (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),

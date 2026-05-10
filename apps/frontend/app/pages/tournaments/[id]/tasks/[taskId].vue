@@ -82,9 +82,17 @@ onMounted(async () => {
     if (!hasCurrentTournamentTasks || !hasCurrentTask) {
         await store.fetchTasks(tournamentId.value)
     }
+
+    // Fetch my submission by teamId (new API)
+    if (authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury) {
+        const teamId = teamsStore.activeTeamId || teamsStore.currentTeam?.id
+        if (teamId) {
+            await store.fetchMySubmission(taskId.value, teamId)
+        }
+    }
 })
 
-async function handleSubmit(payload: { github: string; youtube: string }) {
+async function handleSubmit(payload: { github: string; youtube: string; liveUrl?: string; summary?: string }) {
     if (!task.value) return
 
     const teamId = (route.query.teamId as string) || teamsStore.activeTeamId || teamsStore.currentTeam?.id
@@ -97,6 +105,8 @@ async function handleSubmit(payload: { github: string; youtube: string }) {
         teamId,
         githubUrl: payload.github,
         videoUrl: payload.youtube,
+        liveUrl: payload.liveUrl,
+        summary: payload.summary,
     })
 }
 </script>
