@@ -23,9 +23,9 @@ services:
       dockerfile: apps/frontend/Dockerfile
       target: development
     ports:
-      - '5173:5173'   # adjust to your framework (Next.js = 3001, Vite = 5173, etc.)
+      - '4040:4040'
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:3000   # or VITE_API_URL etc.
+      NUXT_PUBLIC_API_URL: http://localhost:3000
     volumes:
       - ./apps/frontend/app:/app/apps/frontend/app
       - ./apps/frontend/public:/app/apps/frontend/public

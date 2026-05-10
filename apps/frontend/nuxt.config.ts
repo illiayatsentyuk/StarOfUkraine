@@ -34,7 +34,10 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiURL: process.env.API_URL || 'https://starofukraine.onrender.com',
+      apiURL:
+        process.env.NUXT_PUBLIC_API_URL ||
+        process.env.API_URL ||
+        'https://starofukraine.onrender.com',
       devAdminEmail: process.env.DEV_ADMIN_EMAIL,
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
@@ -59,6 +62,7 @@ export default defineNuxtConfig({
     },
   ],
   devServer: {
+    host: '0.0.0.0',
     port: 4040,
   },
 }) 

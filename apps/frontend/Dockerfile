@@ -11,7 +11,8 @@ RUN pnpm install --frozen-lockfile --filter frontend...
 FROM base AS development
 COPY apps/frontend ./apps/frontend
 WORKDIR /app
-CMD ["pnpm", "--filter", "frontend", "run", "dev", "--", "--host", "0.0.0.0"]
+EXPOSE 4040
+CMD ["pnpm", "--filter", "frontend", "run", "dev"]
 
 FROM base AS production
 COPY apps/frontend ./apps/frontend
