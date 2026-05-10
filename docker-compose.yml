@@ -1,9 +1,8 @@
-version: '3.9'
-
 services:
   backend:
     build:
-      context: ./apps/backend
+      context: .
+      dockerfile: apps/backend/Dockerfile
       target: development
     ports:
       - '3000:3000'
@@ -11,7 +10,7 @@ services:
       REDIS_URL: redis://redis:6379
       NODE_ENV: development
     volumes:
-      - ./apps/backend/src:/app/src
+      - ./apps/backend/src:/app/apps/backend/src
     depends_on:
       redis:
         condition: service_healthy
@@ -20,14 +19,16 @@ services:
 
   frontend:
     build:
-      context: ./apps/frontend
+      context: .
+      dockerfile: apps/frontend/Dockerfile
       target: development
     ports:
       - '5173:5173'   # adjust to your framework (Next.js = 3001, Vite = 5173, etc.)
     environment:
       NEXT_PUBLIC_API_URL: http://backend:3000   # or VITE_API_URL etc.
     volumes:
-      - ./apps/frontend/src:/app/src
+      - ./apps/frontend/app:/app/apps/frontend/app
+      - ./apps/frontend/public:/app/apps/frontend/public
     depends_on:
       - backend
     networks:
