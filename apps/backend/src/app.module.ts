@@ -19,11 +19,11 @@ import resetPasswordConfig from './config/reset-password.config';
 import sendMailConfig from './config/send-mail.config';
 import { EmailModule } from './email/email.module';
 import { GatewayModule } from './gateway/gateway.module';
+import { JuryModule } from './jury/jury.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TeamModule } from './team/team.module';
 import { TournamentModule } from './tournament/tournament.module';
 import { UsersModule } from './users/users.module';
-import { JuryModule } from './jury/jury.module';
 
 @Module({
   imports: [

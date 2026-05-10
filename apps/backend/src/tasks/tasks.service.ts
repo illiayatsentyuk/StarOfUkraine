@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma, SubmissionStatus, TaskStatus } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
+import { JuryService } from 'src/jury/jury.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type {
   CreateTournamentTasksDto,
@@ -13,7 +14,6 @@ import type {
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
-import { JuryService } from 'src/jury/jury.service';
 
 @Injectable()
 export class TasksService {
@@ -127,7 +127,9 @@ export class TasksService {
         }),
         ...(dto.startsAt !== undefined && { startsAt: dto.startsAt }),
         ...(dto.deadline !== undefined && { deadline: dto.deadline }),
-        ...(dto.materialUrls !== undefined && { materialUrls: dto.materialUrls }),
+        ...(dto.materialUrls !== undefined && {
+          materialUrls: dto.materialUrls,
+        }),
       },
     });
     this.logger.info(
@@ -147,7 +149,10 @@ export class TasksService {
     }
     const updated = await this.prisma.task.update({
       where: { id },
-      data: { status: TaskStatus.ACTIVE, startsAt: task.startsAt ?? new Date() },
+      data: {
+        status: TaskStatus.ACTIVE,
+        startsAt: task.startsAt ?? new Date(),
+      },
     });
     this.logger.info({ taskId: id }, 'Task activated');
     return updated;
@@ -359,7 +364,10 @@ export class TasksService {
       update: { scores: scoresJson, totalScore, comment: dto.comment },
     });
 
-    await this.maybeFinaliseSubmission(submissionId, submission.task.tournamentId);
+    await this.maybeFinaliseSubmission(
+      submissionId,
+      submission.task.tournamentId,
+    );
 
     this.logger.info(
       { submissionId, juryId: jury.id, userId, totalScore },

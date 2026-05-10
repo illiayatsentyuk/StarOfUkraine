@@ -505,7 +505,9 @@ describe('TournamentService', () => {
 
       await expect(
         service.joinTournament('tournament-1', { teamId: 'team-1' }),
-      ).rejects.toThrow(new BadRequestException('Registration has not started yet'));
+      ).rejects.toThrow(
+        new BadRequestException('Registration has not started yet'),
+      );
     });
 
     it('throws when registration is closed', async () => {
@@ -529,7 +531,9 @@ describe('TournamentService', () => {
 
       await expect(
         service.joinTournament('tournament-1', { teamId: 'team-1' }),
-      ).rejects.toThrow(new BadRequestException('Tournament is full — maximum teams reached'));
+      ).rejects.toThrow(
+        new BadRequestException('Tournament is full — maximum teams reached'),
+      );
     });
 
     it('throws when team is not found', async () => {
@@ -553,7 +557,11 @@ describe('TournamentService', () => {
 
       await expect(
         service.joinTournament('tournament-1', { teamId: 'team-1' }),
-      ).rejects.toThrow(new BadRequestException('Team is already registered for this tournament'));
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Team is already registered for this tournament',
+        ),
+      );
     });
   });
 

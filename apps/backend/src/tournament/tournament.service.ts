@@ -176,7 +176,9 @@ export class TournamentService {
 
     const teams = tournament.teams ?? [];
     if (teams.length >= tournament.maxTeams) {
-      throw new BadRequestException('Tournament is full — maximum teams reached');
+      throw new BadRequestException(
+        'Tournament is full — maximum teams reached',
+      );
     }
 
     const team = await this.prisma.team.findUnique({
@@ -201,7 +203,9 @@ export class TournamentService {
 
     const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {
-      throw new BadRequestException('Team is already registered for this tournament');
+      throw new BadRequestException(
+        'Team is already registered for this tournament',
+      );
     }
 
     const result = await this.prisma.tournament.update({
@@ -234,7 +238,10 @@ export class TournamentService {
       data: { evaluationFinishedAt: new Date() },
     });
 
-    await Promise.all([this.bumpListVersion(), this.bumpOneVersion(tournamentId)]);
+    await Promise.all([
+      this.bumpListVersion(),
+      this.bumpOneVersion(tournamentId),
+    ]);
 
     this.logger.info({ tournamentId }, 'Evaluation marked as finished');
     return updated;
