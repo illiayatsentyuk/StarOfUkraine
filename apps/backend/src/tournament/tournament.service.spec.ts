@@ -455,10 +455,24 @@ describe('TournamentService', () => {
   });
 
   describe('joinTournament', () => {
+    const now = new Date();
+    const openTournament = {
+      ...tournamentMock,
+      registrationStart: new Date(now.getTime() - 60_000),
+      registrationEnd: new Date(now.getTime() + 60_000),
+      maxTeams: 64,
+      teamSizeMin: 1,
+      teamSizeMax: 10,
+      teams: [],
+    };
+
     it('connects team and bumps list and tournament cache versions', async () => {
-      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
-      mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
-      const updated = { ...tournamentMock, teams: [{ id: 'team-1' }] };
+      mockPrisma.tournament.findUnique.mockResolvedValue(openTournament);
+      mockPrisma.team.findUnique.mockResolvedValue({
+        id: 'team-1',
+        members: [{ id: 'user-1' }, { id: 'user-2' }],
+      });
+      const updated = { ...openTournament, teams: [{ id: 'team-1' }] };
       mockPrisma.tournament.update.mockResolvedValue(updated);
 
       const result = await service.joinTournament('tournament-1', {
@@ -466,9 +480,6 @@ describe('TournamentService', () => {
       });
 
       expect(result).toEqual(updated);
-      expect(mockPrisma.team.findUnique).toHaveBeenCalledWith({
-        where: { id: 'team-1' },
-      });
       expect(mockPrisma.tournament.update).toHaveBeenCalledWith({
         where: { id: 'tournament-1' },
         data: { teams: { connect: { id: 'team-1' } } },
@@ -485,13 +496,64 @@ describe('TournamentService', () => {
       );
     });
 
+    it('throws when registration is not open yet', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        registrationStart: new Date(now.getTime() + 60_000),
+        registrationEnd: new Date(now.getTime() + 120_000),
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).rejects.toThrow(new BadRequestException('Registration has not started yet'));
+    });
+
+    it('throws when registration is closed', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        registrationStart: new Date(now.getTime() - 120_000),
+        registrationEnd: new Date(now.getTime() - 60_000),
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).rejects.toThrow(new BadRequestException('Registration is closed'));
+    });
+
+    it('throws when tournament is full', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        maxTeams: 1,
+        teams: [{ id: 'existing-team' }],
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).rejects.toThrow(new BadRequestException('Tournament is full — maximum teams reached'));
+    });
+
     it('throws when team is not found', async () => {
-      mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
+      mockPrisma.tournament.findUnique.mockResolvedValue(openTournament);
       mockPrisma.team.findUnique.mockResolvedValue(null);
 
       await expect(
         service.joinTournament('tournament-1', { teamId: 'missing' }),
       ).rejects.toThrow(new NotFoundException('Team not found'));
+    });
+
+    it('throws when team is already registered', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        teams: [{ id: 'team-1' }],
+      });
+      mockPrisma.team.findUnique.mockResolvedValue({
+        id: 'team-1',
+        members: [{ id: 'user-1' }, { id: 'user-2' }],
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).rejects.toThrow(new BadRequestException('Team is already registered for this tournament'));
     });
   });
 
@@ -517,6 +579,7 @@ describe('TournamentService', () => {
     it('computes sum of jury average scores across tasks and sorts', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue({
         id: 'tournament-1',
+        evaluationFinishedAt: new Date(),
         tasks: [
           { id: 'task-1', order: 1 },
           { id: 'task-2', order: 2 },
@@ -571,11 +634,71 @@ describe('TournamentService', () => {
       );
     });
 
+    it('throws when evaluation not yet finalised', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        id: 'tournament-1',
+        evaluationFinishedAt: null,
+        tasks: [],
+      });
+
+      await expect(service.getLeaderboard('tournament-1')).rejects.toThrow(
+        new BadRequestException(
+          'Leaderboard is not available yet — evaluation has not been finalised by the admin',
+        ),
+      );
+    });
+
     it('throws when tournament not found', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(null);
 
       await expect(service.getLeaderboard('missing')).rejects.toThrow(
         new NotFoundException('Tournament not found'),
+      );
+    });
+  });
+
+  describe('finishEvaluation', () => {
+    it('sets evaluationFinishedAt and invalidates list/one cache keys', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...tournamentMock,
+        evaluationFinishedAt: null,
+      });
+      const updated = {
+        ...tournamentMock,
+        evaluationFinishedAt: new Date('2026-05-01T12:00:00.000Z'),
+      };
+      mockPrisma.tournament.update.mockResolvedValue(updated);
+
+      const result = await service.finishEvaluation('tournament-1');
+
+      expect(result.evaluationFinishedAt).toBeDefined();
+      expect(mockPrisma.tournament.update).toHaveBeenCalledWith({
+        where: { id: 'tournament-1' },
+        data: { evaluationFinishedAt: expect.any(Date) },
+      });
+      expect(mockCache.set).toHaveBeenCalled();
+      expect(mockPinoLogger.info).toHaveBeenCalledWith(
+        { tournamentId: 'tournament-1' },
+        'Evaluation marked as finished',
+      );
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.finishEvaluation('missing')).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
+    });
+
+    it('throws when evaluation already finished', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...tournamentMock,
+        evaluationFinishedAt: new Date('2026-04-01T00:00:00.000Z'),
+      });
+
+      await expect(service.finishEvaluation('tournament-1')).rejects.toThrow(
+        new BadRequestException('Evaluation is already marked as finished'),
       );
     });
   });

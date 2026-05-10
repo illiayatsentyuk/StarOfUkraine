@@ -210,8 +210,8 @@ export class AuthController {
     status: 302,
     description: 'Redirect to Google authorization',
   })
-  googleLogin() {
-    // here we should redirect to google login page
+  googleLogin(): void {
+    return;
   }
 
   @Public()

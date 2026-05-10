@@ -92,4 +92,13 @@ export class UpdateTournamentDto {
   @IsOptional()
   @IsBoolean()
   hideTeamsUntilRegistrationEnds?: boolean;
+
+  @ApiPropertyOptional({
+    example: 2,
+    description: 'Скільки членів журі повинні оцінити кожну роботу',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  minJuryPerSubmission?: number;
 }

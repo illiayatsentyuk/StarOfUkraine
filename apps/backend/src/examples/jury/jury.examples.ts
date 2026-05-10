@@ -16,5 +16,13 @@ export const juryExamples = {
   removeResponse: {
     message: 'Jury removed successfully',
   },
+  assignJuryRequest: {
+    submissionsPerJury: 4,
+  },
+  assignJuryResponse: {
+    assignmentsCreated: 24,
+    submissionsCount: 12,
+    juryCount: 6,
+  },
 } as const;
 

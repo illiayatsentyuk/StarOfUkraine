@@ -29,6 +29,13 @@ enum SubmissionStatus {
   EVALUATED
 }
 
+enum TaskStatus {
+  DRAFT
+  ACTIVE
+  SUBMISSION_CLOSED
+  EVALUATED
+}
+
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
@@ -36,7 +43,7 @@ model User {
   hashedRt  String?   @unique
   name      String?
   nameId    String?   @unique
-  image     String? 
+  image     String?
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -61,13 +68,13 @@ model Account {
   @@index([userId])
 }
 
-/// Jury-specific profile; one row per user with role JURY when those fields are used.
 model Jury {
   id               String       @id @default(cuid())
   userId           String       @unique
   user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   tournaments      Tournament[]
   evaluations      Evaluation[]
+  assignments      SubmissionAssignment[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -101,8 +108,10 @@ model Tournament {
   rounds                        Int
   teamSizeMin                   Int
   teamSizeMax                   Int
+  minJuryPerSubmission          Int              @default(2)
   status                        TournamentStatus @default(DRAFT)
   hideTeamsUntilRegistrationEnds Boolean         @default(false)
+  evaluationFinishedAt          DateTime?
   teams                         Team[]           @relation("TournamentTeams")
   jurors                        Jury[]
   tasks                         Task[]
@@ -117,6 +126,10 @@ model Task {
   name          String
   description   String     @db.Text
   order         Int
+  status        TaskStatus @default(DRAFT)
+  startsAt      DateTime?
+  deadline      DateTime?
+  materialUrls  String[]   @default([])
   criteria      Json
   submissions   Submission[]
 
@@ -131,11 +144,27 @@ model Submission {
   team        Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
   githubUrl   String
   videoUrl    String
+  liveUrl     String?
+  summary     String?           @db.Text
   status      SubmissionStatus  @default(PENDING)
   evaluations Evaluation[]
+  assignments SubmissionAssignment[]
 
   @@unique([taskId, teamId])
   @@index([teamId])
+}
+
+model SubmissionAssignment {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  juryId       String
+  jury         Jury       @relation(fields: [juryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([submissionId, juryId])
+  @@index([juryId])
+  @@index([submissionId])
 }
 
 model Evaluation {
@@ -151,5 +180,3 @@ model Evaluation {
   @@unique([submissionId, juryId])
   @@index([juryId])
 }
-
-

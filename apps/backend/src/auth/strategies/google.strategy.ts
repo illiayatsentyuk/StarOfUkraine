@@ -44,7 +44,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       name: profile._json.name,
       picture,
     });
-    // Normalize shape to match JWT payload used across the app (sub/email/role).
     done(null, { sub: user.id, email: user.email, role: user.role });
   }
 }

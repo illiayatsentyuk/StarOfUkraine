@@ -22,6 +22,25 @@ export const tasksExamples = {
     order: 1,
     criteria: { rubric: [] },
   },
+  taskActiveResponse: {
+    id: 'clx_task_123',
+    tournamentId: 'clx_tournament_123',
+    name: 'Раунд 1 — Відбірковий',
+    description: '## Завдання\n\n',
+    order: 1,
+    status: 'ACTIVE',
+    criteria: { rubric: [] },
+    startsAt: '2026-04-15T10:00:00.000Z',
+  },
+  taskSubmissionClosedResponse: {
+    id: 'clx_task_123',
+    tournamentId: 'clx_tournament_123',
+    name: 'Раунд 1 — Відбірковий',
+    description: '## Завдання\n\n',
+    order: 1,
+    status: 'SUBMISSION_CLOSED',
+    criteria: { rubric: [] },
+  },
   tasksListResponse: [
     {
       id: 'clx_task_123',
@@ -50,6 +69,9 @@ export const tasksExamples = {
     teamId: 'clx_team_abc',
     githubUrl: 'https://github.com/org/project',
     videoUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    liveUrl: 'https://my-app.vercel.app',
+    summary:
+      'Реалізовано REST API на NestJS з PostgreSQL. Для запуску: npm start',
   },
   submissionResponse: {
     id: 'clx_submission_123',

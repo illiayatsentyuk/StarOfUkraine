@@ -238,7 +238,6 @@ describe('Auth (e2e)', () => {
       .split(';')[0]
       .replace('refresh_token=', '');
 
-    // refreshTokens() checks DB hashedRt against cookie refresh token
     mockPrisma.user.findUnique.mockResolvedValue({
       ...userMock,
       hashedRt: bcrypt.hashSync(refreshToken, 10),

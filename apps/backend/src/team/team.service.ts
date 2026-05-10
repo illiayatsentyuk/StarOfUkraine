@@ -206,7 +206,6 @@ export class TeamService {
     const email = this.normalizeEmail(userEmail);
     await this.assertUserExistsByEmail(email);
 
-    // Treat missing field in mocks/legacy rows as "true"; block only when explicitly false.
     if (team.isAcceptNewMembers === false) {
       throw new BadRequestException('Team is not accepting new members');
     }

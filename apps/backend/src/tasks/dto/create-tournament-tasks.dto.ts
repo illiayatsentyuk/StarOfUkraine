@@ -1,11 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMinSize,
   IsArray,
+  IsDate,
   IsInt,
   IsObject,
+  IsOptional,
   IsString,
+  IsUrl,
   Min,
   MinLength,
   ValidateNested,
@@ -29,6 +32,38 @@ export class CreateTaskItemDto {
   @IsInt()
   @Min(0)
   order: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-04-01T09:00:00.000Z',
+    description: 'Дата/час початку раунду',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startsAt?: Date;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-04-02T23:59:59.000Z',
+    description: 'Дедлайн здачі (кінець подачі рішень)',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  deadline?: Date;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['https://drive.google.com/...', 'https://docs.example.com'],
+    description: 'Додаткові матеріали (посилання)',
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUrl({ require_protocol: true }, { each: true })
+  materialUrls?: string[];
 
   @ApiProperty({
     example: {

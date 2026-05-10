@@ -56,6 +56,11 @@ export const tournamentExamples = {
     totalPages: 3,
     itemsPerPage: 10,
   },
+  finishEvaluationResponse: {
+    id: 'clx_tournament_123',
+    name: 'Star of Ukraine Cup 2026',
+    evaluationFinishedAt: '2026-05-01T12:00:00.000Z',
+  },
   leaderboardResponse: [
     {
       team: { id: 'clx_team_abc', name: 'Team Alpha' },
