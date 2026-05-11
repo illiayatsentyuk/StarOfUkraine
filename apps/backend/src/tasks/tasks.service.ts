@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { Prisma, SubmissionStatus, TaskStatus } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { JuryService } from 'src/jury/jury.service';
@@ -14,6 +16,7 @@ import type {
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
+import { SOCKET_SERVICE } from './tasks.module';
 
 @Injectable()
 export class TasksService {
@@ -22,6 +25,7 @@ export class TasksService {
     @InjectPinoLogger(TasksService.name)
     private readonly logger: PinoLogger,
     private readonly juryService: JuryService,
+    @Inject(SOCKET_SERVICE) private readonly socketClient: ClientProxy,
   ) {}
 
   async createTasks(tournamentId: string, dto: CreateTournamentTasksDto) {
@@ -227,6 +231,14 @@ export class TasksService {
       { taskId, teamId: dto.teamId, submissionId: submission.id },
       'Task submission upserted',
     );
+
+    this.socketClient.emit('task.submitted', {
+      tournamentId: task.tournamentId,
+      taskId,
+      teamId: dto.teamId,
+      submissionId: submission.id,
+    });
+
     return submission;
   }
 
@@ -364,7 +376,7 @@ export class TasksService {
       update: { scores: scoresJson, totalScore, comment: dto.comment },
     });
 
-    await this.maybeFinaliseSubmission(
+    const finalised = await this.maybeFinaliseSubmission(
       submissionId,
       submission.task.tournamentId,
     );
@@ -373,18 +385,28 @@ export class TasksService {
       { submissionId, juryId: jury.id, userId, totalScore },
       'Submission evaluated',
     );
+
+    this.socketClient.emit('submission.evaluated', {
+      tournamentId: submission.task.tournamentId,
+      submissionId,
+      taskId: submission.taskId,
+      juryId: jury.id,
+      totalScore,
+      finalised,
+    });
+
     return evaluation;
   }
 
   private async maybeFinaliseSubmission(
     submissionId: string,
     tournamentId: string,
-  ) {
+  ): Promise<boolean> {
     const tournament = await this.prisma.tournament.findUnique({
       where: { id: tournamentId },
       select: { minJuryPerSubmission: true },
     });
-    if (!tournament) return;
+    if (!tournament) return false;
 
     const evalCount = await this.prisma.evaluation.count({
       where: { submissionId },
@@ -399,6 +421,9 @@ export class TasksService {
         { submissionId, evalCount, required: tournament.minJuryPerSubmission },
         'Submission marked EVALUATED',
       );
+      return true;
     }
+
+    return false;
   }
 }
