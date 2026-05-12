@@ -16,7 +16,7 @@ import type {
   SubmitTaskDto,
   UpdateTaskDto,
 } from './dto';
-import { SOCKET_SERVICE } from './tasks.module';
+import { SOCKET_SERVICE } from './tasks.constants';
 
 @Injectable()
 export class TasksService {

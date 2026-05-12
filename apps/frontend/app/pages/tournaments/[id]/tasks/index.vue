@@ -56,7 +56,10 @@ onMounted(() => {
 async function handleCreateTask(payload: { title: string; description: string; points: number; deadline: string }) {
     await store.createTask({
         tournamentId: route.params.id as string,
-        ...payload,
+        name: payload.title,
+        description: payload.description,
+        maxPoints: payload.points,
+        deadline: payload.deadline,
     })
     isModalOpen.value = false
 }

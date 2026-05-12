@@ -4,10 +4,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import type { RedisConfig } from 'src/common/types';
 import { JuryModule } from 'src/jury/jury.module';
 import { PrismaService } from '../prisma/prisma.service';
+import { SOCKET_SERVICE } from './tasks.constants';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 
-export const SOCKET_SERVICE = 'SOCKET_SERVICE';
+export { SOCKET_SERVICE } from './tasks.constants';
 
 @Module({
   imports: [

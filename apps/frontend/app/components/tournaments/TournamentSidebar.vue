@@ -15,6 +15,12 @@ aside.sidebar
 
         .divider
 
+        NuxtLink.sidebar__table-link(:to="`/tournaments/${tournamentId}/table`")
+            span.icon ↗
+            span ТАБЛИЦЯ РЕЗУЛЬТАТІВ
+
+        .divider
+
         .sidebar__footer
             .status-info
                 span.label ПОТОЧНИЙ СТАТУС
@@ -45,12 +51,13 @@ aside.sidebar
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
-defineProps<{
+const props = defineProps<{
     tournament: any
     status: TournamentStatusInfo | null
     isAdmin: boolean
     isAuthenticated: boolean
     isRegistrationActive: boolean
+    tournamentId: string
 }>()
 
 defineEmits<{
@@ -114,6 +121,33 @@ defineEmits<{
             height: 1px;
             background: var(--color-border);
             margin: 40px 0;
+        }
+
+        .sidebar__table-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--space-2);
+            padding: 14px var(--space-4);
+            border: 1px solid var(--color-border);
+            text-decoration: none;
+            color: var(--color-text);
+            font-family: var(--font-display);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+
+            .icon {
+                font-size: 16px;
+            }
+
+            &:hover {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+                background: rgba(228, 35, 19, 0.04);
+            }
         }
 
         .sidebar__footer {

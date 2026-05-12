@@ -10,6 +10,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useLogger(app.get(Logger));
 
+  const allowedOrigin = process.env.CORS_ORIGIN ?? 'http://localhost:4040';
+  app.enableCors({
+    origin: allowedOrigin,
+    credentials: true,
+  });
+
   const configService = app.get(
     (await import('@nestjs/config')).ConfigService,
   );

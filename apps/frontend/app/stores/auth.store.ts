@@ -53,13 +53,11 @@ export const useLoginStore = defineStore('login', () => {
         loading.value = true
         try {
             const response = await useApi().post('/auth/me')
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-                image.value = response.data.user.image
-                console.log(user.value?.image)
+            if (response.data) {
+                user.value = response.data
+                isAdmin.value = response.data.role === 'ADMIN'
+                image.value = response.data.image
             }
-
         } catch {
             user.value = null
             isAdmin.value = false

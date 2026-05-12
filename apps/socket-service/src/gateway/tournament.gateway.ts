@@ -1,18 +1,16 @@
-import { Injectable, UseGuards } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
-  OnGatewayInit,
+  type OnGatewayConnection,
+  type OnGatewayDisconnect,
+  type OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
-import { Server, Socket } from 'socket.io';
-import { WsAuthGuard } from '../guards/ws-auth.guard';
-import { WsJwtMiddleware } from '../middleware/ws-jwt.middleware';
+import { InjectPinoLogger, type PinoLogger } from 'pino-nestjs';
+import type { Server, Socket } from 'socket.io';
 import type {
   BroadcastPayload,
   MessagePayload,
@@ -20,11 +18,11 @@ import type {
   TaskSubmittedPayload,
 } from '../types/index';
 
-@UseGuards(WsAuthGuard)
 @Injectable()
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:4040',
+    credentials: true,
   },
 })
 export class TournamentGateway
@@ -33,13 +31,11 @@ export class TournamentGateway
   @WebSocketServer() server: Server;
 
   constructor(
-    private readonly wsJwtMiddleware: WsJwtMiddleware,
     @InjectPinoLogger(TournamentGateway.name)
     private readonly logger: PinoLogger,
   ) {}
 
   afterInit() {
-    this.server.use(this.wsJwtMiddleware.apply());
     this.logger.info('WebSocket gateway initialized');
   }
 

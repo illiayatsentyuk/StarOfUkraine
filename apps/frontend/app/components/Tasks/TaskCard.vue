@@ -1,27 +1,40 @@
 <template lang="pug">
 .task-card
     .task-card__header
-        .status-badge(:class="`status-${task.status}`")
-            template(v-if="task.status === 'completed'") ВИКОНАНО
-            template(v-else-if="task.status === 'pending'") В ОЧІКУВАННІ
-            template(v-else) НЕ ВИКОНАНО
-        .points {{ task.points }} БАЛІВ
+        .status-badge(:class="`status-${task.status}`") {{ statusLabel }}
+        .points(v-if="maxPoints") {{ maxPoints }} БАЛІВ
 
-    h3.task-title {{ task.title }}
+    h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer
-        span.deadline Дедлайн: {{ formatDate(task.deadline) }}
+        span.deadline(v-if="task.deadline") Дедлайн: {{ formatDate(task.deadline) }}
+        span.deadline(v-else) Без дедлайну
         NuxtLink.detail-btn(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
             span ДЕТАЛІ
             i.pi.pi-arrow-right
 </template>
 
 <script setup lang="ts">
-defineProps<{
-    task: any
+import type { TournamentTask } from '~/stores/tasks.store'
+
+const props = defineProps<{
+    task: TournamentTask
     tournamentId: string
 }>()
+
+const STATUS_LABELS: Record<string, string> = {
+    DRAFT: 'ЧЕРНЕТКА',
+    ACTIVE: 'АКТИВНЕ',
+    SUBMISSION_CLOSED: 'ЗДАЧУ ЗАКРИТО',
+    EVALUATED: 'ОЦІНЕНО',
+}
+
+const statusLabel = computed(() => STATUS_LABELS[props.task.status] ?? props.task.status)
+
+const maxPoints = computed(() =>
+    props.task.criteria?.rubric?.reduce((sum, item) => sum + (item.maxPoints ?? 0), 0) ?? 0
+)
 </script>
 
 <style scoped lang="scss">
@@ -50,20 +63,25 @@ defineProps<{
             font-weight: 700;
             padding: 4px 10px;
             letter-spacing: 1.5px;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-muted);
 
-            &.status-completed {
+            &.status-ACTIVE {
                 background: var(--color-primary);
+                border-color: var(--color-primary);
                 color: white;
             }
 
-            &.status-pending {
+            &.status-EVALUATED {
                 background: var(--color-text);
+                border-color: var(--color-text);
                 color: white;
             }
 
-            &.status-failed {
-                background: var(--color-error, #ef4444);
-                color: white;
+            &.status-SUBMISSION_CLOSED {
+                background: transparent;
+                border-color: var(--color-text-muted);
+                color: var(--color-text-muted);
             }
         }
 

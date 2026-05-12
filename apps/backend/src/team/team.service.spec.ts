@@ -63,6 +63,9 @@ describe('TeamService', () => {
     updatedAt: new Date('2025-01-01'),
   };
 
+  /** What findAll / findOne return after aggregating evaluation scores */
+  const teamMockWithPoints = { ...teamMock, points: 0 };
+
   const createPayload = {
     name: teamMock.name,
     captainName: teamMock.captainName,
@@ -160,7 +163,7 @@ describe('TeamService', () => {
       const result = await service.findAll({ page: 1, limit: 10 });
 
       expect(result).toEqual({
-        data: [teamMock],
+        data: [teamMockWithPoints],
         currentPage: 1,
         nextPage: 2,
         previousPage: null,
@@ -269,7 +272,7 @@ describe('TeamService', () => {
       mockPrisma.team.findUnique.mockResolvedValue(teamMock);
 
       const result = await service.findOne('team-1');
-      expect(result).toEqual(teamMock);
+      expect(result).toEqual(teamMockWithPoints);
       expect(mockPrisma.team.findUnique).toHaveBeenCalledWith({
         where: { id: 'team-1' },
         include: expect.any(Object),

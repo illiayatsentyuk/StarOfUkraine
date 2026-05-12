@@ -1,11 +1,11 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern, Payload } from '@nestjs/microservices';
-import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
+import { InjectPinoLogger, type PinoLogger } from 'pino-nestjs';
 import type {
   SubmissionEvaluatedPayload,
   TaskSubmittedPayload,
 } from '../types/index';
-import { TournamentGateway } from './tournament.gateway';
+import type { TournamentGateway } from './tournament.gateway';
 
 @Controller()
 export class EventsController {
