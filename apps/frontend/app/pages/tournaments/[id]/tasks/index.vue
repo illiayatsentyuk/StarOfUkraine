@@ -2,7 +2,7 @@
 section.tasks-page
     .tasks-page__nav
         NuxtLink.back-link(:to="`/tournaments/${route.params.id}`")
-            span.icon ←
+            i.pi.pi-arrow-left.icon
             span.text НАЗАД ДО ТУРНІРУ
 
     TasksHero(
@@ -47,8 +47,28 @@ const authStore = useLoginStore()
 
 const isModalOpen = ref(false)
 
-onMounted(() => {
-    store.fetchTasks(route.params.id as string)
+onMounted(async () => {
+    const tournamentId = route.params.id as string
+    
+    // Fetch tournament to check status
+    const tournamentsStore = useTournamentsStore()
+    const teamsStore = useTeamsStore()
+    
+    await teamsStore.initActiveTeam()
+    const tournament = await tournamentsStore.fetchTournamentById(tournamentId)
+    
+    if (tournament) {
+        const isJoined = tournament.teams?.some((t: any) => t.id === teamsStore.activeTeamId)
+        const hasStarted = tournament.status === 'ONGOING' || tournament.status === 'COMPLETED'
+        const canSee = authStore.isAdmin || authStore.isJury || (isJoined && hasStarted)
+        
+        if (!canSee) {
+            navigateTo(`/tournaments/${tournamentId}`)
+            return
+        }
+    }
+
+    store.fetchTasks(tournamentId)
 })
 
 async function handleCreateTask(payload: any) {
@@ -104,7 +124,7 @@ async function handleCreateTask(payload: any) {
     animation: fadeIn 0.4s ease-out;
 
     @media (max-width: 768px) {
-        padding: 0 24px 40px;
+        padding: 24px 16px 40px;
     }
 
     &__nav {
@@ -124,6 +144,10 @@ async function handleCreateTask(payload: any) {
             &:hover {
                 color: var(--color-primary);
                 transform: translateX(-4px);
+            }
+
+            .icon {
+                font-size: 14px;
             }
         }
     }
@@ -160,8 +184,12 @@ async function handleCreateTask(payload: any) {
 
 .tasks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 24px;
+
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
 }
 
 @keyframes fadeIn {

@@ -38,7 +38,15 @@ export const useTeamsStore = defineStore('teams', () => {
 
         if (teamIdToUse && user) {
             const allTeams = [...(user.teamsAsCaptain || []), ...(user.teamsAsMember || [])]
-            const isMember = allTeams.some(t => t.id === teamIdToUse)
+            let isMember = allTeams.some((t) => t.id === teamIdToUse)
+            if (!isMember) {
+                await authStore.fetchUser()
+                const after = authStore.user
+                if (after) {
+                    const refreshed = [...(after.teamsAsCaptain || []), ...(after.teamsAsMember || [])]
+                    isMember = refreshed.some((t) => t.id === teamIdToUse)
+                }
+            }
             if (!isMember) {
                 teamIdToUse = null
                 window.localStorage.removeItem('activeTeamId')
@@ -131,11 +139,15 @@ export const useTeamsStore = defineStore('teams', () => {
 
             if (!response.data) throw new Error('Не вдалося створити команду')
 
-            teams.value.push(response.data)
+            const created = response.data as Team
+            teams.value.push(created)
             toast.success('Команду успішно створено')
 
-            await setActiveTeam((response.data as Team).id)
-            return response.data as Team
+            loading.value = false
+            const loginStore = useLoginStore()
+            await loginStore.fetchUser()
+            await setActiveTeam(created.id)
+            return created
         } catch (err: any) {
             console.error('Помилка API при створенні команди:', err)
             toast.error('Не вдалося створити команду')
@@ -158,6 +170,8 @@ export const useTeamsStore = defineStore('teams', () => {
             if (!response.data) throw new Error('Не вдалося приєднатися до команди')
 
             toast.success('Ви успішно приєдналися до команди')
+            loading.value = false
+            await useLoginStore().fetchUser()
             await setActiveTeam(teamId)
             return response.data as Team
         } catch (err: any) {
@@ -200,6 +214,10 @@ export const useTeamsStore = defineStore('teams', () => {
         try {
             const api = useApi()
             await api.delete(`/teams/${teamId}`)
+            toast.success('Команду видалено')
+            if (activeTeamId.value === teamId) {
+                await setActiveTeam(null)
+            }
         }
         catch (err: any) {
             console.error('Помилка API при видаленні команди:', err)
@@ -208,11 +226,27 @@ export const useTeamsStore = defineStore('teams', () => {
             throw err
         } finally {
             loading.value = false
-            if (typeof window !== 'undefined') {
-                window.location.reload()
-            }
         }
     }
+
+    const updateTeam = async (teamId: string, payload: Partial<Team>) => {
+        if (loading.value) return
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            const res = await api.patch(`/teams/${teamId}`, payload)
+            currentTeam.value = res.data as Team
+            toast.success('Дані команди оновлено')
+            return res.data as Team
+        } catch (err: any) {
+            toast.error('Не вдалося оновити команду')
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     const clearSearchResults = () => {
         searchResults.value = []
     }
@@ -272,6 +306,7 @@ export const useTeamsStore = defineStore('teams', () => {
         joinTeam,
         fetchTeamById,
         deleteTeam,
+        updateTeam,
         clearSearchResults,
         searchMembers,
     }

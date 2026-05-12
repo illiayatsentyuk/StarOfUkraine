@@ -28,12 +28,20 @@ defineProps<{
     background: var(--color-border);
     border: 2px solid var(--color-border);
 
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+
     .stat-box {
         background: white;
         padding: 32px;
         display: flex;
         flex-direction: column;
         gap: 8px;
+
+        @media (max-width: 768px) {
+            padding: 20px;
+        }
 
         .label {
             font-size: 10px;
@@ -44,7 +52,7 @@ defineProps<{
 
         .value {
             font-family: var(--font-display);
-            font-size: 24px;
+            font-size: clamp(18px, 4vw, 24px);
             font-weight: 700;
             color: var(--color-text);
         }

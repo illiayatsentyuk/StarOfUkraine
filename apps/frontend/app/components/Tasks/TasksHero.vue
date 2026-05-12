@@ -32,6 +32,14 @@ defineEmits<{
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
 
   .title {
     font-family: var(--font-display);
@@ -44,7 +52,12 @@ defineEmits<{
     text-transform: uppercase;
 
     @media (max-width: 768px) {
-      font-size: 48px;
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    @media (max-width: 480px) {
+      font-size: 24px;
+      word-break: break-word;
     }
   }
 
@@ -56,6 +69,8 @@ defineEmits<{
   }
 
   :deep(.create-btn) {
+    display: inline-flex;
+    gap: 12px;
     background: var(--color-primary);
     border: 1px solid var(--color-primary);
     color: white;

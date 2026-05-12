@@ -17,10 +17,16 @@ export class JuryService {
     private readonly usersService: UsersService,
     @InjectPinoLogger(JuryService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   findAll() {
     return this.prisma.jury.findMany();
+  }
+
+  findByTournament(tournamentId: string) {
+    return this.prisma.jury.findMany({
+      where: { tournaments: { some: { id: tournamentId } } },
+    });
   }
 
   findOne(id: string) {

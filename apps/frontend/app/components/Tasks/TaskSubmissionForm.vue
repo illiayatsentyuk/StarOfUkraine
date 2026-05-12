@@ -6,7 +6,7 @@
     .status-banner.status-banner--evaluated(v-if="mySubmission?.status === 'EVALUATED'")
         i.pi.pi-check-circle
         .banner-text
-            h4 Роботу оцінено ✓
+            h4 Роботу оцінено
             p Журі перевірило вашу роботу
 
     //- Відправлено, очікує оцінки

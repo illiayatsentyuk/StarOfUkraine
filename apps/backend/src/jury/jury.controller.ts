@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -15,6 +16,7 @@ import {
   ApiExtraModels,
   ApiOperation,
   ApiParam,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -41,7 +43,16 @@ export class JuryController {
 
   @Get()
   @Roles(Role.JURY, Role.ADMIN)
-  @ApiOperation({ summary: 'List all jury profiles' })
+  @ApiOperation({
+    summary: 'List jury profiles',
+    description:
+      'Optional `tournamentId` query returns only jurors linked to that tournament.',
+  })
+  @ApiQuery({
+    name: 'tournamentId',
+    required: false,
+    description: 'When set, filter jurors by tournament',
+  })
   @ApiResponse({ status: 200, description: 'Jury profiles returned' })
   @ApiResponse({
     status: 401,
@@ -53,8 +64,10 @@ export class JuryController {
     description: 'Forbidden — requires JURY or ADMIN',
   })
   @Serialize(JuryRecordDto)
-  findAll() {
-    return this.juryService.findAll();
+  findAll(@Query('tournamentId') tournamentId?: string) {
+    return tournamentId
+      ? this.juryService.findByTournament(tournamentId)
+      : this.juryService.findAll();
   }
 
   @Get(':id')

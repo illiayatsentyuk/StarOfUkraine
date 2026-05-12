@@ -3,18 +3,20 @@
     .leaderboard-container
         .header
             NuxtLink.back-link(:to="`/tournaments/${tournamentId}`")
-                span.icon ←
+                i.pi.pi-arrow-left.icon
                 span.text НАЗАД ДО ТУРНІРУ
             h1.title Лідерборд
 
         .table-wrapper
             TournamentLeaderboardTable(
-                v-if="!shouldHideTeams"
+                v-if="!shouldHideTeams && !isNotAvailable"
                 :rows="leaderboardRows"
                 :loading="loadingLeaderboard"
             )
-            .hidden-state(v-else)
+            .hidden-state(v-else-if="shouldHideTeams")
                 p Лідерборд приховано до закінчення реєстрації.
+            .hidden-state(v-else-if="isNotAvailable")
+                p Лідерборд ще не сформовано. Оцінювання триває.
 </template>
 
 <script lang="ts" setup>
@@ -29,6 +31,7 @@ const tournamentId = computed(() => route.params.id as string)
 const tournament = ref<any>(null)
 const leaderboardRows = ref<any[]>([])
 const loadingLeaderboard = ref(true)
+const isNotAvailable = ref(false)
 
 const shouldHideTeams = computed(() => {
     if (authStore.isAdmin || authStore.isJury) return false
@@ -43,10 +46,15 @@ const refreshTeams = async () => {
         return
     }
     loadingLeaderboard.value = true
+    isNotAvailable.value = false
     try {
         leaderboardRows.value = await tournamentStore.fetchLeaderboard(tournamentId.value)
-    } catch (e) {
-        console.error('Failed to load leaderboard', e)
+    } catch (e: any) {
+        if (e.response?.status === 400) {
+            isNotAvailable.value = true
+        } else {
+            console.error('Failed to load leaderboard', e)
+        }
         leaderboardRows.value = []
     } finally {
         loadingLeaderboard.value = false
@@ -112,6 +120,10 @@ onMounted(async () => {
             color: var(--color-primary, #007bff);
             transform: translateX(-4px);
         }
+
+        .icon {
+            font-size: 14px;
+        }
     }
 
     .title {
@@ -124,6 +136,8 @@ onMounted(async () => {
 
 .table-wrapper {
     width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .hidden-state {

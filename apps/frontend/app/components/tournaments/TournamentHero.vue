@@ -2,7 +2,7 @@
 header.tournament-detail__hero
     .status-badge(v-if="status" :style="{ backgroundColor: status.color }") {{ status.label }}
     h1.title {{ name }}
-    .tournament-detail__hero__actions
+    .tournament-detail__hero__actions(v-if="canSeeTasks")
         NuxtLink.task-btn(
             :to="tasksLink"
             @click="handleTasksClick"
@@ -19,6 +19,7 @@ import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 const props = defineProps<{
     name: string
     status: TournamentStatusInfo | null
+    canSeeTasks: boolean
 }>()
 
 const route = useRoute()
@@ -74,6 +75,7 @@ function handleTasksClick(e: MouseEvent) {
         display: flex;
         gap: 16px;
         margin-top: 32px;
+        flex-wrap: wrap;
 
         .task-btn {
             display: inline-flex;
@@ -88,6 +90,13 @@ function handleTasksClick(e: MouseEvent) {
             letter-spacing: 0.5px;
             border-radius: 0;
             transition: all 0.2s;
+
+            @media (max-width: 480px) {
+                width: 100%;
+                justify-content: center;
+                padding: 12px 20px;
+                font-size: 12px;
+            }
 
             i { font-size: 14px; }
 

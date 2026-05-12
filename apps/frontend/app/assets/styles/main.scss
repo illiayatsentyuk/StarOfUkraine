@@ -4,26 +4,13 @@
   box-sizing: border-box;
 }
 
-// PrimeVue DatePicker Fixes
-.p-datepicker {
-  background-color: #ffffff !important;
-  border: 1px solid #e0e0e0 !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12) !important;
-  border-radius: 8px !important;
-  z-index: 2000 !important; // Must be higher than modal (100)
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-// Fix for PrimeVue 4 Aura specific transparency
-.p-datepicker-panel {
-  background-color: #ffffff !important;
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
-
-// Calendar table styling to ensure visibility
-.p-datepicker-calendar-container {
-  background-color: #ffffff !important;
-}
-
-.p-datepicker-header {
-  background-color: #ffffff !important;
-  border-bottom: 1px solid #f0f0f0 !important;
-}

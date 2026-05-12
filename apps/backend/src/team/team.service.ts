@@ -36,7 +36,7 @@ export class TeamService {
     private readonly paginationsConfig: ConfigType<typeof paginationConfig>,
     @InjectPinoLogger(TeamService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   private normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
@@ -102,20 +102,20 @@ export class TeamService {
 
     const where: Prisma.TeamWhereInput | undefined = name
       ? {
-          OR: [
-            {
-              name: {
-                contains: name,
-                mode: Prisma.QueryMode.insensitive,
-              },
+        OR: [
+          {
+            name: {
+              contains: name,
+              mode: Prisma.QueryMode.insensitive,
             },
-            {
-              id: {
-                contains: name,
-              },
+          },
+          {
+            id: {
+              contains: name,
             },
-          ],
-        }
+          },
+        ],
+      }
       : undefined;
 
     const teams = await this.prisma.team.findMany({

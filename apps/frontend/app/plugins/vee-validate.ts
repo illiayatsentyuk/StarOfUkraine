@@ -10,15 +10,29 @@ export default defineNuxtPlugin(() => {
   defineRule('min_value', min_value)
   defineRule('max_value', max_value)
 
-  defineRule('min_date_future', (value: string, [days]: [number]) => {
-    if (!value) return true
-    const date = new Date(value)
+  defineRule('min_date_future', (value: unknown, [days]: [number]) => {
+    if (value == null || value === '') return true
+    let date: Date
+    if (value instanceof Date) {
+      if (Number.isNaN(value.getTime())) return 'Некоректна дата'
+      date = new Date(value.getFullYear(), value.getMonth(), value.getDate())
+    } else {
+      const s = String(value)
+      const head = s.slice(0, 10)
+      const m = head.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      if (m) {
+        date = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+      } else {
+        const parsed = new Date(s)
+        if (Number.isNaN(parsed.getTime())) return 'Некоректна дата'
+        date = new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      }
+    }
     const minDate = new Date()
     minDate.setDate(minDate.getDate() + Number(days))
-    // Reset hours to compare only dates
     minDate.setHours(0, 0, 0, 0)
     date.setHours(0, 0, 0, 0)
-    
+
     return date.getTime() >= minDate.getTime()
   })
 

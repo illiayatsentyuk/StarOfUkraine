@@ -6,13 +6,14 @@ section.tournament-detail
     template(v-else-if="tournament")
         .tournament-detail__nav
             NuxtLink.back-link(to="/")
-                span.icon ←
+                i.pi.pi-arrow-left.icon
                 span.text НАЗАД ДО СПИСКУ
 
         TournamentHero(
             :name="tournament.name"
             :tournamentId="route.params.id"
             :status="tournamentStatus"
+            :canSeeTasks="canSeeTasks"
         )
 
         .tournament-detail__layout
@@ -27,15 +28,7 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-                .content-section(v-if="authStore.isAdmin")
-                    TournamentJuryManager(:tournamentId="tournamentId")
 
-                .content-section.leaderboard-action(v-if="!shouldHideTeams")
-                    h2 Рейтинг команд
-                    p.desc Перегляньте поточний лідерборд турніру та результати оцінювання.
-                    NuxtLink.leaderboard-btn(:to="`/tournaments/${tournamentId}/leaderboard`")
-                        span Переглянути лідерборд
-                        span.icon →
 
             TournamentSidebar(
                 :tournament="tournament"
@@ -46,8 +39,9 @@ section.tournament-detail
                 :isRegistrationActive="isRegistrationActive"
                 :isAlreadyJoined="isAlreadyJoined"
                 :hasTeam="!!teamsStore.activeTeam"
+                :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
-                :shouldHideTeams="shouldHideTeams"
+                :shouldHideTeams="tournament.hideTeamsUntilRegistrationEnds"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @joinTournament="handleJoinTournament"
@@ -80,11 +74,6 @@ section.tournament-detail
 </template>
 
 <script setup lang="ts">
-import type { LeaderboardRow, Tournament, Team } from '~/types'
-import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
-import TournamentLeaderboardTable from '~/components/tournaments/TournamentLeaderboardTable.vue'
-import TournamentJuryManager from '~/components/tournaments/TournamentJuryManager.vue'
-
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
 const authStore = useLoginStore()
@@ -101,8 +90,6 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
 
 const teams = ref<(Partial<Team> & { points?: number })[]>([])
 const loadingTeams = ref(false)
-const leaderboardRows = ref<LeaderboardRow[]>([])
-const loadingLeaderboard = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -131,25 +118,18 @@ const isAlreadyJoined = computed(() => {
     return teams.value.some((t) => t.id === activeTeamId)
 })
 
+const canSeeTasks = computed(() => {
+    if (authStore.isAdmin || authStore.isJury) return true
+    const hasStarted = tournament.value?.status === 'ONGOING' || tournament.value?.status === 'COMPLETED'
+    return isAlreadyJoined.value && hasStarted
+})
+
 const refreshTeams = async () => {
-    if (shouldHideTeams.value) return
-    loadingTeams.value = true
-    loadingLeaderboard.value = true
-    try {
-        const rows = await tournamentStore.fetchLeaderboard(tournamentId.value)
-        leaderboardRows.value = rows
-        teams.value = rows.map((r) => ({
-            id: r.team.id,
-            name: r.team.name,
-            points: r.totalScore,
-        }))
-    } catch (e) {
-        console.error('Failed to refresh teams', e)
-        leaderboardRows.value = []
-    } finally {
-        loadingTeams.value = false
-        loadingLeaderboard.value = false
-    }
+    if (shouldHideTeams.value || !tournament.value?.teams) return
+    teams.value = tournament.value.teams.map((t: any) => ({
+        id: t.id,
+        name: t.name,
+    }))
 }
 
 // Головна дія: вступити в турнір
@@ -228,7 +208,7 @@ const shuffleTeams = () => {
     padding: 60px 48px;
 
     @media (max-width: 768px) {
-        padding: 0 24px 40px;
+        padding: 24px 16px 40px;
     }
 
     &__nav {
@@ -248,6 +228,10 @@ const shuffleTeams = () => {
             &:hover {
                 color: var(--color-primary);
                 transform: translateX(-4px);
+            }
+
+            .icon {
+                font-size: 14px;
             }
         }
     }
@@ -269,45 +253,6 @@ const shuffleTeams = () => {
         margin-bottom: 64px;
     }
 
-    .leaderboard-action {
-        background: var(--color-surface, #ffffff);
-        padding: 32px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 16px;
-
-        h2 {
-            margin: 0;
-            font-size: 24px;
-            color: var(--color-text-main);
-        }
-
-        .desc {
-            margin: 0;
-            color: var(--color-text-muted);
-            font-size: 15px;
-        }
-
-        .leaderboard-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            background-color: var(--color-primary, #007bff);
-            color: white;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 15px;
-            transition: background-color 0.2s, transform 0.2s;
-
-            &:hover {
-                background-color: var(--color-primary-dark, #0056b3);
-                transform: translateY(-2px);
-            }
-        }
-    }
 }
 
 .loading-overlay {

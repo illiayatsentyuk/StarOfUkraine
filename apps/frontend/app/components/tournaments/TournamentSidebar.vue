@@ -1,7 +1,7 @@
 <template lang="pug">
 aside.sidebar
     .sidebar__card
-        h3.section-label КЛЮЧОВІ ДАТИ
+        h3.section-label КЛЮЧОВІ ДАТИ 
         .date-list
             .date-entry
                 span.label РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ
@@ -26,6 +26,7 @@ aside.sidebar
                 label="Редагувати турнір"
                 icon="pi pi-pencil"
                 @click="$emit('edit')"
+                data-testid="edit-tournament-btn"
             )
 
             Button.sidebar__delete(
@@ -36,17 +37,17 @@ aside.sidebar
             )
 
             NuxtLink.sidebar__judge-link(
-                v-if="!shouldHideTeams"
-                :to="`/tournaments/${tournament.id}/leaderboard`"
+                v-if="isAdmin && tournament.id"
+                :to="`/tournaments/${tournament.id}/jury`"
             )
-                Button.sidebar__leaderboard(
+                Button.sidebar__judge(
                     type="button"
-                    label="ПЕРЕГЛЯНУТИ РЕЙТИНГ"
-                    icon="pi pi-chart-bar"
+                    label="КЕРУВАННЯ ЖУРІ"
+                    icon="pi pi-users"
                 )
 
             NuxtLink.sidebar__judge-link(
-                v-if="isJury"
+                v-if="isJury && tournament.id"
                 :to="`/tournaments/${tournament.id}/admin`"
             )
                 Button.sidebar__judge(
@@ -59,7 +60,8 @@ aside.sidebar
             Button.sidebar__joined(
                 v-if="isAuthenticated && !isAdmin && isAlreadyJoined"
                 type="button"
-                label="Ви вже в турнірі ✓"
+                label="Ви вже в турнірі"
+                icon="pi pi-check"
                 :disabled="true"
             )
 
@@ -73,6 +75,16 @@ aside.sidebar
                 :disabled="(!isRegistrationActive) || joining"
                 @click="$emit('joinTournament')"
             )
+
+            NuxtLink.sidebar__team-link(
+                v-if="isAuthenticated && hasTeam && activeTeam"
+                :to="`/teams/${activeTeam.id}`"
+            )
+                Button.sidebar__manage-team(
+                    type="button"
+                    label="КЕРУВАННЯ КОМАНДОЮ"
+                    icon="pi pi-users"
+                )
 </template>
 
 <script setup lang="ts">
@@ -88,6 +100,7 @@ const props = defineProps<{
     isRegistrationActive: boolean
     isAlreadyJoined: boolean
     hasTeam: boolean
+    activeTeam: any
     joining: boolean
     shouldHideTeams: boolean
 }>()
@@ -112,6 +125,11 @@ const joinLabel = computed(() =>
         position: sticky;
         top: 40px;
 
+        @media (max-width: 768px) {
+            padding: 24px;
+            top: 16px;
+        }
+
         .section-label {
             font-family: var(--font-display);
             font-size: 12px;
@@ -119,6 +137,13 @@ const joinLabel = computed(() =>
             color: var(--color-text-muted);
             letter-spacing: 2px;
             margin: 0;
+        }
+
+        .sidebar__team-link {
+            margin-top: 12px;
+            text-decoration: none;
+            width: 100%;
+            display: block;
         }
 
         .date-list {
@@ -184,26 +209,6 @@ const joinLabel = computed(() =>
                 }
             }
 
-            :deep(.sidebar__leaderboard.p-button) {
-                width: 100%;
-                justify-content: center;
-                gap: var(--space-2);
-                background: transparent;
-                border: 1px solid var(--color-border);
-                color: var(--color-text);
-                font-family: var(--font-display);
-                font-size: 13px;
-                font-weight: 600;
-                padding: 12px var(--space-4);
-                border-radius: 0;
-                letter-spacing: 1px;
-                transition: all 0.2s ease;
-
-                &:hover {
-                    border-color: var(--color-text);
-                    background: var(--color-surface);
-                }
-            }
 
             .sidebar__judge-link {
                 text-decoration: none;
@@ -211,7 +216,13 @@ const joinLabel = computed(() =>
                 width: 100%;
             }
 
-            :deep(.sidebar__judge.p-button) {
+            .sidebar__judge-link :deep(.p-button),
+            .sidebar__team-link :deep(.p-button) {
+                width: 100%;
+            }
+
+            :deep(.sidebar__judge.p-button),
+            :deep(.sidebar__manage-team.p-button) {
                 width: 100%;
                 justify-content: center;
                 gap: var(--space-2);

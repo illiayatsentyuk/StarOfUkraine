@@ -16,14 +16,6 @@ export interface Tournament {
     createdAt?: string
 }
 
-export interface LeaderboardRow {
-    team: {
-        id: string
-        name: string
-    }
-    totalScore: number
-    rank?: number
-}
 
 export interface BracketMatch {
     id: string | number

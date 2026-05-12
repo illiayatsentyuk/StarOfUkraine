@@ -15,6 +15,9 @@ async function openTournamentDetailAsAdmin(page: Page) {
   await mockJson(page, /\/teams\/list/, mockEmptyTeamsList)
 
   await page.goto('/')
+  // Wait for auth to initialize (increased timeout for stability)
+  await expect(page.getByTestId('user-email')).toBeVisible({ timeout: 15000 })
+  
   await page.getByRole('heading', { name: 'Cup 2026' }).click()
   await expect(page.getByText('ПРО ТУРНІР')).toBeVisible()
 }
@@ -23,14 +26,14 @@ test.describe('tournament edit & validation', () => {
   test('admin can open edit modal', async ({ page }) => {
     await openTournamentDetailAsAdmin(page)
 
-    await page.getByRole('button', { name: 'Редагувати турнір' }).click()
+    await page.getByTestId('edit-tournament-btn').click()
     await expect(page.getByRole('heading', { name: 'РЕДАГУВАТИ ТУРНІР' })).toBeVisible()
   })
 
   test('edit form shows validation when name is empty', async ({ page }) => {
     await openTournamentDetailAsAdmin(page)
 
-    await page.getByRole('button', { name: 'Редагувати турнір' }).click()
+    await page.getByTestId('edit-tournament-btn').click()
     const modal = page.locator('.modal-content')
 
     await modal.getByPlaceholder('Введіть назву турніру').fill('')
@@ -42,7 +45,7 @@ test.describe('tournament edit & validation', () => {
   test('successful save closes modal and updates title', async ({ page }) => {
     await openTournamentDetailAsAdmin(page)
 
-    await page.getByRole('button', { name: 'Редагувати турнір' }).click()
+    await page.getByTestId('edit-tournament-btn').click()
     const modal = page.locator('.modal-content')
 
     await modal.getByPlaceholder('Введіть назву турніру').fill('Cup Renamed')

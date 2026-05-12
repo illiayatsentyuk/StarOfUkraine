@@ -53,6 +53,11 @@ const formatDate = (dateString: string) => {
     position: relative;
     overflow: hidden;
 
+    @media (max-width: 768px) {
+        padding: 24px;
+        gap: 20px;
+    }
+
     &::before {
         content: '';
         position: absolute;
@@ -92,7 +97,7 @@ const formatDate = (dateString: string) => {
 
     &__title {
         font-family: var(--font-display);
-        font-size: 32px;
+        font-size: clamp(22px, 4vw, 32px);
         font-weight: 700;
         color: var(--color-text);
         line-height: 1.1;
@@ -107,6 +112,10 @@ const formatDate = (dateString: string) => {
         padding: 24px 0;
         border-top: 1px solid var(--color-border);
         border-bottom: 1px solid var(--color-border);
+
+        @media (max-width: 480px) {
+            grid-template-columns: 1fr;
+        }
     }
 
     .detail-group {

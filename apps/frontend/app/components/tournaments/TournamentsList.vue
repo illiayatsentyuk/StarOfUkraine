@@ -120,6 +120,13 @@ onMounted(() => {
         justify-content: space-between;
         align-items: flex-end;
         margin-bottom: var(--space-4);
+        gap: var(--space-4);
+        flex-wrap: wrap;
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: stretch;
+        }
 
         .archive-link {
             display: flex;
@@ -155,6 +162,10 @@ onMounted(() => {
 
         @media (max-width: 1024px) {
             font-size: 36px;
+        }
+
+        @media (max-width: 480px) {
+            font-size: 28px;
         }
     }
 

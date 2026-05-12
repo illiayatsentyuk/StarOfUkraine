@@ -37,7 +37,9 @@
       p.success-panel__hint Перевірте теку «Спам», якщо листа немає у вхідних.
 
     .card-footer
-      NuxtLink.footer-link(to="/auth") ← Повернутися до входу
+      NuxtLink.footer-link.footer-link--row(to="/auth")
+        i.pi.pi-arrow-left
+        span Повернутися до входу
 </template>
 
 <script setup lang="ts">
@@ -252,6 +254,21 @@ const handleSubmit = async (values: ForgotForm) => {
       &:hover {
         color: var(--color-primary);
         border-bottom-color: var(--color-primary);
+      }
+
+      &--row {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: none;
+
+        &:hover {
+          border-bottom: none;
+        }
+
+        .pi {
+          font-size: 14px;
+        }
       }
     }
   }

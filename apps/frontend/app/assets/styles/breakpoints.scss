@@ -30,3 +30,10 @@ $xl-height: 1200px; // >= 1200px
     @content;
   }
 }
+
+// Max-width (layout “down” breakpoints)
+@mixin media-max($px) {
+  @media (max-width: #{$px}) {
+    @content;
+  }
+}

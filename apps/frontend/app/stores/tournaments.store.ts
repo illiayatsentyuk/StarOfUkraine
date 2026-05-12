@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useApi } from '~/composables/useApi'
-import type { Tournament, LeaderboardRow, TournamentStatus } from '~/types'
+import type { Tournament, TournamentStatus } from '~/types'
 
 type TournamentStatusFilter = 'all' | TournamentStatus
 const LIMIT = 6
@@ -162,17 +162,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
-    const fetchLeaderboard = async (tournamentId: string): Promise<LeaderboardRow[]> => {
-        try {
-            const api = useApi()
-            const response = await api.get(`/tournaments/${tournamentId}/leaderboard`)
-            if (!response.data) throw new Error('Не вдалося завантажити лідерборд')
-            return Array.isArray(response.data) ? response.data : []
-        } catch (error) {
-            console.error('Помилка API при завантаженні лідерборду:', error)
-            throw error
-        }
-    }
 
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
@@ -197,6 +186,5 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         joinTournament,
         updateTournament,
         deleteTournament,
-        fetchLeaderboard,
     }
 })

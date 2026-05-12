@@ -71,7 +71,7 @@ const handleLogout = async () => {
   flex-direction: column;
   align-items: stretch;
   gap: var(--space-8);
-  padding: var(--space-8) 0 var(--space-10);
+  padding: var(--space-8) var(--space-4) var(--space-10);
   width: 100%;
   max-width: 720px;
   margin-inline: auto;

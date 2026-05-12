@@ -15,7 +15,7 @@
                     placeholder="Введіть email або нікнейм..."
                     @input="handleSearch"
                 )
-            
+
             .search-results(v-if="searchResults.length")
                 .user-row(v-for="user in searchResults" :key="user.id")
                     .user-info
@@ -35,7 +35,7 @@
             label.field-label ПОТОЧНИЙ СКЛАД ЖУРІ ({{ juryMembers.length }})
             .empty-list(v-if="!juryMembers.length && !loading")
                 span Суддів ще не додано
-            
+
             .jury-grid(v-else)
                 .jury-card(v-for="member in juryMembers" :key="member.id")
                     .member-avatar {{ (member.user?.nameId || 'J')[0].toUpperCase() }}
@@ -43,6 +43,7 @@
                         span.name {{ member.user?.nameId }}
                         span.email {{ member.user?.email }}
                     button.remove-btn(
+                        type="button"
                         @click="removeJuryMember(member.id)"
                         :disabled="removingId === member.id"
                     )
@@ -67,20 +68,26 @@ const loading = ref(false)
 const addingId = ref<string | null>(null)
 const removingId = ref<string | null>(null)
 
-let searchTimeout: any = null
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
 
 async function fetchJuryMembers() {
     loading.value = true
     try {
-        // Backend doesn't have direct /tournaments/:id/jury, but we can filter from all jury
-        // Actually, Jury profile has tournaments relation
-        const res = await api.get('/jury')
-        const allJury = Array.isArray(res.data) ? res.data : []
-        // Filter by tournamentId
-        juryMembers.value = allJury.filter((j: any) => 
-            j.tournaments?.some((t: any) => t.id === props.tournamentId) ||
-            j.tournamentId === props.tournamentId // backward compat
+        const res = await api.get('/jury', {
+            params: { tournamentId: props.tournamentId },
+        })
+        const rows = Array.isArray(res.data) ? res.data : []
+        const membersWithUsers = await Promise.all(
+            rows.map(async (member: any) => {
+                try {
+                    const userRes = await api.get(`/users/${member.userId}`)
+                    return { ...member, user: userRes.data }
+                } catch {
+                    return member
+                }
+            }),
         )
+        juryMembers.value = membersWithUsers
     } catch (e) {
         console.error('Failed to fetch jury', e)
     } finally {
@@ -98,7 +105,7 @@ function handleSearch() {
     searchTimeout = setTimeout(async () => {
         try {
             const res = await api.get('/users/search', {
-                params: { query: searchQuery.value }
+                params: { query: searchQuery.value },
             })
             searchResults.value = Array.isArray(res.data) ? res.data : []
         } catch (e) {
@@ -112,7 +119,7 @@ async function addJuryMember(userId: string) {
     try {
         await api.post('/jury', {
             tournamentId: props.tournamentId,
-            userId
+            userId,
         })
         toast.success('Користувача додано до журі')
         searchQuery.value = ''
@@ -149,6 +156,10 @@ onMounted(() => {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     padding: 32px;
+
+    @media (max-width: 768px) {
+        padding: 20px 16px;
+    }
 }
 
 .manager-header {
@@ -183,14 +194,23 @@ onMounted(() => {
 
     .search-box {
         position: relative;
-        i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); }
+        i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-muted);
+        }
         input {
             width: 100%;
             padding: 14px 14px 14px 44px;
             background: var(--color-bg);
             border: 1px solid var(--color-border);
             font-size: 14px;
-            &:focus { outline: none; border-color: var(--color-primary); }
+            &:focus {
+                outline: none;
+                border-color: var(--color-primary);
+            }
         }
     }
 
@@ -199,9 +219,9 @@ onMounted(() => {
         top: 100%;
         left: 0;
         width: 100%;
-        background: white;
-        border: 1px solid black;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         z-index: 10;
         max-height: 300px;
         overflow-y: auto;
@@ -213,13 +233,29 @@ onMounted(() => {
         align-items: center;
         padding: 12px 16px;
         border-bottom: 1px solid var(--color-border);
-        &:hover { background: var(--color-bg); }
+        gap: 12px;
+        flex-wrap: wrap;
+
+        @media (max-width: 520px) {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        &:hover {
+            background: var(--color-bg);
+        }
 
         .user-info {
             display: flex;
             flex-direction: column;
-            .name { font-weight: 700; font-size: 14px; }
-            .email { font-size: 12px; color: var(--color-text-muted); }
+            .name {
+                font-weight: 700;
+                font-size: 14px;
+            }
+            .email {
+                font-size: 12px;
+                color: var(--color-text-muted);
+            }
         }
     }
 
@@ -235,7 +271,7 @@ onMounted(() => {
 
 .jury-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
     gap: 16px;
 }
 
@@ -249,24 +285,40 @@ onMounted(() => {
     position: relative;
 
     .member-avatar {
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
         background: var(--color-text);
         color: white;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 800; font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 18px;
     }
 
     .member-info {
         flex: 1;
-        .name { display: block; font-weight: 700; font-size: 14px; }
-        .email { display: block; font-size: 11px; color: var(--color-text-muted); }
+        .name {
+            display: block;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .email {
+            display: block;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
     }
 
     .remove-btn {
-        background: none; border: none;
+        background: none;
+        border: none;
         color: var(--color-text-muted);
-        cursor: pointer; padding: 8px;
-        &:hover { color: var(--color-primary); }
+        cursor: pointer;
+        padding: 8px;
+        &:hover {
+            color: var(--color-primary);
+        }
     }
 }
 

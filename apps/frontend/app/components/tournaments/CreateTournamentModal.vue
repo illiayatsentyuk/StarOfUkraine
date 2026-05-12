@@ -23,12 +23,13 @@
                 .form-group
                     label.form-label ДАТА СТАРТУ *
                     VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" appendTo="body")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
                     VeeField(name="registrationStart" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
+                        span.error-text(v-if="errorMessage") {{ errorMessage }}
             
             .form-row
                 .form-group
@@ -53,7 +54,7 @@
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
                 VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
-                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
+                    FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
@@ -282,15 +283,17 @@ function closeModal() {
 
         &:checked {
             background: #000000;
-            
+
             &::after {
-                content: '✓';
+                content: '';
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #ffffff;
-                font-size: 12px;
+                left: 5px;
+                top: 1px;
+                width: 4px;
+                height: 9px;
+                border: solid #ffffff;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
             }
         }
     }

@@ -60,15 +60,17 @@ export const useLoginStore = defineStore('login', () => {
         loading.value = true
         try {
             const response = await useApi().post('/auth/me')
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-                isJury.value = response.data.user.role === 'JURY'
-                image.value = response.data.user.image
-                console.log(user.value?.image)
+            if (response.data) {
+                user.value = response.data
+                isAdmin.value = response.data.role === 'ADMIN'
+                isJury.value = response.data.role === 'JURY'
+                image.value = response.data.image
+                authenticated.value = true
+                console.log('User fetched:', user.value)
             }
 
-        } catch {
+        } catch (error) {
+            console.error('Fetch user failed:', error)
             user.value = null
             isAdmin.value = false
         } finally {

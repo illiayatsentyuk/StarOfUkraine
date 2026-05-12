@@ -58,6 +58,10 @@ const completedTournaments = computed(() => {
     max-width: 1400px;
     margin: 0 auto;
     padding: 64px 32px;
+
+    @media (max-width: 768px) {
+        padding: 40px 16px;
+    }
 }
 
 .archive-header {
@@ -82,14 +86,14 @@ const completedTournaments = computed(() => {
 
     .title {
         font-family: var(--font-display);
-        font-size: 48px;
+        font-size: clamp(28px, 6vw, 48px);
         font-weight: 800;
         margin: 0 0 12px 0;
         color: var(--color-text);
     }
 
     .subtitle {
-        font-size: 18px;
+        font-size: clamp(15px, 3vw, 18px);
         color: var(--color-text-muted);
         margin: 0;
     }
@@ -102,10 +106,25 @@ const completedTournaments = computed(() => {
     margin-bottom: 40px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--color-border);
+    gap: 16px;
+    flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 
     .search-box {
         position: relative;
-        width: 400px;
+        flex: 1;
+        min-width: 0;
+        max-width: 400px;
+
+        @media (max-width: 640px) {
+            max-width: none;
+            width: 100%;
+        }
+
         i { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
         input {
             width: 100%;
@@ -127,7 +146,7 @@ const completedTournaments = computed(() => {
 
 .archive-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 32px;
 
     @media (max-width: 768px) {

@@ -4,10 +4,8 @@ import { mockJson } from './mock-api'
 /** `app.vue` calls `POST /auth/me` on load; admin unlocks tournament edit UI. */
 export async function mockAuthAdmin(page: Page) {
   await mockJson(page, /\/auth\/me/, {
-    user: {
-      id: 'e2e-admin',
-      email: 'e2e-admin@example.com',
-      role: 'ADMIN',
-    },
+    id: 'e2e-admin',
+    email: 'e2e-admin@example.com',
+    role: 'ADMIN',
   })
 }

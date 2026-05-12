@@ -146,7 +146,6 @@ const loading = ref(false)
 
 // Real data
 const teams = ref<Array<{ id: string; name: string; totalScore: number }>>([])
-const leaderboardRows = ref<any[]>([])
 // taskId → submission[]
 const submissionsMap = ref<Map<string, any[]>>(new Map())
 
@@ -164,14 +163,14 @@ onMounted(async () => {
         // 1. Load tasks
         await store.fetchTasks(tournamentId)
 
-        // 2. Real teams from leaderboard
-        const lbRes = await api.get(`/tournaments/${tournamentId}/leaderboard`)
-        leaderboardRows.value = Array.isArray(lbRes.data) ? lbRes.data : []
-        teams.value = leaderboardRows.value.map((r: any) => ({
-            id: r.team.id,
-            name: r.team.name,
-            totalScore: r.totalScore ?? 0,
-        }))
+        // 2. Real teams from tournament object
+        if (tournament.value?.teams) {
+            teams.value = tournament.value.teams.map((t: any) => ({
+                id: t.id,
+                name: t.name,
+                totalScore: 0, // Points removed as requested
+            }))
+        }
 
         // 3. Submissions per task (requires JURY/ADMIN)
         await loadAllSubmissions()
@@ -220,8 +219,7 @@ function getSubmittedCount(teamId: string) {
 }
 
 function getTeamTotalScore(teamId: string) {
-    const row = leaderboardRows.value.find((r: any) => r.team.id === teamId)
-    return row?.totalScore ?? 0
+    return 0 // Removed as requested
 }
 
 function getTaskMaxPoints(task: any) {
@@ -263,6 +261,10 @@ async function handleGrade(submission: any, task: any) {
     padding: 32px;
     background: var(--color-bg);
     min-height: 100vh;
+
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
 }
 
 .dashboard-header {
@@ -272,6 +274,13 @@ async function handleGrade(submission: any, task: any) {
     margin-bottom: 32px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--color-border);
+    gap: 16px;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
     .back-link {
         display: flex;
@@ -293,6 +302,12 @@ async function handleGrade(submission: any, task: any) {
 
     .tournament-info {
         text-align: right;
+
+        @media (max-width: 768px) {
+            text-align: left;
+            width: 100%;
+        }
+
         .tournament-name {
             display: block;
             font-weight: 700;
@@ -327,6 +342,10 @@ async function handleGrade(submission: any, task: any) {
     grid-template-columns: 320px 1fr;
     gap: 32px;
     align-items: start;
+
+    @media (max-width: 992px) {
+        grid-template-columns: 1fr;
+    }
 }
 
 .teams-sidebar {
@@ -336,6 +355,11 @@ async function handleGrade(submission: any, task: any) {
     height: calc(100vh - 200px);
     display: flex;
     flex-direction: column;
+
+    @media (max-width: 992px) {
+        height: auto;
+        max-height: 50vh;
+    }
 
     .sidebar-search {
         padding: 16px;
@@ -411,17 +435,30 @@ async function handleGrade(submission: any, task: any) {
 }
 
 .submissions-view {
-    .view-header {
+        .view-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 24px;
+        gap: 16px;
+        flex-wrap: wrap;
+
+        @media (max-width: 640px) {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
         h2 { font-size: 20px; font-weight: 800; margin: 0; font-family: var(--font-display); }
 
         .team-stats .stat {
             display: flex;
             flex-direction: column;
             align-items: flex-end;
+
+            @media (max-width: 640px) {
+                align-items: flex-start;
+            }
+
             .val { font-size: 28px; font-weight: 800; color: var(--color-primary); }
             .lbl { font-size: 10px; font-weight: 700; color: var(--color-text-muted); letter-spacing: 1px; }
         }
@@ -519,6 +556,12 @@ async function handleGrade(submission: any, task: any) {
                 grid-template-columns: 1fr auto 80px;
                 align-items: center;
                 gap: 8px;
+
+                @media (max-width: 520px) {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                }
+
                 .c-label { font-size: 13px; font-weight: 600; }
                 .c-max { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
                 .c-input {

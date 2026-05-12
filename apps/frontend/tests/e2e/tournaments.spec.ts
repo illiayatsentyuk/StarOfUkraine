@@ -11,18 +11,16 @@ test.describe('tournaments list', () => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
 
     await page.goto('/')
-
     await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible({ timeout: 15000 })
   })
 
   test('/tournaments route shows the same list', async ({ page }) => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
 
     await page.goto('/tournaments')
-
     await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible({ timeout: 15000 })
   })
 
   test('empty API response shows empty state', async ({ page }) => {

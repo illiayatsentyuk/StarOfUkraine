@@ -14,6 +14,10 @@ defineProps<{
 .content-section {
   margin-bottom: 64px;
 
+  @media (max-width: 768px) {
+    margin-bottom: 40px;
+  }
+
   .section-label {
     font-family: var(--font-display);
     font-size: 12px;
@@ -24,7 +28,7 @@ defineProps<{
   }
 
   .description {
-    font-size: 22px;
+    font-size: clamp(16px, 2.8vw, 22px);
     line-height: 1.5;
     color: var(--color-text);
     margin: 24px 0 0 0;

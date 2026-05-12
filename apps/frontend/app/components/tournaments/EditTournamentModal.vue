@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { Tournament } from '~/types'
+import { parseIsoDateToLocalDate } from '~/utils/format-date'
 
 const props = defineProps<{
     isOpen: boolean
@@ -40,10 +41,7 @@ const initialValues = computed(() => {
         }
     }
 
-    const toDateInput = (value?: string) => {
-        if (!value) return null
-        return new Date(value)
-    }
+    const toDateInput = (value?: string) => parseIsoDateToLocalDate(value ?? null)
 
     return {
         name: t.name ?? '',
@@ -122,12 +120,12 @@ function closeModal() {
                 .form-group
                     label.form-label ДАТА СТАРТУ *
                     VeeField(name="startDate" rules="required" v-slot="{ field, errorMessage, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid :class="{ 'p-invalid': errorMessage }" appendTo="body")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
                     VeeField(name="registrationStart" v-slot="{ field, handleChange }")
-                        DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .form-row
                 .form-group
@@ -152,7 +150,7 @@ function closeModal() {
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
                 VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
-                    DatePicker(v-model="field.value" @update:modelValue="handleChange" dateFormat="dd.mm.yy" showIcon fluid appendTo="body")
+                    FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
@@ -331,13 +329,15 @@ function closeModal() {
             background: #000000;
 
             &::after {
-                content: '✓';
+                content: '';
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #ffffff;
-                font-size: 12px;
+                left: 5px;
+                top: 1px;
+                width: 4px;
+                height: 9px;
+                border: solid #ffffff;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
             }
         }
     }
