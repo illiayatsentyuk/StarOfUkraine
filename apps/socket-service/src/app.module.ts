@@ -17,7 +17,7 @@ import { GatewayModule } from './gateway/gateway.module';
         const nodeEnv =
           configService.get<string>('NODE_ENV') ??
           process.env.NODE_ENV ??
-          'development';
+          'development'; 
         const isProd = nodeEnv === 'production';
         const isTest = nodeEnv === 'test';
 

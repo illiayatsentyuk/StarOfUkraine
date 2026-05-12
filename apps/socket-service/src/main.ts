@@ -4,9 +4,11 @@ import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 import { RedisIoAdapter } from './adapters/redis-io.adapter';
 import type { SocketRedisConfig } from './config/redis.config';
+import { Logger } from 'pino-nestjs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useLogger(app.get(Logger));
 
   const configService = app.get(
     (await import('@nestjs/config')).ConfigService,
