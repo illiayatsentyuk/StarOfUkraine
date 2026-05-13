@@ -4,8 +4,9 @@ import 'primeicons/primeicons.css'
 const loginStore = useLoginStore()
 const route = useRoute()
 
-onMounted(() => {
+onMounted(async () => {
   if (route.query.oauth === 'success') {
+    await loginStore.fetchUser()
     navigateTo({ path: route.path, query: {} }, { replace: true })
   }
 })

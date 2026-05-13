@@ -84,6 +84,12 @@ export class TeamResponseDto {
   isAcceptNewMembers: boolean;
 
   @Expose()
+  @ApiProperty({
+    description: 'Aggregate total score across all evaluated submissions',
+  })
+  points: number;
+
+  @Expose()
   @ApiProperty()
   createdAt: Date;
 

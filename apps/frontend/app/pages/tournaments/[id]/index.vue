@@ -44,20 +44,14 @@ section.tournament-detail
                                 @delete="teamsStore.deleteTeam($event)"
                             )
 
-                TournamentTeamsTable(
-                    v-model:teams="teams"
-                    :isAdmin="authStore.isAdmin"
-                    :shouldHideTeams="shouldHideTeams"
-                    @shuffle="shuffleTeams"
-                )
-
             TournamentSidebar(
                 :tournament="tournament"
+                :tournamentId="tournamentId"
                 :status="tournamentStatus"
                 :isAdmin="authStore.isAdmin"
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
-        @edit="openEditModal"
+                @edit="openEditModal"
                 @delete="handleDelete"
                 @createTeam="openTeamModal"
             )
@@ -96,11 +90,15 @@ const store = useTournamentsStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
 
+console.log(route.params.id)
+
 const tournament = ref<any>(null)
 const teams = ref<any[]>([])
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
+
+const tournamentId = computed(() => route.params.id as string)
 
 const tournamentStatus = computed(() => {
     if (!tournament.value) return null
@@ -157,9 +155,6 @@ async function onTournamentDeleted() {
     await navigateTo('/')
 }
 
-function shuffleTeams() {
-    teams.value = [...teams.value].sort(() => Math.random() - 0.5)
-}
 </script>
 
 <style lang="scss" scoped>

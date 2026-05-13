@@ -26,7 +26,22 @@ const memberUserSelect = {
 const teamInclude = {
   members: { select: memberUserSelect },
   captain: { select: memberUserSelect },
+  submissions: {
+    select: {
+      evaluations: { select: { totalScore: true } },
+    },
+  },
 };
+
+function computePoints(team: {
+  submissions?: Array<{ evaluations: Array<{ totalScore: number }> }>;
+}): number {
+  if (!team.submissions) return 0;
+  return team.submissions.reduce(
+    (sum, sub) => sum + sub.evaluations.reduce((s, e) => s + e.totalScore, 0),
+    0,
+  );
+}
 
 @Injectable()
 export class TeamService {
@@ -129,7 +144,7 @@ export class TeamService {
     });
 
     return {
-      data: teams,
+      data: teams.map((t) => ({ ...t, points: computePoints(t) })),
       currentPage: Number(page),
       nextPage: page < maximumPage ? Number(page) + 1 : null,
       previousPage: page > 1 ? Number(page) - 1 : null,
@@ -146,7 +161,7 @@ export class TeamService {
     if (!team) {
       throw new NotFoundException('Team not found');
     }
-    return team;
+    return { ...team, points: computePoints(team) };
   }
 
   async update(id: string, data: UpdateTeamDto) {

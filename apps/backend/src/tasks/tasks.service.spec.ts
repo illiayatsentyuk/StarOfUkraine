@@ -9,6 +9,7 @@ import { getLoggerToken } from 'pino-nestjs';
 import { JuryService } from '../jury/jury.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { EvaluateSubmissionDto } from './dto';
+import { SOCKET_SERVICE } from './tasks.constants';
 import { TasksService } from './tasks.service';
 
 describe('TasksService', () => {
@@ -73,6 +74,10 @@ describe('TasksService', () => {
     findOne: jest.fn(),
   };
 
+  const mockSocketClient = {
+    emit: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -88,6 +93,10 @@ describe('TasksService', () => {
         {
           provide: JuryService,
           useValue: mockJuryService,
+        },
+        {
+          provide: SOCKET_SERVICE,
+          useValue: mockSocketClient,
         },
       ],
     }).compile();

@@ -54,13 +54,16 @@ const authStore = useLoginStore()
 
 const task = computed(() => store.tasks.find(t => t.id === route.params.taskId))
 
+const tournamentId = computed(() => route.params.id as string)
+const taskId = computed(() => route.params.taskId as string)
+
 onMounted(async () => {
-    const tournamentId = route.params.id as string
+    const tid = route.params.id as string
     if (store.tasks.length === 0) {
-        await store.fetchTasks(tournamentId)
+        await store.fetchTasks(tid)
     }
     if (authStore.isAdmin) {
-        await store.fetchSubmissions(route.params.taskId as string)
+        await store.fetchSubmissions(taskId.value)
     }
 })
 
