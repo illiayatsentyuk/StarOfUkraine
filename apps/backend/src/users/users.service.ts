@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { Role } from 'src/enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { FindUsersDto } from './dto';
+import { FindUsersDto, UpdateUserDto } from './dto';
 import { TournamentStatus } from '@prisma/client';
 
 @Injectable()
@@ -48,6 +48,25 @@ export class UsersService {
 
   updateRole(userId: string, role: Role) {
     return this.prisma.user.update({ where: { id: userId }, data: { role } });
+  }
+
+  async updateMe(userId: string, dto: UpdateUserDto) {
+    this.logger.debug({ userId }, 'Updating user profile');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name },
+      select: { id: true, email: true, name: true, nameId: true, image: true, role: true },
+    });
+  }
+
+  async updateAvatar(userId: string, filename: string) {
+    const imageUrl = `/uploads/avatars/${filename}`;
+    this.logger.debug({ userId, imageUrl }, 'Updating user avatar');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { image: imageUrl },
+      select: { id: true, email: true, name: true, nameId: true, image: true, role: true },
+    });
   }
 
   async getDashboard(userId: string) {

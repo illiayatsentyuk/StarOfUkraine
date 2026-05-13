@@ -24,6 +24,8 @@ header.header-competition
                     @click="openTeamModal"
                 )
 
+            LanguageSwitcher
+
             .auth-section
                 template(v-if="loginStore.user")
                     .user-info
@@ -89,6 +91,9 @@ header.header-competition
                 )
             template(v-else)
                 NuxtLink.login-btn(to="/auth" @click="isMenuOpen = false") УВІЙТИ
+
+            .mobile-menu__lang
+                LanguageSwitcher
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
@@ -407,6 +412,12 @@ function closeModal(){
         padding: 40px 24px;
         background: var(--color-bg);
     }   
+
+    &__lang {
+        display: flex;
+        padding-top: 8px;
+        border-top: 1px solid var(--color-border);
+    }
 
     &__actions {
         display: flex;

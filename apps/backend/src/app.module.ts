@@ -3,6 +3,8 @@ import { CacheModule, type CacheOptions } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 import { Logger, LoggerModule } from 'pino-nestjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -94,6 +96,11 @@ import { UsersModule } from './users/users.module';
         return { stores, ttl };
       },
       inject: [ConfigService, Logger],
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+      serveStaticOptions: { index: false },
     }),
     AuthModule,
     TeamModule,

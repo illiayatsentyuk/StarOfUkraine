@@ -1,17 +1,31 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiCookieAuth,
+  ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { GetCurrentUserId } from '../common/decorators';
 import { authExamples, usersExamples } from '../examples';
 import { Serialize } from '../interceptors/serialize.interceptor';
-import { FindUsersDto, UserDto } from './dto';
+import { FindUsersDto, UpdateUserDto, UserDto } from './dto';
 import { UsersService } from './users.service';
 
 @ApiTags('Users')
@@ -20,6 +34,50 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update current user profile (name)' })
+  @ApiResponse({ status: 200, description: 'Updated user' })
+  @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
+  updateMe(
+    @GetCurrentUserId() userId: string,
+    @Body() dto: UpdateUserDto,
+  ) {
+    return this.usersService.updateMe(userId, dto);
+  }
+
+  @Patch('me/avatar')
+  @ApiOperation({ summary: 'Upload avatar for current user' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 200, description: 'Updated user with new avatar URL' })
+  @ApiResponse({ status: 400, description: 'No file uploaded or invalid type' })
+  @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: 'uploads/avatars',
+        filename: (_req, file, cb) => {
+          const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+          cb(null, `${unique}${extname(file.originalname)}`);
+        },
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype.match(/^image\//)) {
+          return cb(new BadRequestException('Only image files are allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  updateAvatar(
+    @GetCurrentUserId() userId: string,
+    //@ts-ignore
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded');
+    return this.usersService.updateAvatar(userId, file.filename);
+  }
 
   @Get('me/dashboard')
   @ApiOperation({

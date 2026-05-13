@@ -99,8 +99,39 @@ export const useLoginStore = defineStore('login', () => {
     }
 
     const isAuthenticated = computed(() => !!user.value)
- 
-    
 
-    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
+    const updateName = async (name: string) => {
+        loading.value = true
+        try {
+            const response = await useApi().patch('/users/me', { name })
+            if (response.data) {
+                user.value = { ...user.value!, ...response.data }
+            }
+        } catch {
+            toast.error('Помилка при оновленні імені')
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const uploadAvatar = async (file: File) => {
+        loading.value = true
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+            const response = await useApi().patch('/users/me/avatar', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            })
+            if (response.data) {
+                user.value = { ...user.value!, ...response.data }
+                image.value = response.data.image
+            }
+        } catch {
+            toast.error('Помилка при завантаженні аватару')
+        } finally {
+            loading.value = false
+        }
+    }
+
+    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail, updateName, uploadAvatar }
 })
