@@ -1,44 +1,76 @@
 <template lang="pug">
 NuxtLink.task-card(:to="taskLink")
     .task-card__header
-        .status-badge.pending
-            span.dot
-            span ВІДКРИТО
-        .points {{ maxPoints }} pts
+        .status-badge(:class="`status-${task.status}`") {{ statusLabel }}
+        .points(v-if="maxPoints") {{ maxPoints }} БАЛІВ
 
     h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer
-        .deadline
-            i.pi.pi-calendar
-            span Раунд {{ task.order }}
-        .detail-btn
-            span ДЕТАЛІ
-            i.pi.pi-arrow-right
+        .task-card__footer__info
+            span.deadline(v-if="task.deadline") Дедлайн: {{ formatDate(task.deadline) }}
+            span.deadline(v-else) Без дедлайну
+            NuxtLink.detail-btn(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
+                span ДЕТАЛІ
+                i.pi.pi-arrow-right
+        
+        .task-card__admin-actions(v-if="isAdmin")
+            Button.admin-btn.activate(
+                v-if="task.status === 'DRAFT'"
+                label="АКТИВУВАТИ"
+                icon="pi pi-play"
+                :loading="store.loading"
+                @click.stop.prevent="handleActivate"
+            )
+            Button.admin-btn.close(
+                v-if="task.status === 'ACTIVE'"
+                label="ЗАКРИТИ ЗДАЧУ"
+                icon="pi pi-lock"
+                :loading="store.loading"
+                @click.stop.prevent="handleClose"
+            )
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { TournamentTask } from '~/types'
+import type { TournamentTask } from '~/stores/tasks.store'
 
 const props = defineProps<{
     task: TournamentTask
-    tournamentId?: string
+    tournamentId: string
+    isAdmin?: boolean
 }>()
 
-const route = useRoute()
-const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
-const teamsStore = useTeamsStore()
+const store = useTasksStore()
 
-const taskLink = computed(() => ({
-    path: `/tournaments/${tournamentId.value}/tasks/${props.task.id}`,
-    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
-}))
+const formatDate = (date: string | null) => {
+    if (!date) return ''
+    return new Date(date).toLocaleDateString('uk-UA')
+}
+
+const taskLink = computed(() => `/tournaments/${props.tournamentId}/tasks/${props.task.id}`)
+
+const STATUS_LABELS: Record<string, string> = {
+    DRAFT: 'ЧЕРНЕТКА',
+    ACTIVE: 'АКТИВНЕ',
+    SUBMISSION_CLOSED: 'ЗДАЧУ ЗАКРИТО',
+    EVALUATED: 'ОЦІНЕНО',
+}
+
+const statusLabel = computed(() => STATUS_LABELS[props.task.status] ?? props.task.status)
 
 const maxPoints = computed(() =>
-    (props.task.criteria?.rubric || []).reduce((sum, item) => sum + (item.maxPoints || 0), 0),
+    props.task.criteria?.rubric?.reduce((sum, item) => sum + (item.maxPoints ?? 0), 0) ?? 0
 )
+
+async function handleActivate() {
+    await store.activateTask(props.task.id)
+}
+
+async function handleClose() {
+    await store.closeSubmissions(props.task.id)
+}
 </script>
 
 <style scoped lang="scss">
@@ -71,19 +103,27 @@ const maxPoints = computed(() =>
             font-size: 10px;
             font-weight: 700;
             padding: 4px 10px;
-            background: var(--color-bg-secondary);
-            border-radius: 0;
+            letter-spacing: 1.5px;
+            border: 1px solid var(--color-border);
+            color: var(--color-text-muted);
 
-            .dot {
-                width: 5px;
-                height: 5px;
-                border-radius: 50%;
-                background: #666;
+            &.status-ACTIVE {
+                background: var(--color-primary);
+                border-color: var(--color-primary);
+                color: white;
             }
 
-            &.completed { color: #10b981; .dot { background: #10b981; } }
-            &.failed { color: #ef4444; .dot { background: #ef4444; } }
-            &.pending { color: #f59e0b; .dot { background: #f59e0b; } }
+            &.status-EVALUATED {
+                background: var(--color-text);
+                border-color: var(--color-text);
+                color: white;
+            }
+
+            &.status-SUBMISSION_CLOSED {
+                background: transparent;
+                border-color: var(--color-text-muted);
+                color: var(--color-text-muted);
+            }
         }
 
         .points {
@@ -116,10 +156,16 @@ const maxPoints = computed(() =>
 
     &__footer {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: 20px;
         border-top: 1px solid var(--color-border);
         padding-top: 16px;
+
+        &__info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
         .deadline {
             display: flex;
@@ -137,6 +183,44 @@ const maxPoints = computed(() =>
             font-weight: 700;
             font-size: 11px;
             color: var(--color-primary);
+        }
+    }
+
+    &__admin-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+
+        .admin-btn {
+            width: 100%;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 1px;
+            border-radius: 0;
+            padding: 10px;
+            height: 40px;
+            transition: all 0.2s;
+
+            &.activate {
+                background: #10b981;
+                border-color: #10b981;
+                color: white;
+                &:hover { background: #059669; border-color: #059669; }
+            }
+
+            &.close {
+                background: #64748b;
+                border-color: #64748b;
+                color: white;
+                &:hover { background: #475569; border-color: #475569; }
+            }
+
+            :deep(.p-button-icon) {
+                font-size: 12px;
+                margin-right: 12px;
+            }
         }
     }
 }

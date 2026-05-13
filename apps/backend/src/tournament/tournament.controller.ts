@@ -22,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TournamentStatus } from '@prisma/client';
-import { Roles } from 'src/common/decorators';
+import { GetCurrentUserId, Roles } from 'src/common/decorators';
 import { Role, SortOrder, TournamentsSortBy } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';

@@ -9,7 +9,9 @@ section.tasks-page
         :loading="store.loading"
         :taskCount="store.tasks.length"
         :isAdmin="authStore.isAdmin"
+        :tournamentId="route.params.id"
         @create="isModalOpen = true"
+        @assign-jury="store.assignJury(route.params.id)"
     )
 
     .loading-state(v-if="store.loading")
@@ -22,6 +24,7 @@ section.tasks-page
             :key="task.id"
             :task="task"
             :tournamentId="route.params.id"
+            :isAdmin="authStore.isAdmin"
         )
 
     .empty-state(v-else)
@@ -106,11 +109,10 @@ async function handleCreateTask(payload: any) {
 
     await store.createTask({
         tournamentId: route.params.id as string,
-        name: derivedName,
-        description: derivedDescription,
-        order: safeOrder,
-        maxPoints: safeMaxPoints,
-        criteria: normalizedCriteria.length ? normalizedCriteria : undefined,
+        name: payload.title,
+        description: payload.description,
+        maxPoints: payload.points,
+        deadline: payload.deadline,
     })
     isModalOpen.value = false
 }

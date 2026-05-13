@@ -155,9 +155,10 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             if (!response.data) throw new Error('Не вдалося зареєструвати команду в турнір')
             toast.success('Команду зареєстровано в турнірі')
             return response.data
-        } catch (err: unknown) {
+        } catch (err: any) {
             console.error('Помилка API при реєстрації команди в турнірі:', err)
-            toast.error('Не вдалося зареєструвати команду в турнірі')
+            const message = err?.response?.data?.message || 'Не вдалося зареєструвати команду в турнірі'
+            toast.error(message)
             throw err
         }
     }

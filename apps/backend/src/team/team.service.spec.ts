@@ -63,6 +63,9 @@ describe('TeamService', () => {
     updatedAt: new Date('2025-01-01'),
   };
 
+  /** What findAll / findOne return after aggregating evaluation scores */
+  const teamMockWithPoints = { ...teamMock, points: 0 };
+
   const createPayload = {
     name: teamMock.name,
     captainName: teamMock.captainName,
@@ -160,7 +163,7 @@ describe('TeamService', () => {
       const result = await service.findAll({ page: 1, limit: 10 });
 
       expect(result).toEqual({
-        data: [teamMock],
+        data: [teamMockWithPoints],
         currentPage: 1,
         nextPage: 2,
         previousPage: null,
@@ -269,7 +272,7 @@ describe('TeamService', () => {
       mockPrisma.team.findUnique.mockResolvedValue(teamMock);
 
       const result = await service.findOne('team-1');
-      expect(result).toEqual(teamMock);
+      expect(result).toEqual(teamMockWithPoints);
       expect(mockPrisma.team.findUnique).toHaveBeenCalledWith({
         where: { id: 'team-1' },
         include: expect.any(Object),
@@ -292,6 +295,7 @@ describe('TeamService', () => {
       captainName: 'Olena Kovalenko',
       captainEmail: 'olena@example.com',
       members: [{ email: 'olena@example.com' }, { email: 'taras@example.com' }],
+      tournaments: [],
       city: 'Kyiv',
       organization: 'UA Esports',
       telegram: '@starofukraine',
@@ -311,7 +315,7 @@ describe('TeamService', () => {
 
       const result = await service.update('team-1', {
         name: 'New Team Name',
-      });
+      }, Role.ADMIN);
 
       expect(result.name).toBe('New Team Name');
       expect(mockPrisma.team.update).toHaveBeenCalled();
@@ -322,7 +326,7 @@ describe('TeamService', () => {
       mockPrisma.user.findMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
       mockPrisma.team.update.mockResolvedValue(teamMock);
 
-      await service.update('team-1', { name: 'Star of Ukraine' });
+      await service.update('team-1', { name: 'Star of Ukraine' }, Role.ADMIN);
 
       expect(mockPrisma.team.findFirst).not.toHaveBeenCalled();
     });
@@ -332,7 +336,7 @@ describe('TeamService', () => {
       mockPrisma.team.findFirst.mockResolvedValue({ id: 'other-team' });
 
       await expect(
-        service.update('team-1', { name: 'Taken Name' }),
+        service.update('team-1', { name: 'Taken Name' }, Role.ADMIN),
       ).rejects.toThrow(
         new BadRequestException('Team with this name already exists'),
       );

@@ -20,7 +20,10 @@ section.task-detail
 
             // Main content: Task Description
             main.task-main
-                TaskDetailHero(:task="task")
+                TaskDetailHero(
+                    :task="task"
+                    :isAdmin="authStore.isAdmin"
+                )
                 
                 .content-card
                     .content-section
@@ -70,25 +73,18 @@ const store = useTasksStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
 
-const taskId = computed(() => route.params.taskId as string)
+const task = computed(() => store.tasks.find(t => t.id === route.params.taskId))
+
 const tournamentId = computed(() => route.params.id as string)
-const task = computed(() => store.tasks.find(t => t.id === taskId.value))
+const taskId = computed(() => route.params.taskId as string)
 
 onMounted(async () => {
-    await teamsStore.initActiveTeam()
-    const hasCurrentTournamentTasks = store.tasks.some(t => t.tournamentId === tournamentId.value)
-    const hasCurrentTask = store.tasks.some(t => t.id === taskId.value)
-
-    if (!hasCurrentTournamentTasks || !hasCurrentTask) {
-        await store.fetchTasks(tournamentId.value)
+    const tid = route.params.id as string
+    if (store.tasks.length === 0) {
+        await store.fetchTasks(tid)
     }
-
-    // Fetch my submission by teamId (new API)
-    if (authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury) {
-        const teamId = teamsStore.activeTeamId || teamsStore.currentTeam?.id
-        if (teamId) {
-            await store.fetchMySubmission(taskId.value, teamId)
-        }
+    if (authStore.isAdmin) {
+        await store.fetchSubmissions(taskId.value)
     }
 })
 

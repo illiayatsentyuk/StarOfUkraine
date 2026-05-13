@@ -13,8 +13,11 @@ export const useLoginStore = defineStore('login', () => {
     const loading = ref(false)
 
     const loginByGoogle = () => {
+        console.log('Login by Google triggered', config.public.apiURL)
         if (typeof window !== 'undefined') {
-            window.location.href = `${config.public.apiURL}/auth/google/login`
+            const url = `${config.public.apiURL}/auth/google/login`
+            console.log('Redirecting to:', url)
+            window.location.href = url
         }
     }
 

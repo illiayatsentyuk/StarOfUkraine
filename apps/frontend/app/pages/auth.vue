@@ -5,7 +5,7 @@
 
     AuthSocial(
       :isLogin="isLogin"
-      @loginGoogle="loginStore.loginByGoogle()"
+      @login-google="() => loginStore.loginByGoogle()"
     )
     
     AuthForm(

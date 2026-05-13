@@ -28,10 +28,24 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-
+                .content-section
+                    h3.section-label КОМАНДИ
+                    p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
+                    template(v-else)
+                        p.description(v-if="teamsStore.loading") Завантаження команд...
+                        p.description(v-else-if="!teams.length") Команди поки не додані.
+                        .teams-grid(v-else)
+                            TeamCard(
+                                v-for="team in teams"
+                                :key="team.id"
+                                :team="team"
+                                :isAdmin="authStore.isAdmin"
+                                @delete="teamsStore.deleteTeam($event)"
+                            )
 
             TournamentSidebar(
                 :tournament="tournament"
+                :tournamentId="tournamentId"
                 :status="tournamentStatus"
                 :isAdmin="authStore.isAdmin"
                 :isJury="authStore.isJury"
@@ -41,7 +55,7 @@ section.tournament-detail
                 :hasTeam="!!teamsStore.activeTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
-                :shouldHideTeams="tournament.hideTeamsUntilRegistrationEnds"
+                :shouldHideTeams="shouldHideTeams"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @joinTournament="handleJoinTournament"
@@ -78,7 +92,7 @@ const route = useRoute()
 const tournamentStore = useTournamentsStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
-const api = useApi()
+const toast = useServerSafeToast()
 
 const tournamentId = computed(() => route.params.id as string)
 
@@ -88,8 +102,7 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
     () => tournamentStore.fetchTournamentById(tournamentId.value)
 )
 
-const teams = ref<(Partial<Team> & { points?: number })[]>([])
-const loadingTeams = ref(false)
+const teams = ref<any[]>([])
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -114,7 +127,7 @@ const shouldHideTeams = computed(() => {
 // Перевірка чи команда юзера вже зареєстрована в цьому турнірі
 const isAlreadyJoined = computed(() => {
     const activeTeamId = teamsStore.activeTeamId
-    if (!activeTeamId) return false
+    if (!activeTeamId || !Array.isArray(teams.value)) return false
     return teams.value.some((t) => t.id === activeTeamId)
 })
 
@@ -125,7 +138,10 @@ const canSeeTasks = computed(() => {
 })
 
 const refreshTeams = async () => {
-    if (shouldHideTeams.value || !tournament.value?.teams) return
+    if (shouldHideTeams.value || !tournament.value?.teams || !Array.isArray(tournament.value.teams)) {
+        teams.value = []
+        return
+    }
     teams.value = tournament.value.teams.map((t: any) => ({
         id: t.id,
         name: t.name,
@@ -142,6 +158,20 @@ const handleJoinTournament = async () => {
         return
     }
 
+    const team = teamsStore.activeTeam
+    const memberCount = team?.members?.length || 0
+
+    // Валідація кількості учасників
+    if (tournament.value?.teamSizeMin && memberCount < tournament.value.teamSizeMin) {
+        toast.error(`У вашій команді недостатньо учасників. Для цього турніру потрібно мінімум ${tournament.value.teamSizeMin} (зараз: ${memberCount}). Запросіть друзів у команду!`)
+        return
+    }
+
+    if (tournament.value?.teamSizeMax && memberCount > tournament.value.teamSizeMax) {
+        toast.error(`У вашій команді забагато учасників. Максимальна кількість для цього турніру: ${tournament.value.teamSizeMax} (зараз: ${memberCount}).`)
+        return
+    }
+
     // Є команда — одразу join
     joining.value = true
     try {
@@ -154,9 +184,19 @@ const handleJoinTournament = async () => {
     }
 }
 
-// Після створення команди — автоматично приєднуємо до турніру
+// Після створення команди — автоматично приєднуємо до турніру, якщо склад відповідає вимогам
 const onTeamCreated = async ({ teamId }: { teamId: string }) => {
     await teamsStore.setActiveTeam(teamId)
+    
+    // Отримуємо актуальні дані про нову команду (вона завжди має 1 учасника - капітана)
+    const team = await teamsStore.fetchTeamById(teamId)
+    const memberCount = 1
+
+    if (tournament.value?.teamSizeMin && memberCount < tournament.value.teamSizeMin) {
+        toast.warning(`Команду створено! Але для участі у цьому турнірі вам потрібно запросити ще як мінімум ${tournament.value.teamSizeMin - 1} учасн.(иків). Ви зможете зареєструватися, коли склад буде повним.`)
+        return
+    }
+
     joining.value = true
     try {
         await tournamentStore.joinTournament(tournamentId.value, teamId)
@@ -198,9 +238,6 @@ async function onTournamentDeleted() {
     await navigateTo('/')
 }
 
-const shuffleTeams = () => {
-    teams.value = [...teams.value].sort(() => Math.random() - 0.5)
-}
 </script>
 
 <style lang="scss" scoped>

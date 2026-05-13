@@ -208,6 +208,19 @@ export class TournamentService {
       );
     }
 
+    const captainAlreadyRegistered = await this.prisma.team.findFirst({
+      where: {
+        captainEmail: team.captainEmail,
+        tournaments: { some: { id } },
+        NOT: { id: team.id },
+      },
+    });
+    if (captainAlreadyRegistered) {
+      throw new BadRequestException(
+        'This captain already has another team registered for this tournament',
+      );
+    }
+
     const result = await this.prisma.tournament.update({
       where: { id },
       data: { teams: { connect: { id: team.id } } },
@@ -394,7 +407,7 @@ export class TournamentService {
             : { task: { tournamentId } },
           select: {
             taskId: true,
-            evaluations: { select: { totalScore: true } },
+            evaluations: { select: { totalScore: true, scores: true } },
           },
         },
       },
@@ -404,7 +417,7 @@ export class TournamentService {
     const rows: LeaderboardRow[] = teams.map((team) => {
       const submissionsByTaskId = new Map<
         string,
-        { evaluations: Array<{ totalScore: number }> }
+        { evaluations: Array<{ totalScore: number; scores: unknown }> }
       >();
       for (const s of team.submissions) {
         submissionsByTaskId.set(s.taskId, { evaluations: s.evaluations });
@@ -417,7 +430,10 @@ export class TournamentService {
           evals.length === 0
             ? 0
             : evals.reduce((sum, e) => sum + e.totalScore, 0) / evals.length;
-        return { taskId, avgScore: avg };
+
+        const criteriaBreakdown = computeCriteriaAverages(evals);
+
+        return { taskId, avgScore: avg, criteria: criteriaBreakdown };
       });
 
       const totalScore = tasks.reduce((sum, t) => sum + t.avgScore, 0);
@@ -494,11 +510,41 @@ export class TournamentService {
   }
 }
 
+type CriterionScore = { id: string; avgPoints: number };
+
 type LeaderboardRow = {
   team: { id: string; name: string };
   totalScore: number;
-  tasks: { taskId: string; avgScore: number }[];
+  tasks: { taskId: string; avgScore: number; criteria: CriterionScore[] }[];
 };
+
+function computeCriteriaAverages(
+  evals: Array<{ scores: unknown }>,
+): CriterionScore[] {
+  if (evals.length === 0) return [];
+
+  const sums = new Map<string, { total: number; count: number }>();
+
+  for (const ev of evals) {
+    const scoresObj = ev.scores as { rubric?: Array<{ id: string; points: number }> } | null;
+    const rubric = scoresObj?.rubric;
+    if (!Array.isArray(rubric)) continue;
+
+    for (const item of rubric) {
+      if (typeof item.id !== 'string' || typeof item.points !== 'number') continue;
+      const entry = sums.get(item.id) ?? { total: 0, count: 0 };
+      entry.total += item.points;
+      entry.count += 1;
+      sums.set(item.id, entry);
+    }
+  }
+
+  const result: CriterionScore[] = [];
+  for (const [id, { total, count }] of sums) {
+    result.push({ id, avgPoints: count > 0 ? total / count : 0 });
+  }
+  return result;
+}
 
 function buildPage(
   tournaments: unknown[],
