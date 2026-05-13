@@ -1,0 +1,92 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+      target: development
+    ports:
+      - '3000:3000'
+    environment:
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: development
+      # Windows + bind mounts: Nest/webpack often miss file events without polling
+      CHOKIDAR_USEPOLLING: 'true'
+    volumes:
+      # Do not mount the whole package dir — that hides image `node_modules` (pnpm) and breaks `nest` / `nuxt`.
+      - ./apps/backend/src:/app/apps/backend/src
+      - ./apps/backend/prisma:/app/apps/backend/prisma
+      - ./apps/backend/test:/app/apps/backend/test
+      - ./apps/backend/nest-cli.json:/app/apps/backend/nest-cli.json
+      - ./apps/backend/tsconfig.json:/app/apps/backend/tsconfig.json
+      - ./apps/backend/tsconfig.build.json:/app/apps/backend/tsconfig.build.json
+      - ./apps/backend/biome.json:/app/apps/backend/biome.json
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      target: development
+    ports:
+      - '4040:4040'
+    environment:
+      NUXT_PUBLIC_API_URL: http://localhost:3000
+      # Windows + Docker Desktop: Vite/Nuxt often do not hot-reload on bind mounts without polling
+      CHOKIDAR_USEPOLLING: 'true'
+      WATCHPACK_POLLING: 'true'
+    volumes:
+      # Same as backend: full dir mount would replace `node_modules` from the image with the host tree.
+      - ./apps/frontend/app:/app/apps/frontend/app
+      - ./apps/frontend/public:/app/apps/frontend/public
+      - ./apps/frontend/tests:/app/apps/frontend/tests
+      - ./apps/frontend/nuxt.config.ts:/app/apps/frontend/nuxt.config.ts
+      - ./apps/frontend/playwright.config.ts:/app/apps/frontend/playwright.config.ts
+      - ./apps/frontend/index.html:/app/apps/frontend/index.html
+      - ./apps/frontend/vercel.json:/app/apps/frontend/vercel.json
+    depends_on:
+      - backend
+    networks:
+      - backend-network
+
+  socket-service:
+    build:
+      context: .
+      dockerfile: apps/socket-service/Dockerfile
+      target: development
+    ports:
+      - '3001:3001'
+    environment:
+      REDIS_URL: redis://redis:6379
+      SOCKET_PORT: 3001
+      JWT_SECRET: ${JWT_SECRET}
+      NODE_ENV: development
+    volumes:
+      - ./apps/socket-service/src:/app/apps/socket-service/src
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge
+
+volumes:
+  redis-data:

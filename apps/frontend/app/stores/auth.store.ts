@@ -1,29 +1,28 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 import { useApi } from '~/composables/useApi'
-import { useToast } from "vue-toastification";
-import type { Form } from '~/types'
+import type { Form, User } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
-    const toast = useToast()
-    const user = ref<any>(null)
+    const toast = useServerSafeToast()
+    const user = ref<User | null>(null)
+    const image = ref<string | null>(null)
     const authenticated = ref(false)
     const isAdmin = ref(false)
+    const isJury = ref(false)
     const loading = ref(false)
 
     const loginByGoogle = () => {
-        window.location.href = `${config.public.apiURL}/auth/google/login`
+        if (typeof window !== 'undefined') {
+            window.location.href = `${config.public.apiURL}/auth/google/login`
+        }
     }
 
-    const signupByEmail = async (userData: any) => {
+    const signupByEmail = async (userData: Partial<User> & { password?: string }) => {
         loading.value = true
         try {
-            const response = await useApi().post('/auth/signup', userData)
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-            }
+            await useApi().post('/auth/signup', userData)
+            await fetchUser()
         } catch {
             user.value = null
             isAdmin.value = false
@@ -32,18 +31,17 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
     const loginByEmail = async (credentials: any) => {
         loading.value = true
         try {
-            const response = await useApi().post('/auth/signin', credentials)
-            if (response.data?.user) {
-                user.value = response.data.user
-                isAdmin.value = response.data.user.role === 'ADMIN'
-            }
+            await useApi().post('/auth/signin', credentials)
+            await fetchUser()
         } catch {
             user.value = null
             isAdmin.value = false
@@ -52,27 +50,27 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
-    // Просто запитуємо профіль — cookies браузер надішле сам
     const fetchUser = async () => {
         loading.value = true
         try {
             const response = await useApi().post('/auth/me')
-            if (response.data?.user) {
-                const userData = response.data.user
-                // Load local image override if exists
-                const localImage = localStorage.getItem(`user_image_${userData.id}`)
-                if (localImage) {
-                    userData.image = localImage
-                }
-                
-                user.value = userData
-                isAdmin.value = userData.role === 'ADMIN'
+            if (response.data) {
+                user.value = response.data
+                isAdmin.value = response.data.role === 'ADMIN'
+                isJury.value = response.data.role === 'JURY'
+                image.value = response.data.image
+                authenticated.value = true
+                console.log('User fetched:', user.value)
             }
-        } catch {
+
+        } catch (error) {
+            console.error('Fetch user failed:', error)
             user.value = null
             isAdmin.value = false
         } finally {
@@ -80,16 +78,8 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    const setLocalProfileImage = (imageUrl: string) => {
-        if (!user.value?.id) return
-        
-        user.value.image = imageUrl
-        localStorage.setItem(`user_image_${user.value.id}`, imageUrl)
-    }
-
-    // Ініціалізація при старті
     const init = async () => {
-        await fetchUser()  // просто пробуємо, без refresh спочатку
+        await fetchUser()
     }
 
     const logout = async () => {
@@ -101,23 +91,16 @@ export const useLoginStore = defineStore('login', () => {
             user.value = null
             isAdmin.value = false
             authenticated.value = false
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('activeTeamId')
+                window.location.reload()
+            }
         }
     }
 
     const isAuthenticated = computed(() => !!user.value)
+ 
+    
 
-    return { 
-        user, 
-        isAdmin, 
-        isAuthenticated, 
-        loading, 
-        loginByGoogle, 
-        fetchUser, 
-        init, 
-        logout, 
-        signupByEmail, 
-        loginByEmail,
-        setLocalProfileImage 
-    }
+    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
 })

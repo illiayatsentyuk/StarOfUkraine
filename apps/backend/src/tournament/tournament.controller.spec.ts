@@ -1,7 +1,8 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
+import type { JoinTournamentDto } from './dto/join-tournament.dto';
 import { TournamentController } from './tournament.controller';
 import { TournamentService } from './tournament.service';
-import type { JoinTournamentDto } from './dto/join-tournament.dto';
 
 describe('TournamentController', () => {
   let controller: TournamentController;
@@ -16,6 +17,7 @@ describe('TournamentController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [CacheModule.register()],
       controllers: [TournamentController],
       providers: [
         {
@@ -39,12 +41,11 @@ describe('TournamentController', () => {
   it('joinTournament delegates to service', async () => {
     mockTournamentService.joinTournament.mockResolvedValue({ id: 't-1' });
     const dto: JoinTournamentDto = { teamId: 'team-1' };
-    await expect(
-      controller.joinTournament('t-1', dto),
-    ).resolves.toEqual({ id: 't-1' });
+    await expect(controller.joinTournament('t-1', dto)).resolves.toEqual({
+      id: 't-1',
+    });
     expect(mockTournamentService.joinTournament).toHaveBeenCalledWith('t-1', {
       teamId: 'team-1',
     });
   });
 });
-

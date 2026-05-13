@@ -24,6 +24,18 @@ enum AuthProvider {
   GOOGLE
 }
 
+enum SubmissionStatus {
+  PENDING
+  EVALUATED
+}
+
+enum TaskStatus {
+  DRAFT
+  ACTIVE
+  SUBMISSION_CLOSED
+  EVALUATED
+}
+
 model User {
   id        String    @id @default(cuid())
   email     String    @unique
@@ -35,10 +47,13 @@ model User {
   role      Role      @default(USER)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  resetToken String?
 
-  accounts       Account[]
-  teamsAsCaptain Team[]    @relation("TeamCaptain")
-  teamsAsMember  Team[]    @relation("TeamMembers")
+  accounts             Account[]
+  teamsAsCaptain       Team[]       @relation("TeamCaptain")
+  teamsAsMember        Team[]       @relation("TeamMembers")
+  jury                 Jury?
+  createdTournaments   Tournament[] @relation("TournamentCreator")
 }
 
 model Account {
@@ -54,20 +69,33 @@ model Account {
   @@index([userId])
 }
 
+model Jury {
+  id               String       @id @default(cuid())
+  userId           String       @unique
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournaments      Tournament[]
+  evaluations      Evaluation[]
+  assignments      SubmissionAssignment[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model Team {
-  id           String   @id @default(cuid())
-  name     String   @unique
-  captainName  String
-  captainEmail String
-  captain      User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
-  members      User[]   @relation("TeamMembers")
-  tournaments  Tournament[] @relation("TournamentTeams")
-  city         String?
-  organization String?
-  telegram     String?
-  discord      String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  name                String   @unique
+  captainName         String
+  captainEmail        String
+  captain             User     @relation("TeamCaptain", fields: [captainEmail], references: [email])
+  members             User[]   @relation("TeamMembers")
+  tournaments         Tournament[] @relation("TournamentTeams")
+  submissions         Submission[]
+  city                String?
+  organization        String?
+  telegram            String?
+  discord             String?
+  isAcceptNewMembers  Boolean @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 model Tournament {
@@ -81,10 +109,79 @@ model Tournament {
   rounds                        Int
   teamSizeMin                   Int
   teamSizeMax                   Int
+  minJuryPerSubmission          Int              @default(2)
   status                        TournamentStatus @default(DRAFT)
   hideTeamsUntilRegistrationEnds Boolean         @default(false)
+  evaluationFinishedAt          DateTime?
+  createdById                   String?
+  createdBy                     User?            @relation("TournamentCreator", fields: [createdById], references: [id])
   teams                         Team[]           @relation("TournamentTeams")
+  jurors                        Jury[]
+  tasks                         Task[]
   createdAt                     DateTime        @default(now())
   updatedAt                     DateTime        @updatedAt
+
+  @@index([createdById])
 }
 
+model Task {
+  id            String     @id @default(cuid())
+  tournamentId  String
+  tournament    Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  name          String
+  description   String     @db.Text
+  order         Int
+  status        TaskStatus @default(DRAFT)
+  startsAt      DateTime?
+  deadline      DateTime?
+  materialUrls  String[]   @default([])
+  criteria      Json
+  submissions   Submission[]
+
+  @@index([tournamentId])
+}
+
+model Submission {
+  id          String            @id @default(cuid())
+  taskId      String
+  task        Task              @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        Team              @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  githubUrl   String
+  videoUrl    String
+  liveUrl     String?
+  summary     String?           @db.Text
+  status      SubmissionStatus  @default(PENDING)
+  evaluations Evaluation[]
+  assignments SubmissionAssignment[]
+
+  @@unique([taskId, teamId])
+  @@index([teamId])
+}
+
+model SubmissionAssignment {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  juryId       String
+  jury         Jury       @relation(fields: [juryId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([submissionId, juryId])
+  @@index([juryId])
+  @@index([submissionId])
+}
+
+model Evaluation {
+  id           String     @id @default(cuid())
+  submissionId String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  juryId       String
+  jury         Jury       @relation(fields: [juryId], references: [id], onDelete: Cascade)
+  scores       Json
+  totalScore   Int
+  comment      String     @db.Text
+
+  @@unique([submissionId, juryId])
+  @@index([juryId])
+}

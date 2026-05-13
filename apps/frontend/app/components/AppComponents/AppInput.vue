@@ -1,14 +1,19 @@
 <template lang="pug">
-.input-group
+.input-group(
+  :class="{ 'input-group--invalid': Boolean(errorMessage) }"
+)
   label(v-if="label" :class="{ 'mini-label': isMini }") {{ label }}
-  
+  .input-group__error(v-if="errorMessage") {{ errorMessage }}
+
   .pass-wrapper(v-if="isPasswordField")
     input(
       :value="modelValue"
-      @input="$emit('update:modelValue', $event.target.value)"
+      :name="name"
       :type="isPasswordVisible ? 'text' : 'password'"
       :placeholder="placeholder"
       :required="required"
+      @input="$emit('update:modelValue', $event.target.value)"
+      @blur="$emit('blur', $event)"
     )
     button.eye-btn(type="button" @click.prevent="isPasswordVisible = !isPasswordVisible")
       i(:class="isPasswordVisible ? 'pi pi-eye-slash' : 'pi pi-eye'")
@@ -16,18 +21,22 @@
   select(
     v-else-if="type === 'select'"
     :value="modelValue"
-    @input="$emit('update:modelValue', $event.target.value)"
+    :name="name"
     :required="required"
+    @input="$emit('update:modelValue', $event.target.value)"
+    @blur="$emit('blur', $event)"
   )
     slot
   
   input(
     v-else
     :value="modelValue"
-    @input="$emit('update:modelValue', $event.target.value)"
+    :name="name"
     :type="type"
     :placeholder="placeholder"
     :required="required"
+    @input="$emit('update:modelValue', $event.target.value)"
+    @blur="$emit('blur', $event)"
   )
 </template>
 
@@ -37,6 +46,7 @@ import type { AppInputProps } from '@/types'
 defineProps<AppInputProps>()
 defineEmits<{
   'update:modelValue': [value: string | number | boolean]
+  blur: [event: FocusEvent]
 }>()
 
 const isPasswordVisible = ref(false)
@@ -57,6 +67,13 @@ const isPasswordVisible = ref(false)
     }
   }
 
+  &__error {
+    color: var(--color-error);
+    font-size: var(--font-size-sm);
+    font-family: var(--font-sans);
+    line-height: 1.35;
+  }
+
   input,
   select {
     padding: var(--space-2) var(--space-3);
@@ -74,6 +91,19 @@ const isPasswordVisible = ref(false)
 
     &::placeholder {
       color: var(--color-text-muted);
+    }
+  }
+
+  &--invalid {
+    input,
+    select {
+      border-color: var(--color-error);
+
+      &:focus {
+        outline: none;
+        border-color: var(--color-error);
+        box-shadow: 0 0 0 1px var(--color-error);
+      }
     }
   }
 }

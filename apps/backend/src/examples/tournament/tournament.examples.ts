@@ -1,6 +1,9 @@
 import { TournamentStatus } from '@prisma/client';
 
 export const tournamentExamples = {
+  joinRequest: {
+    teamId: 'clx_team_123',
+  },
   createRequest: {
     name: 'Star of Ukraine Cup 2026',
     description: 'Open tournament for teams across Ukraine.',
@@ -53,4 +56,19 @@ export const tournamentExamples = {
     totalPages: 3,
     itemsPerPage: 10,
   },
+  finishEvaluationResponse: {
+    id: 'clx_tournament_123',
+    name: 'Star of Ukraine Cup 2026',
+    evaluationFinishedAt: '2026-05-01T12:00:00.000Z',
+  },
+  leaderboardResponse: [
+    {
+      team: { id: 'clx_team_abc', name: 'Team Alpha' },
+      totalScore: 55.5,
+      tasks: [
+        { taskId: 'clx_task_1', avgScore: 27.5 },
+        { taskId: 'clx_task_2', avgScore: 28.0 },
+      ],
+    },
+  ],
 } as const;

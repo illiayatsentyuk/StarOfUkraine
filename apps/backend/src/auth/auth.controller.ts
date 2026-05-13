@@ -17,7 +17,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import { Role } from 'src/enum';
 import {
   GetCurrentOAuthUser,
   GetCurrentUser,
@@ -27,12 +26,20 @@ import {
 import { GoogleAuthGuard } from '../common/guards';
 import { RtGuard } from '../common/guards/rt.guard';
 import { authExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
+import { UserDto } from '../users/dto/user.dto';
 import { AuthService } from './auth.service';
-import { SigninDto, SignupDto } from './dto';
+import {
+  ForgotPasswordDto,
+  GoogleOAuthCallbackUserDto,
+  ResetPasswordDto,
+  SigninDto,
+  SignupDto,
+} from './dto';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Public()
   @Post('signup')
@@ -189,8 +196,8 @@ export class AuthController {
     description: 'User not found',
     schema: { example: authExamples.userNotFound },
   })
+  @Serialize(UserDto)
   me(@GetCurrentUserId() userId: string) {
-    console.log('userId', userId);
     return this.authService.getMe(userId);
   }
 
@@ -206,8 +213,8 @@ export class AuthController {
     status: 302,
     description: 'Redirect to Google authorization',
   })
-  googleLogin() {
-    // here we should redirect to google login page
+  googleLogin(): void {
+    return;
   }
 
   @Public()
@@ -216,12 +223,12 @@ export class AuthController {
   @ApiOperation({
     summary: 'Google OAuth callback',
     description:
-      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies, then redirects to FRONTEND_URL/auth?oauth=success (default http://localhost:4040).',
+      'Completes OAuth; issues access and refresh tokens as HttpOnly cookies, then redirects to FRONTEND_URL/?oauth=success. FRONTEND_URL must be the Nuxt origin (e.g. http://localhost:4040), not the API URL.',
   })
   @ApiResponse({
     status: 302,
     description:
-      'Redirects to FRONTEND_URL/auth?oauth=success; HttpOnly cookies set',
+      'Redirects to FRONTEND_URL/?oauth=success; HttpOnly cookies set',
   })
   @ApiResponse({
     status: 401,
@@ -229,10 +236,9 @@ export class AuthController {
     schema: { example: authExamples.unauthorized },
   })
   async googleCallback(
-    @GetCurrentOAuthUser() user: { sub: string; email: string; role: Role },
+    @GetCurrentOAuthUser() user: GoogleOAuthCallbackUserDto,
     @Res() res: Response,
   ) {
-    console.log('user', user);
     const tokens = await this.authService.getTokens(
       user.sub,
       user.email,
@@ -240,8 +246,40 @@ export class AuthController {
     );
 
     this.setAuthCookies(res, tokens.access_token, tokens.refresh_token);
-    const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:4040';
-    return res.redirect(302, `${frontendUrl}/auth?oauth=success`);
+    const frontendBase = (
+      process.env.FRONTEND_URL ?? 'http://localhost:4040'
+    ).replace(/\/+$/, '');
+    return res.redirect(302, `${frontendBase}/?oauth=success`);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiBody({
+    type: ForgotPasswordDto,
+    examples: {
+      forgot: { value: authExamples.forgotPasswordRequest },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Reset email sent if user exists' })
+  @ApiResponse({ status: 400, description: 'Validation failed' })
+  forgotPassword(@Body() dto: ForgotPasswordDto): Promise<void> {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  @ApiOperation({ summary: 'Set new password using reset token' })
+  @ApiBody({
+    type: ResetPasswordDto,
+    examples: {
+      reset: { value: authExamples.resetPasswordRequest },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Password updated' })
+  @ApiResponse({ status: 400, description: 'Invalid or expired token' })
+  resetPassword(@Body() dto: ResetPasswordDto): Promise<void> {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   private setAuthCookies(res: Response, at: string, rt: string) {

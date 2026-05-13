@@ -15,39 +15,40 @@ export const authExamples = {
     ok: true,
   },
   meResponse: {
-    message: 'Authenticated',
+    id: 'clxxxxxxxxxxxxxxxxxxxxxxxx',
+    email: 'user@example.com',
+    name: 'Ivan Petrenko',
+    nameId: 'ivan-petrenko',
+    image: null,
     role: Role.USER,
-    user: {
-      id: 'clxxxxxxxxxxxxxxxxxxxxxxxx',
-      email: 'user@example.com',
-      name: 'Ivan Petrenko',
-      image: null,
-      role: Role.USER,
-      createdAt: '2025-01-01T00:00:00.000Z',
-      updatedAt: '2025-01-01T00:00:00.000Z',
-    },
+    createdAt: '2025-01-01T00:00:00.000Z',
+    updatedAt: '2025-01-01T00:00:00.000Z',
   },
   unauthorized: {
     statusCode: 401,
     message: 'Invalid credentials',
     error: 'Unauthorized',
   },
-  /** Register: duplicate email (BadRequestException) */
   emailAlreadyInUse: {
     statusCode: 400,
     message: 'Email already in use',
     error: 'Bad Request',
   },
-  /** Sign in: no user for email */
   userNotFound: {
     statusCode: 404,
     message: 'No user found',
     error: 'Not Found',
   },
-  /** Sign in: wrong password */
   accessDenied: {
     statusCode: 403,
     message: 'Access Denied',
     error: 'Forbidden',
+  },
+  forgotPasswordRequest: {
+    email: 'user@example.com',
+  },
+  resetPasswordRequest: {
+    token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    password: 'N3wP@ssw0rd!',
   },
 } as const;

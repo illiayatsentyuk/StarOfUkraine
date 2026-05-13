@@ -9,8 +9,10 @@ import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type { SignOptions } from 'jsonwebtoken';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { OAuthUserPayload } from '../common/types';
 import jwtTokensConfig from '../config/jwt.config';
+import { EmailService } from '../email/email.service';
 import { AuthProvider, Role } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
 import { SigninDto, SignupDto } from './dto';
@@ -23,6 +25,9 @@ export class AuthService {
     private jwtService: JwtService,
     @Inject(jwtTokensConfig.KEY)
     private jwtConfig: ConfigType<typeof jwtTokensConfig>,
+    private emailService: EmailService,
+    @InjectPinoLogger(AuthService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   async getMe(userId: string) {
@@ -32,25 +37,17 @@ export class AuthService {
         id: true,
         email: true,
         name: true,
+        nameId: true,
         image: true,
         role: true,
         createdAt: true,
         updatedAt: true,
+        teamsAsCaptain: { select: { id: true, name: true } },
+        teamsAsMember: { select: { id: true, name: true } },
       },
     });
     if (!user) throw new NotFoundException('No user found');
-    if (user.role === Role.ADMIN) {
-      return {
-        user,
-        message: 'Authenticated' as const,
-        role: 'admin' as const,
-      };
-    }
-    return {
-      user,
-      message: 'Authenticated' as const,
-      role: user.role,
-    };
+    return user;
   }
 
   async signupLocal(dto: SignupDto): Promise<Tokens> {
@@ -70,6 +67,7 @@ export class AuthService {
         hash,
         name: dto.name,
         nameId,
+        resetToken: '',
       },
     });
 
@@ -79,6 +77,7 @@ export class AuthService {
       savedUser.role,
     );
     await this.updateRtHash(savedUser.id, tokens.refresh_token);
+    this.logger.info({ userId: savedUser.id }, 'User signed up (local)');
     return tokens;
   }
 
@@ -93,6 +92,7 @@ export class AuthService {
 
     const tokens = await this.getTokens(String(user.id), user.email, user.role);
     await this.updateRtHash(String(user.id), tokens.refresh_token);
+    this.logger.info({ userId: user.id }, 'User signed in (local)');
     return tokens;
   }
 
@@ -101,6 +101,7 @@ export class AuthService {
       where: { id: String(userId) },
       data: { hashedRt: null },
     });
+    this.logger.info({ userId }, 'User logged out');
   }
 
   async refreshTokens(userId: string, rt: string) {
@@ -115,6 +116,7 @@ export class AuthService {
 
     const tokens = await this.getTokens(String(user.id), user.email, user.role);
     await this.updateRtHash(String(user.id), tokens.refresh_token);
+    this.logger.debug({ userId: user.id }, 'Access tokens refreshed');
     return tokens;
   }
 
@@ -181,28 +183,59 @@ export class AuthService {
     });
 
     if (existingAccount) {
-      return existingAccount.user; // already linked, just return the user
+      if (
+        profile.picture &&
+        (!existingAccount.user.image ||
+          existingAccount.user.image !== profile.picture)
+      ) {
+        const updated = await this.prisma.user.update({
+          where: { id: existingAccount.user.id },
+          data: { image: profile.picture },
+        });
+        this.logger.debug(
+          { userId: updated.id, provider: 'GOOGLE' },
+          'Google profile image synced',
+        );
+        return updated;
+      }
+      this.logger.debug(
+        { userId: existingAccount.user.id, provider: 'GOOGLE' },
+        'Google sign-in (existing account)',
+      );
+      return existingAccount.user;
     }
 
-    // 2. Check if a user with this email already exists (password account)
     let user = await this.prisma.user.findUnique({
       where: { email: profile.email },
     });
 
-    // 3. Create user if they don't exist at all
     if (!user) {
       const nameId = `${profile.name?.toLowerCase().replace(/\s+/g, '-')}-${Math.floor(Math.random() * 10000)}`;
       user = await this.prisma.user.create({
         data: {
           email: profile.email,
           name: profile.name,
+          image: profile.picture,
           nameId,
-          // no password — OAuth user
+          resetToken: '',
         },
+      });
+      this.logger.info(
+        { userId: user.id, provider: 'GOOGLE' },
+        'User created from Google OAuth',
+      );
+    }
+    if (
+      user &&
+      profile.picture &&
+      (!user.image || user.image !== profile.picture)
+    ) {
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { image: profile.picture },
       });
     }
 
-    // 4. Link the Google account to the user
     await this.prisma.account.create({
       data: {
         userId: user.id,
@@ -211,6 +244,48 @@ export class AuthService {
       },
     });
 
+    this.logger.info(
+      { userId: user.id, provider: 'GOOGLE' },
+      'Linked new Google account to user',
+    );
     return user;
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException(`No user found for email: ${email}`);
+    }
+    await this.emailService.sendResetPasswordLink(email);
+    this.logger.info({ userId: user.id }, 'Password reset email requested');
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    const emailFromToken =
+      await this.emailService.decodeConfirmationToken(token);
+    const email =
+      typeof emailFromToken === 'string'
+        ? emailFromToken.toLowerCase()
+        : String(emailFromToken).toLowerCase();
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new NotFoundException(`No user found for email: ${email}`);
+    }
+
+    const hash = await this.hashData(password);
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        hash,
+        hashedRt: null,
+        resetToken: '',
+      },
+    });
+    this.logger.info({ userId: user.id }, 'Password reset completed');
   }
 }

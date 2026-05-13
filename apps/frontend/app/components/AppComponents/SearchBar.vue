@@ -134,4 +134,4 @@ const model = defineModel<string>({ default: '' })
 @keyframes spin {
     to { transform: rotate(360deg); }
 }
-</style>
+</style>

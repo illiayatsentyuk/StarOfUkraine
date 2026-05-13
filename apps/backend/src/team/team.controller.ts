@@ -20,10 +20,15 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
-import { GetCurrentUser, Public } from '../common/decorators';
+import { GetCurrentUser, GetCurrentUserId, Public } from '../common/decorators';
 import { authExamples, teamExamples } from '../examples';
+import { Serialize } from '../interceptors/serialize.interceptor';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { FindTeamQueryDto } from './dto/find-team-query.dto';
+import {
+  PaginatedTeamsResponseDto,
+  TeamResponseDto,
+} from './dto/team-response.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { TeamService } from './team.service';
 
@@ -54,7 +59,11 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  @Serialize(TeamResponseDto)
   create(@Body() data: CreateTeamDto, @GetCurrentUser('email') email: string) {
     return this.teamService.create(data, email);
   }
@@ -77,10 +86,12 @@ export class TeamController {
   })
   @ApiResponse({ status: 400, description: 'User is already a team member' })
   @ApiResponse({ status: 404, description: 'Team or user not found' })
-  join(
-    @Param('id') id: string,
-    @GetCurrentUser('email') email: string,
-  ) {
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  @Serialize(TeamResponseDto)
+  join(@Param('id') id: string, @GetCurrentUser('email') email: string) {
     return this.teamService.join(id, email);
   }
 
@@ -88,13 +99,19 @@ export class TeamController {
   @Post('list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'List all teams' })
-  @ApiBody({ type: FindTeamQueryDto })
+  @ApiBody({
+    type: FindTeamQueryDto,
+    examples: {
+      list: { value: teamExamples.listRequest },
+    },
+  })
   @ApiResponse({
     status: 200,
     description: 'List of teams returned',
     schema: { example: teamExamples.paginatedResponse },
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
+  @Serialize(PaginatedTeamsResponseDto)
   findAll(@Body() body: FindTeamQueryDto) {
     return this.teamService.findAll(body);
   }
@@ -109,6 +126,7 @@ export class TeamController {
     schema: { example: teamExamples.response },
   })
   @ApiResponse({ status: 404, description: 'Team not found' })
+  @Serialize(TeamResponseDto)
   findOne(@Param('id') id: string) {
     return this.teamService.findOne(id);
   }
@@ -140,9 +158,17 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
-  update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
-    return this.teamService.update(id, data);
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  @Serialize(TeamResponseDto)
+  update(
+    @Param('id') id: string,
+    @Body() data: UpdateTeamDto,
+    @GetCurrentUser('role') role: Role,
+  ) {
+    return this.teamService.update(id, data, role);
   }
 
   @Delete(':id')
@@ -162,7 +188,11 @@ export class TeamController {
     description: 'Unauthorized',
     schema: { example: authExamples.unauthorized },
   })
-  @ApiResponse({ status: 403, description: 'Forbidden — requires USER role' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
+  })
+  @Serialize(TeamResponseDto)
   remove(@Param('id') id: string) {
     return this.teamService.remove(id);
   }

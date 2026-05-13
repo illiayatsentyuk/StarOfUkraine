@@ -55,7 +55,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:teams', value: any[]): void
-    (e: 'generate'): void
     (e: 'shuffle'): void
 }>()
 

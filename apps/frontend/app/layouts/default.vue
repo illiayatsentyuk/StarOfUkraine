@@ -2,7 +2,6 @@
 .layout
   HeaderCompetition
   main.layout__main
-    .layout__content
       slot
   AppFooter
 </template>
@@ -20,6 +19,7 @@
 .layout__main {
   flex: 1;
   width: 100%;
+  min-width: 0;
 }
 
 .layout__content {

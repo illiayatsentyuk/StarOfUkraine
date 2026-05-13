@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
+import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TeamsSortBy } from '../enum';
 import { PrismaService } from '../prisma/prisma.service';
@@ -25,7 +27,22 @@ const memberUserSelect = {
 const teamInclude = {
   members: { select: memberUserSelect },
   captain: { select: memberUserSelect },
+  submissions: {
+    select: {
+      evaluations: { select: { totalScore: true } },
+    },
+  },
 };
+
+function computePoints(team: {
+  submissions?: Array<{ evaluations: Array<{ totalScore: number }> }>;
+}): number {
+  if (!team.submissions) return 0;
+  return team.submissions.reduce(
+    (sum, sub) => sum + sub.evaluations.reduce((s, e) => s + e.totalScore, 0),
+    0,
+  );
+}
 
 @Injectable()
 export class TeamService {
@@ -33,7 +50,9 @@ export class TeamService {
     private readonly prisma: PrismaService,
     @Inject(paginationConfig.KEY)
     private readonly paginationsConfig: ConfigType<typeof paginationConfig>,
-  ) {}
+    @InjectPinoLogger(TeamService.name)
+    private readonly logger: PinoLogger,
+  ) { }
 
   private normalizeEmail(email: string): string {
     return email.trim().toLowerCase();
@@ -62,7 +81,7 @@ export class TeamService {
     const captainEmail = this.normalizeEmail(creatorEmail);
     await this.assertUserExistsByEmail(captainEmail);
 
-    return this.prisma.team.create({
+    const team = await this.prisma.team.create({
       data: {
         name: data.name,
         captainName: data.captainName,
@@ -79,6 +98,8 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: team.id, name: team.name }, 'Team created');
+    return team;
   }
 
   async findAll(query: FindTeamQueryDto) {
@@ -97,20 +118,20 @@ export class TeamService {
 
     const where: Prisma.TeamWhereInput | undefined = name
       ? {
-          OR: [
-            {
-              name: {
-                contains: name,
-                mode: Prisma.QueryMode.insensitive,
-              },
+        OR: [
+          {
+            name: {
+              contains: name,
+              mode: Prisma.QueryMode.insensitive,
             },
-            {
-              id: {
-                contains: name,
-              },
+          },
+          {
+            id: {
+              contains: name,
             },
-          ],
-        }
+          },
+        ],
+      }
       : undefined;
 
     const teams = await this.prisma.team.findMany({
@@ -124,7 +145,7 @@ export class TeamService {
     });
 
     return {
-      data: teams,
+      data: teams.map((t) => ({ ...t, points: computePoints(t) })),
       currentPage: Number(page),
       nextPage: page < maximumPage ? Number(page) + 1 : null,
       previousPage: page > 1 ? Number(page) - 1 : null,
@@ -141,18 +162,33 @@ export class TeamService {
     if (!team) {
       throw new NotFoundException('Team not found');
     }
-    return team;
+    return { ...team, points: computePoints(team) };
   }
 
-  async update(id: string, data: UpdateTeamDto) {
+  async update(id: string, data: UpdateTeamDto, userRole: Role) {
     const existing = await this.prisma.team.findUnique({
       where: { id },
       include: {
         members: { select: { email: true } },
+        tournaments: {
+          select: { registrationEnd: true },
+        },
       },
     });
     if (!existing) {
       throw new NotFoundException('Team not found');
+    }
+
+    if (userRole !== Role.ADMIN) {
+      const now = new Date();
+      const isLockedByTournament = existing.tournaments.some(
+        (t) => now > new Date(t.registrationEnd),
+      );
+      if (isLockedByTournament) {
+        throw new ForbiddenException(
+          'Team cannot be edited after tournament registration has closed. Contact an admin.',
+        );
+      }
     }
 
     if (data.name !== undefined && data.name !== existing.name) {
@@ -173,11 +209,13 @@ export class TeamService {
       await this.assertUserExistsByEmail(captainEmail);
     }
 
-    return this.prisma.team.update({
+    const updated = await this.prisma.team.update({
       where: { id },
       data: {
         ...(data.name !== undefined && { name: data.name }),
-        ...(data.captainName !== undefined && { captainName: data.captainName }),
+        ...(data.captainName !== undefined && {
+          captainName: data.captainName,
+        }),
         ...(data.captainEmail !== undefined && {
           captain: { connect: { email: captainEmail } },
         }),
@@ -190,6 +228,8 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: id }, 'Team updated');
+    return updated;
   }
 
   async join(teamId: string, userEmail: string) {
@@ -197,12 +237,16 @@ export class TeamService {
     const email = this.normalizeEmail(userEmail);
     await this.assertUserExistsByEmail(email);
 
+    if (team.isAcceptNewMembers === false) {
+      throw new BadRequestException('Team is not accepting new members');
+    }
+
     const alreadyMember = team.members.some((m) => m.email === email);
     if (alreadyMember) {
       throw new BadRequestException('User is already a team member');
     }
 
-    return this.prisma.team.update({
+    const joined = await this.prisma.team.update({
       where: { id: teamId },
       data: {
         members: {
@@ -211,13 +255,17 @@ export class TeamService {
       },
       include: teamInclude,
     });
+    this.logger.info({ teamId: teamId }, 'User joined team');
+    return joined;
   }
 
   async remove(id: string) {
     await this.findOne(id);
-    return this.prisma.team.delete({
+    const deleted = await this.prisma.team.delete({
       where: { id },
       include: teamInclude,
     });
+    this.logger.info({ teamId: id }, 'Team deleted');
+    return deleted;
   }
 }

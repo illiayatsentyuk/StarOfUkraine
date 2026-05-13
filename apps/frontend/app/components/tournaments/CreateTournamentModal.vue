@@ -117,6 +117,59 @@ function closeModal() {
             button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? $t('modals.create.creating') : $t('modals.create.create_btn') }}
 </template>
 
+<script lang="ts" setup>
+import type { Tournament } from '~/types'
+
+const props = defineProps<{
+  isOpen: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: "close"): void
+}>()
+
+const store = useTournamentsStore()
+
+const initialValues = {
+    name: "",
+    description: "",
+    startDate: null,
+    registrationStart: null,
+    registrationEnd: null,
+    rounds: null,
+    maxTeams: null,
+    teamSizeMin: 2,
+    teamSizeMax: 5,
+    hideTeamsUntilRegistrationEnds: false,
+}
+
+const isLoading = ref(false)
+
+async function onSubmit(values: Tournament) {
+    try {
+        isLoading.value = true
+        const payload = {
+            ...values,
+            startDate: values.startDate ? new Date(values.startDate).toISOString() : "",
+            registrationStart: values.registrationStart ? new Date(values.registrationStart).toISOString() : "",
+            registrationEnd: values.registrationEnd ? new Date(values.registrationEnd).toISOString() : "",
+            status: "DRAFT"
+        }
+        
+        await store.addTournament(payload)
+        emit("close")
+    } catch (e) {
+        console.error("Виникла помилка під час створення турніру.", e)
+    } finally {
+        isLoading.value = false
+    }
+}
+
+function closeModal() {
+  emit("close")
+}
+</script>
+
 <style lang="scss" scoped>
 .modal-wrapper {
     position: fixed;
@@ -124,7 +177,7 @@ function closeModal() {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1100;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -283,15 +336,17 @@ function closeModal() {
 
         &:checked {
             background: #000000;
-            
+
             &::after {
-                content: '✓';
+                content: '';
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #ffffff;
-                font-size: 12px;
+                left: 5px;
+                top: 1px;
+                width: 4px;
+                height: 9px;
+                border: solid #ffffff;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
             }
         }
     }

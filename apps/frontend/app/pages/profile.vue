@@ -263,6 +263,7 @@ const handleLogout = async () => {
     height: 104px;
     background-color: var(--color-bg, #FFFFFF);
     display: flex;
+    align-items: center;
     justify-content: center;
     align-items: center;
     border: 4px solid var(--color-bg, #FFFFFF);

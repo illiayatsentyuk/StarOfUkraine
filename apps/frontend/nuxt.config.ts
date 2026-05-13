@@ -3,6 +3,10 @@ export default defineNuxtConfig({
   srcDir: 'app/',
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
+  nitro: {
+    // Vercel sets VERCEL=1 during CI builds; Nitro emits the correct serverless bundle.
+    preset: process.env.VERCEL ? 'vercel' : undefined,
+  },
   modules: [
     '@nuxt/image',
     '@nuxt/fonts',
@@ -46,7 +50,14 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiURL: process.env.API_URL || 'http://localhost:3000',
+      apiURL:
+        process.env.NUXT_PUBLIC_API_URL ||
+        process.env.API_URL ||
+        'https://starofukraine.onrender.com',
+      socketUrl:
+        process.env.NUXT_PUBLIC_SOCKET_URL ||
+        process.env.SOCKET_URL ||
+        'http://localhost:3001',
       devAdminEmail: process.env.DEV_ADMIN_EMAIL,
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }
@@ -61,7 +72,7 @@ export default defineNuxtConfig({
       },
     },
     optimizeDeps: {
-      include: ['socket.io-client'],
+      include: ['socket.io-client', '@vueuse/core', 'vue-toastification', 'axios', 'vue-draggable-next'],
     },
   },
   components: [
@@ -74,6 +85,7 @@ export default defineNuxtConfig({
     '/auth': { redirect: '/en/auth' },
   },
   devServer: {
+    host: '0.0.0.0',
     port: 4040,
   },
-})
+}) 

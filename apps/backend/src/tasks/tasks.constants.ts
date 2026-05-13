@@ -1,0 +1,1 @@
+export const SOCKET_SERVICE = 'SOCKET_SERVICE';

@@ -1,12 +1,12 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { OAuthUserPayload } from '../types';
+import type { GoogleOAuthCallbackUserDto } from '../../auth/dto/google-oauth-callback-user.dto';
 
 export const GetCurrentOAuthUser = createParamDecorator(
   (data: string | undefined, context: ExecutionContext) => {
     const request = context.switchToHttp().getRequest<{
-      user?: OAuthUserPayload;
+      user?: GoogleOAuthCallbackUserDto;
     }>();
     if (!data) return request.user;
-    return request.user?.[data as keyof OAuthUserPayload];
+    return request.user?.[data as keyof GoogleOAuthCallbackUserDto];
   },
 );

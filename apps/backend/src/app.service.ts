@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import type { Cache } from 'cache-manager';
 
 @Injectable()
 export class AppService {
-  getHello() {
+  getHealth() {
     return {
       ok: true,
       message: 'Server is running',
