@@ -117,6 +117,8 @@ defineEmits<{
     joinTournament: []
 }>()
 
+const tournamentId = computed(() => useRoute().params.id as string)
+
 const joinLabel = computed(() =>
     props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
 )
