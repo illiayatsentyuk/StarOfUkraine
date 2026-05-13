@@ -1,11 +1,12 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import paginationConfig from '../config/pagination.config';
 import { SortOrder, TeamsSortBy } from '../enum';
@@ -164,15 +165,30 @@ export class TeamService {
     return { ...team, points: computePoints(team) };
   }
 
-  async update(id: string, data: UpdateTeamDto) {
+  async update(id: string, data: UpdateTeamDto, userRole: Role) {
     const existing = await this.prisma.team.findUnique({
       where: { id },
       include: {
         members: { select: { email: true } },
+        tournaments: {
+          select: { registrationEnd: true },
+        },
       },
     });
     if (!existing) {
       throw new NotFoundException('Team not found');
+    }
+
+    if (userRole !== Role.ADMIN) {
+      const now = new Date();
+      const isLockedByTournament = existing.tournaments.some(
+        (t) => now > new Date(t.registrationEnd),
+      );
+      if (isLockedByTournament) {
+        throw new ForbiddenException(
+          'Team cannot be edited after tournament registration has closed. Contact an admin.',
+        );
+      }
     }
 
     if (data.name !== undefined && data.name !== existing.name) {

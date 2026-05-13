@@ -117,7 +117,7 @@ describe('TournamentService', () => {
         teamSizeMin: tournamentMock.teamSizeMin,
         teamSizeMax: tournamentMock.teamSizeMax,
         status: tournamentMock.status,
-      });
+      }, 'admin-user-id');
 
       expect(result).toEqual(tournamentMock);
       expect(mockPrisma.tournament.findFirst).toHaveBeenCalledWith({
@@ -143,7 +143,7 @@ describe('TournamentService', () => {
           rounds: tournamentMock.rounds,
           teamSizeMin: tournamentMock.teamSizeMin,
           teamSizeMax: tournamentMock.teamSizeMax,
-        }),
+        }, 'admin-user-id'),
       ).rejects.toThrow(new BadRequestException('Tournament already exists'));
     });
   });

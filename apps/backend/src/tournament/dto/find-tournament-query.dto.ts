@@ -1,7 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { TournamentStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { SortOrder, TournamentsSortBy } from '../../enum';
 
 export class FindTournamentQueryDto {
@@ -48,4 +55,13 @@ export class FindTournamentQueryDto {
   @IsOptional()
   @IsEnum(TournamentStatus)
   status?: TournamentStatus;
+
+  @ApiPropertyOptional({
+    description: 'Filter only tournaments created by the current user (admin)',
+    example: true,
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  createdByMe?: boolean;
 }

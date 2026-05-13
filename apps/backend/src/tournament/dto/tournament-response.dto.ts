@@ -106,6 +106,10 @@ export class TournamentResponseDto {
   evaluationFinishedAt: Date | null;
 
   @Expose()
+  @ApiPropertyOptional({ nullable: true })
+  createdById: string | null;
+
+  @Expose()
   @ApiProperty()
   createdAt: Date;
 

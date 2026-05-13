@@ -27,6 +27,82 @@ export class JuryService {
     return this.prisma.jury.findUnique({ where: { userId: id } });
   }
 
+  async getMyAssignments(userId: string, taskId?: string) {
+    const jury = await this.prisma.jury.findUnique({
+      where: { userId },
+    });
+    if (!jury) throw new NotFoundException('Jury profile not found');
+
+    const where: {
+      juryId: string;
+      submission?: { taskId: string };
+    } = { juryId: jury.id };
+
+    if (taskId) {
+      where.submission = { taskId };
+    }
+
+    return this.prisma.submissionAssignment.findMany({
+      where,
+      include: {
+        submission: {
+          include: {
+            team: {
+              select: {
+                id: true,
+                name: true,
+                captainName: true,
+                captainEmail: true,
+              },
+            },
+            evaluations: {
+              where: { juryId: jury.id },
+              select: {
+                id: true,
+                totalScore: true,
+                scores: true,
+                comment: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async getEvaluationHistory(userId: string) {
+    const jury = await this.prisma.jury.findUnique({
+      where: { userId },
+    });
+    if (!jury) throw new NotFoundException('Jury profile not found');
+
+    return this.prisma.evaluation.findMany({
+      where: { juryId: jury.id },
+      select: {
+        id: true,
+        submissionId: true,
+        totalScore: true,
+        scores: true,
+        comment: true,
+        submission: {
+          select: {
+            id: true,
+            taskId: true,
+            status: true,
+            team: {
+              select: { id: true, name: true },
+            },
+            task: {
+              select: { id: true, name: true, tournamentId: true },
+            },
+          },
+        },
+      },
+      orderBy: { id: 'desc' },
+    });
+  }
+
   async addToJury(body: AddToJuryDto) {
     const { tournamentId, userId } = body;
 
