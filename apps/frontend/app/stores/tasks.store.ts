@@ -4,8 +4,9 @@ import type { CreateTournamentTaskPayload, TaskSubmission, TournamentTask, Submi
 
 export const useTasksStore = defineStore('tasks', () => {
     const toast = useServerSafeToast()
+    const api = useApi()
+
     const loading = ref(false)
-    const error = ref<string | null>(null)
     const tasks = ref<TournamentTask[]>([])
     const submissions = ref<TaskSubmission[]>([])
     // taskId → { status, githubUrl, videoUrl } — власні подачі поточного юзера
@@ -243,13 +244,11 @@ export const useTasksStore = defineStore('tasks', () => {
 
     return {
         loading,
-        error,
         tasks,
         submissions,
         mySubmissions,
         fetchTasks,
         createTask,
-        submitTask,
         fetchSubmissions,
         fetchMySubmission,
         gradeSubmission,

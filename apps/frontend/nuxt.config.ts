@@ -38,6 +38,10 @@ export default defineNuxtConfig({
         process.env.NUXT_PUBLIC_API_URL ||
         process.env.API_URL ||
         'https://starofukraine.onrender.com',
+      socketUrl:
+        process.env.NUXT_PUBLIC_SOCKET_URL ||
+        process.env.SOCKET_URL ||
+        'http://localhost:3001',
       devAdminEmail: process.env.DEV_ADMIN_EMAIL,
       devAdminPassword: process.env.DEV_ADMIN_PASSWORD,
     }

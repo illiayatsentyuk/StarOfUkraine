@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators';
 import { Role } from 'src/enum';
-import { GetCurrentUser, Public } from '../common/decorators';
+import { GetCurrentUser, GetCurrentUserId, Public } from '../common/decorators';
 import { authExamples, teamExamples } from '../examples';
 import { Serialize } from '../interceptors/serialize.interceptor';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -163,8 +163,12 @@ export class TeamController {
     description: 'Forbidden — insufficient role (USER, JURY, or ADMIN)',
   })
   @Serialize(TeamResponseDto)
-  update(@Param('id') id: string, @Body() data: UpdateTeamDto) {
-    return this.teamService.update(id, data);
+  update(
+    @Param('id') id: string,
+    @Body() data: UpdateTeamDto,
+    @GetCurrentUser('role') role: Role,
+  ) {
+    return this.teamService.update(id, data, role);
   }
 
   @Delete(':id')

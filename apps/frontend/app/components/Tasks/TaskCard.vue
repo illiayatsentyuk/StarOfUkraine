@@ -7,6 +7,7 @@ NuxtLink.task-card(:to="taskLink")
         .points {{ maxPoints }} pts
 
     h3.task-title {{ task.name }}
+    h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer

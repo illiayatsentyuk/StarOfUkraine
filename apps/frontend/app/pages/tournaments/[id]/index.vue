@@ -32,6 +32,7 @@ section.tournament-detail
 
             TournamentSidebar(
                 :tournament="tournament"
+                :tournamentId="tournamentId"
                 :status="tournamentStatus"
                 :isAdmin="authStore.isAdmin"
                 :isJury="authStore.isJury"

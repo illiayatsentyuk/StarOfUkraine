@@ -70,8 +70,8 @@ const store = useTasksStore()
 const authStore = useLoginStore()
 const teamsStore = useTeamsStore()
 
-const taskId = computed(() => route.params.taskId as string)
 const tournamentId = computed(() => route.params.id as string)
+const taskId = computed(() => route.params.taskId as string)
 const task = computed(() => store.tasks.find(t => t.id === taskId.value))
 
 onMounted(async () => {
@@ -83,7 +83,10 @@ onMounted(async () => {
         await store.fetchTasks(tournamentId.value)
     }
 
-    // Fetch my submission by teamId (new API)
+    if (authStore.isAdmin) {
+        await store.fetchSubmissions(taskId.value)
+    }
+
     if (authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury) {
         const teamId = teamsStore.activeTeamId || teamsStore.currentTeam?.id
         if (teamId) {

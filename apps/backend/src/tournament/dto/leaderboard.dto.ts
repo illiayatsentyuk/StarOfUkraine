@@ -11,6 +11,19 @@ export class LeaderboardTeamDto {
   name: string;
 }
 
+export class LeaderboardCriterionScoreDto {
+  @Expose()
+  @ApiProperty({ example: 'code_quality', description: 'Rubric criterion ID' })
+  id: string;
+
+  @Expose()
+  @ApiProperty({
+    example: 8.5,
+    description: 'Average points for this criterion across all jurors',
+  })
+  avgPoints: number;
+}
+
 export class LeaderboardTaskScoreDto {
   @Expose()
   @ApiProperty({ example: 'clx_task_1' })
@@ -22,6 +35,14 @@ export class LeaderboardTaskScoreDto {
     description: 'Середній бал журі за цей раунд (0 якщо немає оцінок)',
   })
   avgScore: number;
+
+  @Expose()
+  @Type(() => LeaderboardCriterionScoreDto)
+  @ApiProperty({
+    type: [LeaderboardCriterionScoreDto],
+    description: 'Per-criterion average breakdown',
+  })
+  criteria: LeaderboardCriterionScoreDto[];
 }
 
 export class LeaderboardRowDto {

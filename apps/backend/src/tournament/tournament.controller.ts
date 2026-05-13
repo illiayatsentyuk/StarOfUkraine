@@ -22,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { TournamentStatus } from '@prisma/client';
-import { Roles } from 'src/common/decorators';
+import { GetCurrentUserId, Roles } from 'src/common/decorators';
 import { Role, SortOrder, TournamentsSortBy } from 'src/enum';
 import { Public } from '../common/decorators';
 import { authExamples, tournamentExamples } from '../examples';
@@ -70,8 +70,8 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
   @Serialize(TournamentResponseDto)
-  create(@Body() data: CreateTournamentDto) {
-    return this.tournamentService.create(data);
+  create(@Body() data: CreateTournamentDto, @GetCurrentUserId() userId: string) {
+    return this.tournamentService.create(data, userId);
   }
 
   @Patch(':id')
@@ -213,6 +213,12 @@ export class TournamentController {
     enum: TournamentStatus,
     description: 'Filter by tournament status',
   })
+  @ApiQuery({
+    name: 'createdByMe',
+    required: false,
+    type: Boolean,
+    description: 'Filter tournaments created by the current user (admin)',
+  })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
@@ -220,8 +226,8 @@ export class TournamentController {
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
   @Serialize(PaginatedTournamentsResponseDto)
-  findAll(@Query() query: FindTournamentQueryDto) {
-    return this.tournamentService.findAll(query);
+  findAll(@Query() query: FindTournamentQueryDto, @GetCurrentUserId() userId: string) {
+    return this.tournamentService.findAll(query, userId);
   }
 
   @Public()
