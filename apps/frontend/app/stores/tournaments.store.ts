@@ -2,11 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import { useApi } from '~/composables/useApi'
-import type { Tournament } from '~/types'
+import type { Tournament, TournamentStatus } from '~/types'
 
-const LIMIT = 5
-
-type TournamentStatusFilter = 'all' | 'DRAFT' | 'REGISTRATION_OPEN' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
+type TournamentStatusFilter = 'all' | TournamentStatus
+const LIMIT = 6
 
 export const useTournamentsStore = defineStore('tournaments', () => {
     const toast = useServerSafeToast()
@@ -19,7 +18,8 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
     const statusFilter = ref<TournamentStatusFilter>('all')
-
+    
+    //think about delete
     const hasMore = computed(() => page.value <= totalPages.value)
     const filteredTournaments = computed(() => {
         if (statusFilter.value === 'all') return tournaments.value
@@ -46,6 +46,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const api = useApi()
             const response = await api.get(`/tournaments/list`, {
+                //think about query or params
                 params: {
                     page: page.value,
                     limit: LIMIT,
@@ -147,6 +148,21 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
+    const joinTournament = async (tournamentId: string, teamId: string) => {
+        try {
+            const api = useApi()
+            const response = await api.patch(`/tournaments/join/${tournamentId}`, { teamId })
+            if (!response.data) throw new Error('Не вдалося зареєструвати команду в турнір')
+            toast.success('Команду зареєстровано в турнірі')
+            return response.data
+        } catch (err: unknown) {
+            console.error('Помилка API при реєстрації команди в турнірі:', err)
+            toast.error('Не вдалося зареєструвати команду в турнірі')
+            throw err
+        }
+    }
+
+
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -167,6 +183,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         loadFromDatabase,
         fetchTournamentById,
         addTournament,
+        joinTournament,
         updateTournament,
         deleteTournament,
     }

@@ -38,6 +38,30 @@ pnpm --filter backend dev
 pnpm --filter frontend dev
 ```
 
+## Docker
+
+The project includes a `docker-compose.yml` for quick setup of the full stack (Backend + Frontend + Redis).
+
+### Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running.
+
+### Quick Start
+1. **Prepare Environment**: Copy `.env.example` to `.env` in `apps/backend/`.
+2. **Build and Start**:
+   ```bash
+   docker compose up --build
+   ```
+3. **Initialize Database**: Once the containers are running, run migrations:
+   ```bash
+   # Run from host machine (monorepo root)
+   docker compose exec backend pnpm --filter backend exec prisma migrate dev
+   ```
+
+### URLs
+- **Frontend**: `http://localhost:4040`
+- **Backend API**: `http://localhost:3000`
+- **Swagger Docs**: `http://localhost:3000/api/docs`
+
 ## Root scripts
 
 | Script | Purpose |

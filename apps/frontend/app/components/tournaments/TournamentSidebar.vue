@@ -1,7 +1,7 @@
 <template lang="pug">
 aside.sidebar
     .sidebar__card
-        h3.section-label КЛЮЧОВІ ДАТИ
+        h3.section-label КЛЮЧОВІ ДАТИ 
         .date-list
             .date-entry
                 span.label РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ
@@ -25,46 +25,101 @@ aside.sidebar
             .status-info
                 span.label ПОТОЧНИЙ СТАТУС
                 span.value(v-if="status" :style="{ color: status.color }") {{ status.label }}
+
             Button.sidebar__edit(
                 v-if="isAdmin"
                 type="button"
                 label="Редагувати турнір"
                 icon="pi pi-pencil"
                 @click="$emit('edit')"
+                data-testid="edit-tournament-btn"
             )
+
             Button.sidebar__delete(
                 v-if="isAdmin"
                 type="button"
                 label="Видалити турнір"
                 @click="$emit('delete')"
             )
-            Button.sidebar__create(
-                v-if="isAuthenticated"
-                type="button"
-                label="Створити команду"
-                icon="pi pi-plus"
-                @click="$emit('createTeam')"
-                :disabled="!isRegistrationActive && !isAdmin"
+
+            NuxtLink.sidebar__judge-link(
+                v-if="isAdmin && tournament.id"
+                :to="`/tournaments/${tournament.id}/jury`"
             )
+                Button.sidebar__judge(
+                    type="button"
+                    label="КЕРУВАННЯ ЖУРІ"
+                    icon="pi pi-users"
+                )
+
+            NuxtLink.sidebar__judge-link(
+                v-if="isJury && tournament.id"
+                :to="`/tournaments/${tournament.id}/admin`"
+            )
+                Button.sidebar__judge(
+                    type="button"
+                    label="ПАНЕЛЬ СУДДІВСТВА"
+                    icon="pi pi-users"
+                )
+
+            //- Joined state
+            Button.sidebar__joined(
+                v-if="isAuthenticated && !isAdmin && isAlreadyJoined"
+                type="button"
+                label="Ви вже в турнірі"
+                icon="pi pi-check"
+                :disabled="true"
+            )
+
+            //- Join / Create+Join button
+            Button.sidebar__create(
+                v-if="isAuthenticated && !isAdmin && !isJury && !isAlreadyJoined"
+                type="button"
+                :label="joinLabel"
+                icon="pi pi-arrow-right"
+                :loading="joining"
+                :disabled="(!isRegistrationActive) || joining"
+                @click="$emit('joinTournament')"
+            )
+
+            NuxtLink.sidebar__team-link(
+                v-if="isAuthenticated && hasTeam && activeTeam"
+                :to="`/teams/${activeTeam.id}`"
+            )
+                Button.sidebar__manage-team(
+                    type="button"
+                    label="КЕРУВАННЯ КОМАНДОЮ"
+                    icon="pi pi-users"
+                )
 </template>
 
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
+import type { Tournament } from '~/types'
 
 const props = defineProps<{
-    tournament: any
+    tournament: Tournament
     status: TournamentStatusInfo | null
     isAdmin: boolean
+    isJury: boolean
     isAuthenticated: boolean
     isRegistrationActive: boolean
-    tournamentId: string
+    isAlreadyJoined: boolean
+    hasTeam: boolean
+    activeTeam: any
+    joining: boolean
+    shouldHideTeams: boolean
 }>()
 
 defineEmits<{
     edit: []
     delete: []
-    createTeam: []
+    joinTournament: []
 }>()
+
+const joinLabel = computed(() =>
+    props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
+)
 </script>
 
 <style scoped lang="scss">
@@ -76,6 +131,11 @@ defineEmits<{
         position: sticky;
         top: 40px;
 
+        @media (max-width: 768px) {
+            padding: 24px;
+            top: 16px;
+        }
+
         .section-label {
             font-family: var(--font-display);
             font-size: 12px;
@@ -83,6 +143,13 @@ defineEmits<{
             color: var(--color-text-muted);
             letter-spacing: 2px;
             margin: 0;
+        }
+
+        .sidebar__team-link {
+            margin-top: 12px;
+            text-decoration: none;
+            width: 100%;
+            display: block;
         }
 
         .date-list {
@@ -175,6 +242,40 @@ defineEmits<{
                 }
             }
 
+
+            .sidebar__judge-link {
+                text-decoration: none;
+                display: block;
+                width: 100%;
+            }
+
+            .sidebar__judge-link :deep(.p-button),
+            .sidebar__team-link :deep(.p-button) {
+                width: 100%;
+            }
+
+            :deep(.sidebar__judge.p-button),
+            :deep(.sidebar__manage-team.p-button) {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: var(--color-text);
+                border: 1px solid var(--color-text);
+                color: #fff;
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 600;
+                padding: 12px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 1px;
+                transition: all 0.2s ease;
+
+                &:hover {
+                    background: var(--color-primary) !important;
+                    border-color: var(--color-primary) !important;
+                }
+            }
+
             :deep(.sidebar__delete.p-button) {
                 margin-top: 0;
                 width: 100%;
@@ -234,6 +335,24 @@ defineEmits<{
                     outline: 2px solid var(--color-text);
                     outline-offset: 2px;
                 }
+            }
+
+            :deep(.sidebar__joined.p-button) {
+                margin-top: 0;
+                width: 100%;
+                justify-content: center;
+                background: transparent;
+                border: 2px solid var(--color-success, #16a34a);
+                color: var(--color-success, #16a34a);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 800;
+                padding: 18px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                cursor: default;
+                opacity: 1;
             }
 
             :deep(.sidebar__create.p-button) {

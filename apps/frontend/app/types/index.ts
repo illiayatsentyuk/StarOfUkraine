@@ -1,3 +1,6 @@
 export * from './AppInput.interface'
 export * from './form.interface'
-export * from './tornaments.interface'
+export * from './tournaments.interface'
+export * from './teams.interface'
+export * from './tasks.interface'
+export * from './user.interface'

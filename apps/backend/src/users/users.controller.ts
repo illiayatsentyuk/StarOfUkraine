@@ -19,7 +19,7 @@ import { UsersService } from './users.service';
 @ApiCookieAuth('access_token')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get('me/dashboard')
   @ApiOperation({

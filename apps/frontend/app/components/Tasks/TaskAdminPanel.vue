@@ -1,43 +1,47 @@
 <template lang="pug">
 .content-section.admin-section
-    h3.section-label СУДДІВСЬКА ПАНЕЛЬ (ПОДАНІ РОБОТИ)
-
+    h3.section-title ПАНЕЛЬ ПЕРЕВІРКИ
+    
     .loading-state(v-if="loading && submissions.length === 0")
         i.pi.pi-spin.pi-spinner
-        span Завантаження робіт...
+        span Завантаження...
 
     .submissions-list(v-else)
         .submission-card(v-for="sub in submissions" :key="sub.id")
             .submission-header
-                h4.team-name {{ sub.teamName }}
-                span.status-badge(:class="`status-${sub.status}`")
-                    template(v-if="sub.status === 'pending'") ОЧІКУЄ ОЦІНКИ
-                    template(v-if="sub.status === 'graded'") ОЦІНЕНО ({{ sub.score }} БАЛІВ)
+                span.team-name {{ sub.team?.name || sub.teamId }}
+                .status-badge(:class="sub.status")
+                    span {{ sub.status === 'PENDING' ? 'Очікує' : 'Оцінено' }}
+            
             .submission-links
-                a.link-item(:href="sub.githubUrl" target="_blank" v-if="sub.githubUrl")
+                a.link-icon(:href="sub.githubUrl" target="_blank" v-if="sub.githubUrl")
                     i.pi.pi-github
-                    span GitHub
-                a.link-item(:href="sub.youtubeUrl" target="_blank" v-if="sub.youtubeUrl")
+                a.link-icon(:href="sub.videoUrl" target="_blank" v-if="sub.videoUrl")
                     i.pi.pi-youtube
-                    span YouTube
-            .submission-actions(v-if="sub.status === 'pending'")
-                InputNumber.score-input(
-                    v-model="gradingScores[sub.id]"
-                    :min="0"
-                    :max="task.points"
-                    placeholder="Бали"
-                    inputClass="custom-input p-inputtext-sm"
-                )
-                Button.approve-btn(
-                    @click="handleGrade(sub.id)"
-                    type="button"
-                    label="ОЦІНИТИ"
+            
+            .grading-area(v-if="sub.status === 'PENDING'")
+                .criterion-grading(v-for="c in task?.criteria?.rubric || []" :key="c.id")
+                    .c-info
+                        span.c-name {{ c.label }}
+                        span.c-max max {{ c.maxPoints }}
+                    
+                    .c-input
+                        InputText(v-model="gradingData[sub.id][c.id]" type="number" :max="c.maxPoints" placeholder="0")
+                
+                .comment-area
+                    Textarea(v-model="commentsData[sub.id]" placeholder="Коментар до роботи..." rows="2" autoResize)
+
+                Button.grade-btn(
+                    label="ЗБЕРЕГТИ ОЦІНКУ"
+                    @click="submitGrade(sub.id)"
                     :loading="loading"
-                    :disabled="gradingScores[sub.id] === undefined || gradingScores[sub.id] === null"
                 )
+            
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
 const props = defineProps<{
     submissions: any[]
     task: any
@@ -45,172 +49,144 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    grade: [submissionId: string, score: number]
+    (e: 'grade', submissionId: string, scores: Array<{ id: string; points: number }>, comment: string): void
 }>()
 
-const gradingScores = ref<Record<string, number>>({})
+const gradingData = ref<Record<string, Record<string, number>>>({})
+const commentsData = ref<Record<string, string>>({})
 
-function handleGrade(submissionId: string) {
-    const score = gradingScores.value[submissionId]
-    if (score === undefined || score === null) return
-    emit('grade', submissionId, score)
+// Initialize grading data for each submission
+watch(() => props.submissions, (newSubs) => {
+    newSubs.forEach(sub => {
+        if (!gradingData.value[sub.id]) {
+            const initial: Record<string, number> = {}
+            props.task?.criteria?.rubric?.forEach((c: any) => {
+                initial[c.id] = 0
+            })
+            gradingData.value[sub.id] = initial
+        }
+    })
+}, { immediate: true })
+
+function submitGrade(submissionId: string) {
+    const grades = gradingData.value[submissionId] || {}
+    const scores = Object.entries(grades).map(([id, points]) => ({
+        id,
+        points: Number(points),
+    }))
+    const comment = commentsData.value[submissionId] || 'Оцінено суддею'
+    emit('grade', submissionId, scores, comment)
 }
 </script>
 
 <style scoped lang="scss">
-.content-section {
-    margin-bottom: 64px;
-
-    .section-label {
-        font-size: 12px;
-        font-weight: 700;
-        color: var(--color-text-muted);
-        letter-spacing: 2px;
-        margin: 0 0 24px 0;
-    }
+.admin-section {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    padding: 24px;
 }
 
-.loading-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 0;
-    gap: 16px;
+.section-title {
+    font-size: 11px;
+    font-weight: 700;
     color: var(--color-text-muted);
-    font-weight: 500;
-    font-size: 18px;
-
-    i {
-        font-size: 32px;
-    }
+    letter-spacing: 1.5px;
+    margin-bottom: 20px;
 }
 
 .submissions-list {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-top: 24px;
 }
 
 .submission-card {
-    background: var(--color-surface);
+    background: var(--color-bg-secondary);
     border: 1px solid var(--color-border);
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+    padding: 20px;
 
     .submission-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-bottom: 12px;
+        .team-name { font-weight: 700; font-size: 15px; }
+    }
 
-        .team-name {
-            font-family: var(--font-display);
-            font-size: 20px;
-            margin: 0;
-        }
-
-        .status-badge {
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 8px;
-            letter-spacing: 1px;
-
-            &.status-pending {
-                background: #f59e0b;
-                color: white;
-            }
-
-            &.status-graded {
-                background: var(--color-primary);
-                color: white;
-            }
-        }
+    .status-badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 4px 8px;
+        &.PENDING { background: #fef3c7; color: #92400e; }
+        &.EVALUATED { background: #d1fae5; color: #065f46; }
     }
 
     .submission-links {
         display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+        .link-icon { color: #64748b; font-size: 18px; &:hover { color: var(--color-primary); } }
+    }
+
+    .grading-area {
+        display: flex;
+        flex-direction: column;
         gap: 16px;
+        padding-top: 16px;
+        border-top: 1px dashed var(--color-border);
+    }
 
-        .link-item {
+    .criterion-grading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        
+        .c-info {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--color-text);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border: 1px solid var(--color-border);
-            transition: all 0.2s;
+            flex-direction: column;
+            .c-name { font-size: 13px; font-weight: 600; }
+            .c-max { font-size: 10px; color: #94a3b8; }
+        }
 
-            &:hover {
-                background: #f3f4f6;
-                border-color: var(--color-text);
-            }
-
-            i {
-                font-size: 18px;
-            }
+        .c-input {
+            :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; text-align: center; }
+            :deep(.p-rating) { gap: 4px; .p-rating-item .p-rating-icon { font-size: 14px; color: #f59e0b; } }
         }
     }
 
-    .submission-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 0;
+    .comment-area {
         margin-top: 8px;
-
-        .score-input {
-            width: 100px;
-
-            :deep(.p-inputtext) {
-                border-radius: 0;
-                border: 1px solid var(--color-text);
-                border-right: none;
-                padding: 12px 16px;
-                font-size: 14px;
-                text-align: center;
-                font-family: var(--font-display);
-                color: var(--color-text);
-                background: #ffffff;
-                box-shadow: none;
-
-                &:focus {
-                    border-color: var(--color-text);
-                    outline: none;
-                }
-            }
+        :deep(.p-inputtextarea) {
+            width: 100%;
+            font-size: 13px;
+            border-color: var(--color-border);
+            background: var(--color-bg);
+            color: var(--color-text);
         }
+    }
 
-        :deep(.approve-btn) {
-            background: var(--color-text);
-            border: 1px solid var(--color-text);
-            color: white;
-            font-family: var(--font-display);
+    .grade-btn {
+        width: 100%;
+        margin-top: 8px;
+        background: var(--color-primary);
+        border: none;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 12px;
+    }
+
+    .graded-summary {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-border);
+        
+        .g-item {
             font-size: 12px;
-            font-weight: 700;
-            padding: 12px 24px;
-            border-radius: 0;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-            height: 44px;
-
-            &:hover:not(:disabled) {
-                background: var(--color-primary);
-                border-color: var(--color-primary);
-                transform: translateY(-2px);
-            }
-
-            &:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
+            .n { color: #64748b; margin-right: 4px; }
+            .v { font-weight: 700; color: var(--color-primary); }
         }
     }
 }

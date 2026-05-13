@@ -1,21 +1,24 @@
 import { defineStore } from 'pinia'
 import { useApi } from '~/composables/useApi'
-import type { Form } from '~/types'
+import type { Form, User } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
     const toast = useServerSafeToast()
-    const user = ref<any>(null)
+    const user = ref<User | null>(null)
     const image = ref<string | null>(null)
     const authenticated = ref(false)
     const isAdmin = ref(false)
+    const isJury = ref(false)
     const loading = ref(false)
 
     const loginByGoogle = () => {
-        window.location.href = `${config.public.apiURL}/auth/google/login`
+        if (typeof window !== 'undefined') {
+            window.location.href = `${config.public.apiURL}/auth/google/login`
+        }
     }
 
-    const signupByEmail = async (userData: any) => {
+    const signupByEmail = async (userData: Partial<User> & { password?: string }) => {
         loading.value = true
         try {
             await useApi().post('/auth/signup', userData)
@@ -28,7 +31,9 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
@@ -45,7 +50,9 @@ export const useLoginStore = defineStore('login', () => {
             loading.value = false
             navigateTo('/')
             authenticated.value = true
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.location.reload()
+            }
         }
     }
 
@@ -56,9 +63,14 @@ export const useLoginStore = defineStore('login', () => {
             if (response.data) {
                 user.value = response.data
                 isAdmin.value = response.data.role === 'ADMIN'
+                isJury.value = response.data.role === 'JURY'
                 image.value = response.data.image
+                authenticated.value = true
+                console.log('User fetched:', user.value)
             }
-        } catch {
+
+        } catch (error) {
+            console.error('Fetch user failed:', error)
             user.value = null
             isAdmin.value = false
         } finally {
@@ -79,7 +91,10 @@ export const useLoginStore = defineStore('login', () => {
             user.value = null
             isAdmin.value = false
             authenticated.value = false
-            window.location.reload()
+            if (typeof window !== 'undefined') {
+                window.localStorage.removeItem('activeTeamId')
+                window.location.reload()
+            }
         }
     }
 
@@ -87,5 +102,5 @@ export const useLoginStore = defineStore('login', () => {
  
     
 
-    return { user, isAdmin, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
+    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail }
 })

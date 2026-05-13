@@ -8,24 +8,28 @@ test.describe('tournament list filters', () => {
     await mockTournamentsListWithStatusFilter(page)
 
     await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.locator('.tournaments-list__grid')).toBeVisible({ timeout: 15000 })
 
-    await expect(page.getByRole('heading', { name: 'Draft Cup' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Live Cup' })).toBeVisible()
+    await expect(page.getByText('Draft Cup')).toBeVisible()
+    await expect(page.getByText('Live Cup')).toBeVisible()
 
     await page.getByRole('button', { name: 'Триває' }).click()
 
-    await expect(page.getByRole('heading', { name: 'Live Cup' })).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Draft Cup' })).toHaveCount(0)
+    await expect(page.getByText('Live Cup')).toBeVisible()
+    await expect(page.getByText('Draft Cup')).toHaveCount(0)
   })
 
   test('sort filter sends sortBy name to API', async ({ page }) => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
 
     await page.goto('/')
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.locator('.tournaments-list__grid')).toBeVisible({ timeout: 15000 })
 
     // `loadFromDatabase` no-ops while `loading` is true; clicking sort during the first
     // GET would skip the second request and this test would time out.
-    await expect(page.getByRole('heading', { name: 'Cup 2026' })).toBeVisible()
+    await expect(page.getByText('Cup 2026')).toBeVisible()
 
     const sortRequest = page.waitForRequest((req) => {
       if (!req.url().includes('/tournaments/list') || req.method() !== 'GET') return false

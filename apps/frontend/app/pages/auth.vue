@@ -1,24 +1,17 @@
 <template lang="pug">
 .registration-page
   .auth-card
-    .header-section
-      h1.main-title Tournament Hub
-      p.subtitle {{ isLogin ? 'Увійдіть до свого профілю' : 'Створіть свій особистий профіль' }}
+    AuthHero(:isLogin="isLogin")
 
-    .card-header
-      h2 {{ isLogin ? 'Вхід' : 'Реєстрація' }}
-      p {{ isLogin ? 'Швидкий вхід за допомогою соцмереж або пошти' : 'Швидкий вхід або заповнення даних' }}
+    AuthSocial(
+      :isLogin="isLogin"
+      @loginGoogle="loginStore.loginByGoogle()"
+    )
     
-    .social-grid
-      button.social-btn(type="button" @click="loginStore.loginByGoogle()")
-        i(class="pi pi-google")
-        | Google
-
-    .divider
-      span або пошта
-    
-    VeeForm.form-content(
-      :initial-values="authInitialValues"
+    AuthForm(
+      :isLogin="isLogin"
+      :loading="loginStore.loading"
+      :initialValues="authInitialValues"
       @submit="handleRegister"
     )
       VeeField(
@@ -171,35 +164,6 @@ const authInitialValues = {
   acceptTerms: false,
 }
 
-function fieldErrorText(
-  errorMessage: string | undefined | null,
-  errors: string[] | undefined | null,
-) {
-  const trimmed = errorMessage && String(errorMessage).trim()
-  if (trimmed) return trimmed
-  const first = errors?.find((e) => Boolean(e && String(e).trim()))
-  return first ? String(first) : ''
-}
-
-/** vee-validate exposes handlers on the slot and/or on `field`; support both. */
-function emitFieldValue(
-  field: { onChange?: (v: unknown) => void },
-  handleChange: ((v: unknown) => void) | undefined,
-  value: unknown,
-) {
-  const fn = handleChange ?? field.onChange
-  if (typeof fn === 'function') fn(value)
-}
-
-function emitFieldBlur(
-  field: { onBlur?: (e: unknown) => void },
-  handleBlur: ((e: unknown) => void) | undefined,
-  event: FocusEvent,
-) {
-  const fn = handleBlur ?? field.onBlur
-  if (typeof fn === 'function') fn(event)
-}
-
 const isLogin = ref(true)
 const loginStore = useLoginStore()
 const route = useRoute()
@@ -214,7 +178,6 @@ watch(() => loginStore.user, (user) => {
 onMounted(() => {
   // Якщо ми повернулися після Google Auth з успіхом
   if (route.query.oauth === 'success') {
-    // app.vue вже викликає fetchUser, тому ми просто чекаємо результату через watch
     console.log('Google Auth success, waiting for user data...')
   }
 })

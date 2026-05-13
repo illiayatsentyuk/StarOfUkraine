@@ -34,6 +34,6 @@ export default defineConfig({
         command: 'pnpm build && pnpm preview --port 4040',
         url: 'http://localhost:4040',
         reuseExistingServer: !env.CI,
-        timeout: 120_000,
+        timeout: 300_000,
       },
 })

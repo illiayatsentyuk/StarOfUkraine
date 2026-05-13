@@ -61,20 +61,22 @@ import { TournamentBracket as VueTournamentBracket } from 'vue3-tournament'
 import 'vue3-tournament/style.css'
 import { useLoginStore } from '../../stores/auth.store'
 
+import type { BracketRound, BracketMatch } from '~/types'
+
 const authStore = useLoginStore()
 const isAdmin = computed(() => authStore.isAdmin)
 
 const props = defineProps<{
-    rounds: any[]
+    rounds: BracketRound[]
 }>()
 
 const emit = defineEmits<{
-    (e: 'update:rounds', value: any[]): void
-    (e: 'matchClick', match: any): void
+    (e: 'update:rounds', value: BracketRound[]): void
+    (e: 'matchClick', match: BracketMatch): void
     (e: 'participantClick', participant: any): void
 }>()
 
-const localRounds = ref<any[]>([])
+const localRounds = ref<BracketRound[]>([])
 const wrapperRef = ref<HTMLElement | null>(null)
 
 interface TeamLocation {
@@ -238,7 +240,7 @@ function onMatchIdChange(matchId: string, event: Event) {
         padding: var(--space-6);
         background: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: var(--radius-md, 8px);
+        border-radius: 0;
         overflow-x: auto;
         position: relative;
         min-height: 12rem;
@@ -248,11 +250,9 @@ function onMatchIdChange(matchId: string, event: Event) {
         }
         &::-webkit-scrollbar-track {
             background: var(--color-bg);
-            border-radius: 4px;
         }
         &::-webkit-scrollbar-thumb {
             background: var(--color-border);
-            border-radius: 4px;
         }
         &::-webkit-scrollbar-thumb:hover {
             background: var(--color-primary);

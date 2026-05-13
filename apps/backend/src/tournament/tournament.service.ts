@@ -32,7 +32,7 @@ export class TournamentService {
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
     @InjectPinoLogger(TournamentService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   private async getListVersion(): Promise<number> {
     return (await this.cacheManager.get<number>(CacheKeys.LIST_VERSION)) ?? 0;
@@ -190,17 +190,6 @@ export class TournamentService {
       throw new NotFoundException('Team not found');
     }
 
-    const memberCount = team.members?.length ?? 0;
-    if (memberCount < tournament.teamSizeMin) {
-      throw new BadRequestException(
-        `Team must have at least ${tournament.teamSizeMin} member(s) to register`,
-      );
-    }
-    if (memberCount > tournament.teamSizeMax) {
-      throw new BadRequestException(
-        `Team exceeds the maximum of ${tournament.teamSizeMax} member(s)`,
-      );
-    }
 
     const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {

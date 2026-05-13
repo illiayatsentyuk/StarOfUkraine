@@ -91,6 +91,8 @@ describe('AuthService', () => {
       role: true,
       createdAt: true,
       updatedAt: true,
+      teamsAsCaptain: { select: { id: true, name: true } },
+      teamsAsMember: { select: { id: true, name: true } },
     },
   };
 

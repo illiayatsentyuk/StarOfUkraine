@@ -16,7 +16,7 @@ CMD ["pnpm", "--filter", "backend", "run", "dev"]
 
 FROM base AS production
 COPY apps/backend ./apps/backend
-WORKDIR /app
+WORKDIR /app    
 RUN pnpm --filter backend exec prisma generate
 RUN pnpm --filter backend run build
 WORKDIR /app/apps/backend

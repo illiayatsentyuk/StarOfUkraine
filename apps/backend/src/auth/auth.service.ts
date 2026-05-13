@@ -42,6 +42,8 @@ export class AuthService {
         role: true,
         createdAt: true,
         updatedAt: true,
+        teamsAsCaptain: { select: { id: true, name: true } },
+        teamsAsMember: { select: { id: true, name: true } },
       },
     });
     if (!user) throw new NotFoundException('No user found');

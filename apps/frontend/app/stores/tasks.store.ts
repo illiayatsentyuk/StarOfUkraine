@@ -1,25 +1,6 @@
 import { defineStore } from 'pinia'
-
-export type TaskStatus = 'DRAFT' | 'ACTIVE' | 'SUBMISSION_CLOSED' | 'EVALUATED'
-
-export interface RubricItem {
-    id: string
-    label: string
-    maxPoints: number
-}
-
-export interface TournamentTask {
-    id: string
-    tournamentId: string
-    name: string
-    description: string
-    order: number
-    status: TaskStatus
-    startsAt: string | null
-    deadline: string | null
-    materialUrls: string[]
-    criteria: { rubric: RubricItem[] }
-}
+import { ref } from 'vue'
+import type { CreateTournamentTaskPayload, TaskSubmission, TournamentTask, SubmissionScore } from '~/types'
 
 export const useTasksStore = defineStore('tasks', () => {
     const toast = useServerSafeToast()
@@ -27,74 +8,254 @@ export const useTasksStore = defineStore('tasks', () => {
 
     const loading = ref(false)
     const tasks = ref<TournamentTask[]>([])
+    const submissions = ref<TaskSubmission[]>([])
+    // taskId → { status, githubUrl, videoUrl } — власні подачі поточного юзера
+    const mySubmissions = ref<Record<string, { status: 'PENDING' | 'EVALUATED'; githubUrl: string; videoUrl: string; liveUrl?: string; summary?: string }>>({})
 
     const fetchTasks = async (tournamentId: string) => {
         loading.value = true
+        error.value = null
+
         try {
-            const res = await api.get(`/tournaments/${tournamentId}/tasks`)
-            tasks.value = res.data ?? []
+            const api = useApi()
+            const response = await api.get(`/tournaments/${tournamentId}/tasks`)
+            tasks.value = response.data
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Помилка завантаження завдань')
+            toast.error('Помилка завантаження завдань')
+            error.value = err.message || 'Помилка завантаження завдань'
         } finally {
             loading.value = false
         }
     }
 
-    const createTask = async (payload: {
-        tournamentId: string
-        name: string
-        description: string
-        maxPoints: number
-        deadline: string
-    }) => {
+    const createTask = async (payload: CreateTournamentTaskPayload) => {
         loading.value = true
+        error.value = null
+
         try {
-            const order = tasks.value.length + 1
-            const res = await api.post(`/tournaments/${payload.tournamentId}/tasks`, {
-                tasks: [{
-                    name: payload.name,
-                    description: payload.description,
-                    order,
-                    deadline: payload.deadline,
-                    criteria: {
-                        rubric: [{ id: 'score', label: 'Загальна оцінка', maxPoints: payload.maxPoints }],
+            const api = useApi()
+            const response = await api.post(`/tournaments/${payload.tournamentId}/tasks`, {
+                tasks: [
+                    {
+                        name: payload.name,
+                        description: payload.description,
+                        order: payload.order,
+                        criteria: {
+                            rubric: payload.criteria?.length
+                                ? payload.criteria
+                                : [
+                                    {
+                                        id: 'total',
+                                        label: 'Загальна оцінка',
+                                        maxPoints: payload.maxPoints ?? 100,
+                                    },
+                                ],
+                        },
                     },
-                }],
+                ],
             })
-            const created: TournamentTask[] = res.data ?? []
-            tasks.value.push(...created)
-            toast.success('Завдання успішно створено!')
+
+            const createdTasks = Array.isArray(response.data) ? response.data : []
+            if (!createdTasks.length) throw new Error('Не вдалося створити завдання')
+
+            tasks.value = [...tasks.value, ...createdTasks].sort((a, b) => a.order - b.order)
+            toast.success('Завдання успішно створено')
+            return createdTasks[0] as TournamentTask
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Помилка створення завдання')
+            toast.error('Не вдалося створити завдання')
+            error.value = err?.message || 'Помилка створення'
             throw err
         } finally {
             loading.value = false
         }
     }
 
-    // ── legacy stubs used by task-detail page (not yet migrated) ──────────
-    const submissions = ref<any[]>([])
-
-    const fetchSubmissions = async (_taskId: string) => {
-        submissions.value = []
+    const submitTask = async (
+        taskId: string,
+        payload: { teamId: string; githubUrl: string; videoUrl: string; liveUrl?: string; summary?: string },
+    ) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            await api.post(`/tasks/${taskId}/submit`, payload)
+            mySubmissions.value[taskId] = {
+                status: 'PENDING',
+                githubUrl: payload.githubUrl,
+                videoUrl: payload.videoUrl,
+                liveUrl: payload.liveUrl,
+                summary: payload.summary,
+            }
+            toast.success('Завдання успішно відправлено')
+        } catch (err: any) {
+            toast.error('Помилка відправки завдання')
+            error.value = err?.message || 'Помилка відправки'
+            throw err
+        } finally {
+            loading.value = false
+        }
     }
 
-    const submitTask = async (_taskId: string, _payload: any) => {
-        toast.info('Відправка завдань буде реалізована незабаром')
+    const fetchSubmissions = async (taskId: string) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            const response = await api.get(`/tasks/${taskId}/submissions`)
+            submissions.value = Array.isArray(response.data) ? response.data : []
+        } catch (err: any) {
+            toast.error('Помилка завантаження робіт')
+            error.value = err?.message || 'Помилка завантаження робіт'
+        } finally {
+            loading.value = false
+        }
     }
 
-    const gradeSubmission = async (_submissionId: string, _score: number) => {
-        toast.info('Оцінювання доступне на сторінці оцінювання')
+    const gradeSubmission = async (submissionId: string, scores: SubmissionScore[], comment: string) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            await api.post(`/submissions/${submissionId}/evaluate`, { scores, comment })
+            const idx = submissions.value.findIndex(s => s.id === submissionId)
+            if (idx !== -1) {
+                const current = submissions.value[idx]
+                if (!current) return
+                submissions.value[idx] = {
+                    ...current,
+                    status: 'EVALUATED',
+                }
+            }
+            toast.success('Роботу оцінено')
+        } catch (err: any) {
+            toast.error('Помилка при оцінюванні')
+            error.value = err?.message || 'Помилка оцінювання'
+        } finally {
+            loading.value = false
+        }
+    }
+
+    /** ADMIN: DRAFT → ACTIVE */
+    const activateTask = async (taskId: string) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            await api.post(`/tasks/${taskId}/activate`)
+            const idx = tasks.value.findIndex(t => t.id === taskId)
+            if (idx !== -1 && tasks.value[idx]) {
+                tasks.value[idx].status = 'ACTIVE' as any
+            }
+            toast.success('Завдання активовано — прийом робіт відкрито')
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Помилка активації')
+            error.value = err?.message || 'Помилка активації'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    /** ADMIN: ACTIVE → SUBMISSION_CLOSED */
+    const closeSubmissions = async (taskId: string) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            await api.post(`/tasks/${taskId}/close-submissions`)
+            const idx = tasks.value.findIndex(t => t.id === taskId)
+            if (idx !== -1 && tasks.value[idx]) {
+                tasks.value[idx].status = 'SUBMISSION_CLOSED' as any
+            }
+            toast.success('Прийом робіт закрито')
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Помилка закриття')
+            error.value = err?.message || 'Помилка закриття'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    /** ADMIN: assign submissions to jury via /jury/tournaments/:id/assign */
+    const assignJury = async (tournamentId: string, submissionsPerJury: number = 5) => {
+        loading.value = true
+        error.value = null
+        try {
+            const api = useApi()
+            const res = await api.post(`/jury/tournaments/${tournamentId}/assign`, { submissionsPerJury })
+            toast.success(`Розподіл завершено: ${res.data.assignmentsCreated} призначень`)
+            return res.data
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Помилка розподілу')
+            error.value = err?.message || 'Помилка розподілу'
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const fetchMySubmission = async (taskId: string, teamId?: string) => {
+        if (!teamId) return
+        try {
+            const api = useApi()
+            // New API returns all submissions for task — find ours by teamId
+            const response = await api.get(`/tasks/${taskId}/submissions`)
+            const all = Array.isArray(response.data) ? response.data : []
+            const mine = all.find((s: any) => s.teamId === teamId || s.team?.id === teamId)
+            if (mine) {
+                mySubmissions.value[taskId] = {
+                    status: mine.status,
+                    githubUrl: mine.githubUrl,
+                    videoUrl: mine.videoUrl,
+                    liveUrl: mine.liveUrl,
+                    summary: mine.summary,
+                }
+            }
+        } catch (err) {
+            // Submission might not exist yet — not an error
+            console.debug('No submission for task', taskId)
+        }
+    }
+
+    // Legacy: kept for backwards compat
+    const updateTaskStatus = async (taskId: string, status: string) => {
+        if (status === 'ACTIVE') return activateTask(taskId)
+        if (status === 'SUBMISSION_CLOSED') return closeSubmissions(taskId)
+        if (status === 'EVALUATED') {
+            // No direct endpoint — just update local state
+            const idx = tasks.value.findIndex(t => t.id === taskId)
+            if (idx !== -1 && tasks.value[idx]) {
+                tasks.value[idx].status = status as any
+            }
+        }
+    }
+
+    // Legacy alias
+    const distributeSubmissions = async (taskId: string, _config: any) => {
+        // Find tournamentId from the task
+        const task = tasks.value.find(t => t.id === taskId)
+        if (!task?.tournamentId) {
+            toast.error('Не вдалося знайти турнір для розподілу')
+            return
+        }
+        return assignJury(task.tournamentId, _config?.maxSubmissionsPerJury ?? 5)
     }
 
     return {
         loading,
         tasks,
         submissions,
+        mySubmissions,
         fetchTasks,
         createTask,
         fetchSubmissions,
-        submitTask,
+        fetchMySubmission,
         gradeSubmission,
+        activateTask,
+        closeSubmissions,
+        assignJury,
+        updateTaskStatus,
+        distributeSubmissions,
     }
 })

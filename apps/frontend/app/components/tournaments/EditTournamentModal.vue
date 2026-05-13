@@ -1,7 +1,10 @@
 <script lang="ts" setup>
+import type { Tournament } from '~/types'
+import { parseIsoDateToLocalDate } from '~/utils/format-date'
+
 const props = defineProps<{
     isOpen: boolean
-    tournament: any | null
+    tournament: Tournament | null
 }>()
 
 const emit = defineEmits<{
@@ -27,9 +30,9 @@ const initialValues = computed(() => {
             name: '',
             description: '',
             status: 'DRAFT',
-            startDate: '',
-            registrationStart: '',
-            registrationEnd: '',
+            startDate: null,
+            registrationStart: null,
+            registrationEnd: null,
             rounds: null,
             maxTeams: null,
             teamSizeMin: 2,
@@ -38,10 +41,7 @@ const initialValues = computed(() => {
         }
     }
 
-    const toDateInput = (value?: string) => {
-        if (!value) return ''
-        return new Date(value).toISOString().slice(0, 10)
-    }
+    const toDateInput = (value?: string) => parseIsoDateToLocalDate(value ?? null)
 
     return {
         name: t.name ?? '',
@@ -58,7 +58,7 @@ const initialValues = computed(() => {
     }
 })
 
-async function onSubmit(values: any) {
+async function onSubmit(values: Partial<Tournament>) {
     if (!props.tournament?.id) return
     try {
         isLoading.value = true
@@ -119,13 +119,13 @@ function closeModal() {
             .form-row
                 .form-group
                     label.form-label ДАТА СТАРТУ *
-                    VeeField(name="startDate" rules="required" v-slot="{ field, errorMessage }")
-                        input.form-input(type="date" v-bind="field" :class="{ 'is-invalid': errorMessage }")
+                    VeeField(name="startDate" rules="required" v-slot="{ field, errorMessage, handleChange }")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
-                    VeeField(name="registrationStart" v-slot="{ field }")
-                        input.form-input(type="date" v-bind="field")
+                    VeeField(name="registrationStart" v-slot="{ field, handleChange }")
+                        FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .form-row
                 .form-group
@@ -149,8 +149,8 @@ function closeModal() {
             
             .form-group
                 label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
-                VeeField(name="registrationEnd" v-slot="{ field }")
-                    input.form-input(type="date" v-bind="field")
+                VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
+                    FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
@@ -168,7 +168,7 @@ function closeModal() {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1100;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -329,13 +329,15 @@ function closeModal() {
             background: #000000;
 
             &::after {
-                content: '✓';
+                content: '';
                 position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #ffffff;
-                font-size: 12px;
+                left: 5px;
+                top: 1px;
+                width: 4px;
+                height: 9px;
+                border: solid #ffffff;
+                border-width: 0 2px 2px 0;
+                transform: rotate(45deg);
             }
         }
     }

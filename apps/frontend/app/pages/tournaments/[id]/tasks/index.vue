@@ -2,20 +2,15 @@
 section.tasks-page
     .tasks-page__nav
         NuxtLink.back-link(:to="`/tournaments/${route.params.id}`")
-            span.icon ←
+            i.pi.pi-arrow-left.icon
             span.text НАЗАД ДО ТУРНІРУ
 
-    header.tasks-page__hero
-        .hero-content
-            h1.title ЗАВДАННЯ ТУРНІРУ
-            p.subtitle(v-if="!store.loading") Доступно завдань: {{ store.tasks.length }}
-        Button.create-btn(
-            v-if="authStore.isAdmin"
-            type="button"
-            label="СТВОРИТИ ЗАВДАННЯ"
-            icon="pi pi-plus"
-            @click="isModalOpen = true"
-        )
+    TasksHero(
+        :loading="store.loading"
+        :taskCount="store.tasks.length"
+        :isAdmin="authStore.isAdmin"
+        @create="isModalOpen = true"
+    )
 
     .loading-state(v-if="store.loading")
         i.pi.pi-spin.pi-spinner
@@ -43,23 +38,79 @@ section.tasks-page
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import CreateTaskModal from '~/components/Tasks/CreateTaskModal.vue'
+
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()
 
 const isModalOpen = ref(false)
 
-onMounted(() => {
-    store.fetchTasks(route.params.id as string)
+onMounted(async () => {
+    const tournamentId = route.params.id as string
+    
+    // Fetch tournament to check status
+    const tournamentsStore = useTournamentsStore()
+    const teamsStore = useTeamsStore()
+    
+    await teamsStore.initActiveTeam()
+    const tournament = await tournamentsStore.fetchTournamentById(tournamentId)
+    
+    if (tournament) {
+        const isJoined = tournament.teams?.some((t: any) => t.id === teamsStore.activeTeamId)
+        const hasStarted = tournament.status === 'ONGOING' || tournament.status === 'COMPLETED'
+        const canSee = authStore.isAdmin || authStore.isJury || (isJoined && hasStarted)
+        
+        if (!canSee) {
+            navigateTo(`/tournaments/${tournamentId}`)
+            return
+        }
+    }
+
+    store.fetchTasks(tournamentId)
 })
 
-async function handleCreateTask(payload: { title: string; description: string; points: number; deadline: string }) {
+async function handleCreateTask(payload: any) {
+    const derivedName = String(payload?.name ?? payload?.title ?? '').trim()
+    const derivedDescription = String(payload?.description ?? '').trim()
+    const parsedOrder = Number(payload?.order)
+    const safeOrder = Number.isInteger(parsedOrder) && parsedOrder >= 0
+        ? parsedOrder
+        : store.tasks.length
+    const parsedMaxPoints = Number(payload?.maxPoints ?? payload?.points)
+    const safeMaxPoints = Number.isFinite(parsedMaxPoints) && parsedMaxPoints > 0
+        ? parsedMaxPoints
+        : 100
+    const normalizedCriteria = Array.isArray(payload?.criteria)
+        ? payload.criteria
+            .map((criterion: any, index: number) => {
+                const label = String(criterion?.label ?? criterion?.name ?? '').trim()
+                if (!label) return null
+                const explicitMax = Number(criterion?.maxPoints ?? criterion?.max)
+                const isStars = criterion?.type === 'stars' || payload?.gradingMode === 'stars'
+                const maxPoints = isStars
+                    ? 5
+                    : Number.isFinite(explicitMax) && explicitMax > 0
+                        ? explicitMax
+                        : 1
+
+                return {
+                    id: `criterion_${index + 1}`,
+                    label,
+                    maxPoints,
+                }
+            })
+            .filter(Boolean)
+        : []
+
     await store.createTask({
         tournamentId: route.params.id as string,
-        name: payload.title,
-        description: payload.description,
-        maxPoints: payload.points,
-        deadline: payload.deadline,
+        name: derivedName,
+        description: derivedDescription,
+        order: safeOrder,
+        maxPoints: safeMaxPoints,
+        criteria: normalizedCriteria.length ? normalizedCriteria : undefined,
     })
     isModalOpen.value = false
 }
@@ -73,7 +124,7 @@ async function handleCreateTask(payload: { title: string; description: string; p
     animation: fadeIn 0.4s ease-out;
 
     @media (max-width: 768px) {
-        padding: 0 24px 40px;
+        padding: 24px 16px 40px;
     }
 
     &__nav {
@@ -94,51 +145,9 @@ async function handleCreateTask(payload: { title: string; description: string; p
                 color: var(--color-primary);
                 transform: translateX(-4px);
             }
-        }
-    }
 
-    &__hero {
-        margin-bottom: 48px;
-        border-bottom: 2px solid var(--color-text);
-        padding-bottom: 32px;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-
-        .title {
-            font-family: var(--font-display);
-            font-size: 64px;
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -2px;
-            margin: 0 0 16px 0;
-            color: var(--color-text);
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            color: var(--color-text-muted);
-            margin: 0;
-            font-weight: 500;
-        }
-
-        :deep(.create-btn) {
-            background: var(--color-primary);
-            border: 1px solid var(--color-primary);
-            color: white;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 12px;
-            padding: 16px 32px;
-            border-radius: 0;
-            letter-spacing: 1.5px;
-            transition: all 0.2s;
-
-            &:hover {
-                background: var(--color-text);
-                border-color: var(--color-text);
-                transform: translateY(-2px);
+            .icon {
+                font-size: 14px;
             }
         }
     }
@@ -175,8 +184,12 @@ async function handleCreateTask(payload: { title: string; description: string; p
 
 .tasks-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
     gap: 24px;
+
+    @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+    }
 }
 
 @keyframes fadeIn {
