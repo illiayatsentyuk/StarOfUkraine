@@ -27,6 +27,7 @@ describe('TournamentService', () => {
       count: jest.fn(),
     },
     team: {
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
@@ -470,8 +471,10 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(openTournament);
       mockPrisma.team.findUnique.mockResolvedValue({
         id: 'team-1',
+        captainEmail: 'captain@example.com',
         members: [{ id: 'user-1' }, { id: 'user-2' }],
       });
+      mockPrisma.team.findFirst.mockResolvedValue(null);
       const updated = { ...openTournament, teams: [{ id: 'team-1' }] };
       mockPrisma.tournament.update.mockResolvedValue(updated);
 
@@ -625,15 +628,15 @@ describe('TournamentService', () => {
       expect(result[0].team.id).toBe('team-b');
       expect(result[0].totalScore).toBe(40);
       expect(result[0].tasks).toEqual([
-        { taskId: 'task-1', avgScore: 30 },
-        { taskId: 'task-2', avgScore: 10 },
+        { taskId: 'task-1', avgScore: 30, criteria: [] },
+        { taskId: 'task-2', avgScore: 10, criteria: [] },
       ]);
 
       expect(result[1].team.id).toBe('team-a');
       expect(result[1].totalScore).toBe(15);
       expect(result[1].tasks).toEqual([
-        { taskId: 'task-1', avgScore: 15 },
-        { taskId: 'task-2', avgScore: 0 },
+        { taskId: 'task-1', avgScore: 15, criteria: [] },
+        { taskId: 'task-2', avgScore: 0, criteria: [] },
       ]);
       expect(mockCache.set).toHaveBeenCalledWith(
         CacheKeys.LEADERBOARD('tournament-1', 0),
