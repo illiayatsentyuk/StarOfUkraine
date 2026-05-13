@@ -107,18 +107,21 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findFirst.mockResolvedValue(null);
       mockPrisma.tournament.create.mockResolvedValue(tournamentMock);
 
-      const result = await service.create({
-        name: tournamentMock.name,
-        description: tournamentMock.description,
-        startDate: tournamentMock.startDate,
-        registrationStart: tournamentMock.registrationStart,
-        registrationEnd: tournamentMock.registrationEnd,
-        maxTeams: tournamentMock.maxTeams,
-        rounds: tournamentMock.rounds,
-        teamSizeMin: tournamentMock.teamSizeMin,
-        teamSizeMax: tournamentMock.teamSizeMax,
-        status: tournamentMock.status,
-      }, 'admin-user-id');
+      const result = await service.create(
+        {
+          name: tournamentMock.name,
+          description: tournamentMock.description,
+          startDate: tournamentMock.startDate,
+          registrationStart: tournamentMock.registrationStart,
+          registrationEnd: tournamentMock.registrationEnd,
+          maxTeams: tournamentMock.maxTeams,
+          rounds: tournamentMock.rounds,
+          teamSizeMin: tournamentMock.teamSizeMin,
+          teamSizeMax: tournamentMock.teamSizeMax,
+          status: tournamentMock.status,
+        },
+        'admin-user-id',
+      );
 
       expect(result).toEqual(tournamentMock);
       expect(mockPrisma.tournament.findFirst).toHaveBeenCalledWith({
@@ -135,16 +138,19 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findFirst.mockResolvedValue(tournamentMock);
 
       await expect(
-        service.create({
-          name: tournamentMock.name,
-          startDate: tournamentMock.startDate,
-          registrationStart: tournamentMock.registrationStart,
-          registrationEnd: tournamentMock.registrationEnd,
-          maxTeams: tournamentMock.maxTeams,
-          rounds: tournamentMock.rounds,
-          teamSizeMin: tournamentMock.teamSizeMin,
-          teamSizeMax: tournamentMock.teamSizeMax,
-        }, 'admin-user-id'),
+        service.create(
+          {
+            name: tournamentMock.name,
+            startDate: tournamentMock.startDate,
+            registrationStart: tournamentMock.registrationStart,
+            registrationEnd: tournamentMock.registrationEnd,
+            maxTeams: tournamentMock.maxTeams,
+            rounds: tournamentMock.rounds,
+            teamSizeMin: tournamentMock.teamSizeMin,
+            teamSizeMax: tournamentMock.teamSizeMax,
+          },
+          'admin-user-id',
+        ),
       ).rejects.toThrow(new BadRequestException('Tournament already exists'));
     });
   });

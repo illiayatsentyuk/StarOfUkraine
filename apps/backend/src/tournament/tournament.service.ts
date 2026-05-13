@@ -32,7 +32,7 @@ export class TournamentService {
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
     @InjectPinoLogger(TournamentService.name)
     private readonly logger: PinoLogger,
-  ) { }
+  ) {}
 
   private async getListVersion(): Promise<number> {
     return (await this.cacheManager.get<number>(CacheKeys.LIST_VERSION)) ?? 0;
@@ -189,7 +189,6 @@ export class TournamentService {
     if (!team) {
       throw new NotFoundException('Team not found');
     }
-
 
     const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {
@@ -521,12 +520,15 @@ function computeCriteriaAverages(
   const sums = new Map<string, { total: number; count: number }>();
 
   for (const ev of evals) {
-    const scoresObj = ev.scores as { rubric?: Array<{ id: string; points: number }> } | null;
+    const scoresObj = ev.scores as {
+      rubric?: Array<{ id: string; points: number }>;
+    } | null;
     const rubric = scoresObj?.rubric;
     if (!Array.isArray(rubric)) continue;
 
     for (const item of rubric) {
-      if (typeof item.id !== 'string' || typeof item.points !== 'number') continue;
+      if (typeof item.id !== 'string' || typeof item.points !== 'number')
+        continue;
       const entry = sums.get(item.id) ?? { total: 0, count: 0 };
       entry.total += item.points;
       entry.count += 1;

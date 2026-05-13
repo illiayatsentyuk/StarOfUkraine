@@ -70,7 +70,10 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
   @Serialize(TournamentResponseDto)
-  create(@Body() data: CreateTournamentDto, @GetCurrentUserId() userId: string) {
+  create(
+    @Body() data: CreateTournamentDto,
+    @GetCurrentUserId() userId: string,
+  ) {
     return this.tournamentService.create(data, userId);
   }
 
@@ -226,7 +229,10 @@ export class TournamentController {
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
   @Serialize(PaginatedTournamentsResponseDto)
-  findAll(@Query() query: FindTournamentQueryDto, @GetCurrentUserId() userId: string) {
+  findAll(
+    @Query() query: FindTournamentQueryDto,
+    @GetCurrentUserId() userId: string,
+  ) {
     return this.tournamentService.findAll(query, userId);
   }
 

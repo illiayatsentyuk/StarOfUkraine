@@ -12,8 +12,8 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
-  ApiCookieAuth,
   ApiConsumes,
+  ApiCookieAuth,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -33,16 +33,17 @@ import { UsersService } from './users.service';
 @ApiCookieAuth('access_token')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Patch('me')
   @ApiOperation({ summary: 'Update current user profile (name)' })
   @ApiResponse({ status: 200, description: 'Updated user' })
-  @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
-  updateMe(
-    @GetCurrentUserId() userId: string,
-    @Body() dto: UpdateUserDto,
-  ) {
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  updateMe(@GetCurrentUserId() userId: string, @Body() dto: UpdateUserDto) {
     return this.usersService.updateMe(userId, dto);
   }
 
@@ -51,7 +52,11 @@ export class UsersController {
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 200, description: 'Updated user with new avatar URL' })
   @ApiResponse({ status: 400, description: 'No file uploaded or invalid type' })
-  @ApiResponse({ status: 401, description: 'Unauthorized', schema: { example: authExamples.unauthorized } })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -64,7 +69,10 @@ export class UsersController {
       limits: { fileSize: 5 * 1024 * 1024 },
       fileFilter: (_req, file, cb) => {
         if (!file.mimetype.match(/^image\//)) {
-          return cb(new BadRequestException('Only image files are allowed'), false);
+          return cb(
+            new BadRequestException('Only image files are allowed'),
+            false,
+          );
         }
         cb(null, true);
       },
@@ -98,7 +106,8 @@ export class UsersController {
 
   @Get('me/history')
   @ApiOperation({
-    summary: 'Get current user participation history (teams, tournaments, submissions)',
+    summary:
+      'Get current user participation history (teams, tournaments, submissions)',
   })
   @ApiResponse({
     status: 200,

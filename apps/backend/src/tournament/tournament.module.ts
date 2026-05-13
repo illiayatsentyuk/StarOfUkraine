@@ -3,8 +3,8 @@ import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { TournamentController } from './tournament.controller';
-import { TournamentSchedulerService } from './tournament-scheduler.service';
 import { TournamentService } from './tournament.service';
+import { TournamentSchedulerService } from './tournament-scheduler.service';
 
 @Module({
   imports: [ConfigModule, ScheduleModule.forRoot()],
