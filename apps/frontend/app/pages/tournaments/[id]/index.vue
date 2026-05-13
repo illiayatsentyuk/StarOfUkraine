@@ -171,12 +171,16 @@ const onTeamCreated = async ({ teamId }: { teamId: string }) => {
 onMounted(async () => {
     try {
         await teamsStore.initActiveTeam()
-        tournament.value = await tournamentStore.fetchTournamentById(route.params.id as string)
+        // No need to fetch tournament here, useAsyncData handles it
         await refreshTeams()
     } catch {
-        console.error('Failed to load tournament detail')
+        console.error('Failed to initialize detail page')
     }
 })
+
+watch(tournament, () => {
+    refreshTeams()
+}, { immediate: true })
 
 function handleDelete() {
     isDeleteModalOpen.value = true

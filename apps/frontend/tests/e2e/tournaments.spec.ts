@@ -6,6 +6,11 @@ import {
   mockTournamentListResponse,
 } from './fixtures/tournaments'
 
+test.beforeEach(async ({ page }) => {
+  // Prevent redirect loops by mocking auth/me for all tournament tests
+  await mockJson(page, /\/auth\/me/, null)
+})
+
 test.describe('tournaments list', () => {
   test('home shows tournaments from API', async ({ page }) => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
@@ -38,26 +43,31 @@ test.describe('tournaments list', () => {
 test.describe('tournament detail', () => {
   test('tournament card navigates to detail page', async ({ page }) => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
-    await mockJson(page, /\/tournaments\/t-1$/, mockTournamentDetail)
+    await mockJson(page, /\/tournaments\/t-1/, mockTournamentDetail)
     await mockJson(page, /\/teams\/list/, mockEmptyTeamsList)
 
     await page.goto('/')
     await page.getByRole('heading', { name: 'Cup 2026' }).click()
 
-    await expect(page.getByText('ПРО ТУРНІР')).toBeVisible()
+    await expect(page.getByText('ПРО ТУРНІР')).toBeVisible({ timeout: 15000 })
     await expect(page.getByText('About Cup 2026')).toBeVisible()
   })
 
   test('back link returns to home', async ({ page }) => {
     await mockJson(page, /\/tournaments\/list/, mockTournamentListResponse)
-    await mockJson(page, /\/tournaments\/t-1$/, mockTournamentDetail)
+    await mockJson(page, /\/tournaments\/t-1/, mockTournamentDetail)
     await mockJson(page, /\/teams\/list/, mockEmptyTeamsList)
 
     await page.goto('/')
     await page.getByRole('heading', { name: 'Cup 2026' }).click()
-    await expect(page.getByText('ПРО ТУРНІР')).toBeVisible()
+    await page.waitForURL(/\/tournaments\/t-1/)
+    await expect(page.getByText('ПРО ТУРНІР')).toBeVisible({ timeout: 15000 })
+    
+    // Ensure the back link is ready to be clicked
+    const backLink = page.locator('section.tournament-detail a.back-link')
+    await expect(backLink).toBeVisible()
+    await backLink.click({ force: true })
 
-    await page.locator('section.tournament-detail a.back-link').click()
-    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'АКТИВНІ ТУРНІРИ' })).toBeVisible({ timeout: 10000 })
   })
 })

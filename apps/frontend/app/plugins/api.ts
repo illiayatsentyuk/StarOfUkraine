@@ -10,10 +10,10 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
 
   let isRefreshing = false
-  let failedQueue: { resolve: (value?: unknown) => void; reject: (reason?: any) => void }[] = []
+  let failedQueue: any[] = []
 
   const processQueue = (error: any, token: string | null = null) => {
-    failedQueue.forEach(prom => {
+    failedQueue.forEach((prom) => {
       if (error) {
         prom.reject(error)
       } else {
@@ -24,39 +24,61 @@ export default defineNuxtPlugin((nuxtApp) => {
   }
 
   api.interceptors.response.use(
-    response => response,
-    async error => {
+    (response) => response,
+    async (error) => {
       const originalRequest = error.config
       const status = error.response?.status
 
-      if (status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/')) {
+      // Avoid refresh for auth routes where it doesn't make sense or causes loops
+      const isAuthRoute = 
+        originalRequest.url?.includes('/auth/signin') || 
+        originalRequest.url?.includes('/auth/signup') || 
+        originalRequest.url?.includes('/auth/refresh') ||
+        originalRequest.url?.includes('/auth/logout')
+
+      if (status === 401 && !originalRequest._retry && !isAuthRoute) {
         if (isRefreshing) {
-          return new Promise(function (resolve, reject) {
+          return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject })
           })
-            .then(() => {
-              return api(originalRequest)
-            })
-            .catch(err => {
-              return Promise.reject(err)
-            })
+            .then(() => api(originalRequest))
+            .catch((err) => Promise.reject(err))
         }
 
         originalRequest._retry = true
         isRefreshing = true
 
         try {
-          await axios.post(`${config.public.apiURL}/auth/refresh`, {}, { withCredentials: true })
+          // Attempt to refresh tokens
+          await axios.post(
+            `${config.public.apiURL}/auth/refresh`,
+            {},
+            { withCredentials: true }
+          )
+
+          // IMPORTANT: After refresh, we need to sync the user state 
+          // because the role (ADMIN/USER) might have changed or needs to be re-read from the new token
+          await nuxtApp.runWithContext(async () => {
+             const authStore = useLoginStore()
+             await authStore.fetchUser()
+          })
+
           processQueue(null)
           return api(originalRequest)
         } catch (refreshError) {
           processQueue(refreshError, null)
           
-          nuxtApp.runWithContext(async () => {
+          // If refresh fails, clear user state and redirect to home/login
+          await nuxtApp.runWithContext(async () => {
             const authStore = useLoginStore()
             authStore.user = null
             authStore.authenticated = false
-            await navigateTo('/')
+            authStore.isAdmin = false
+            
+            const route = useRoute()
+            if (route.path !== '/') {
+              await navigateTo('/')
+            }
           })
           
           return Promise.reject(refreshError)
