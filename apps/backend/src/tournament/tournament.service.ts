@@ -189,6 +189,17 @@ export class TournamentService {
       throw new NotFoundException('Team not found');
     }
 
+    const memberCount = team.members.length;
+    if (tournament.teamSizeMin && memberCount < tournament.teamSizeMin) {
+      throw new BadRequestException(
+        `Team must have at least ${tournament.teamSizeMin} members to join this tournament (currently: ${memberCount})`,
+      );
+    }
+    if (tournament.teamSizeMax && memberCount > tournament.teamSizeMax) {
+      throw new BadRequestException(
+        `Team cannot have more than ${tournament.teamSizeMax} members in this tournament (currently: ${memberCount})`,
+      );
+    }
 
     const alreadyJoined = teams.some((t) => t.id === team.id);
     if (alreadyJoined) {

@@ -33,23 +33,21 @@ section.tournaments-archive
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 const store = useTournamentsStore()
 
 onMounted(async () => {
-    // We can filter by completed status if API supports it
-    // For now, we load all and filter in computed
-    if (store.tournaments.length === 0) {
-        await store.loadFromDatabase(true)
-    }
+    store.statusFilter = 'COMPLETED'
+    await store.loadFromDatabase(true)
+})
+
+onUnmounted(() => {
+    store.statusFilter = 'all'
 })
 
 const completedTournaments = computed(() => {
-    return store.tournaments.filter(t => {
-        const endDate = new Date(t.registrationEnd)
-        return endDate < new Date() || t.status === 'completed'
-    })
+    return store.tournaments.filter(t => t.status === 'COMPLETED')
 })
 </script>
 
