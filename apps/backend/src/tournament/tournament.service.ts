@@ -63,7 +63,6 @@ export class TournamentService {
   }
 
   async create(data: CreateTournamentDto) {
-    this.validateTournamentDates(data.registrationStart, data.startDate);
     const existingTournament = await this.prisma.tournament.findFirst({
       where: {
         name: data.name,
@@ -101,11 +100,6 @@ export class TournamentService {
 
   async update(id: string, data: UpdateTournamentDto) {
     const current = await this.findOne(id);
-
-    this.validateTournamentDates(
-      data.registrationStart ?? current.registrationStart,
-      data.startDate ?? current.startDate,
-    );
 
     if (typeof data.name === 'string' && data.name.trim().length > 0) {
       const nextName = data.name.trim();
@@ -513,29 +507,6 @@ export class TournamentService {
       }
     }
     return [primary, { id: 'asc' }];
-  }
-
-  private validateTournamentDates(registrationStart: Date, startDate: Date) {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-
-    const regStart = new Date(registrationStart);
-    regStart.setHours(0, 0, 0, 0);
-
-    if (regStart < now) {
-      throw new BadRequestException(
-        'Дата початку реєстрації не може бути в минулому',
-      );
-    }
-
-    const sDate = new Date(startDate);
-    sDate.setHours(0, 0, 0, 0);
-
-    if (regStart > sDate) {
-      throw new BadRequestException(
-        'Дата початку реєстрації не може бути пізніше за дату початку турніру',
-      );
-    }
   }
 }
 
