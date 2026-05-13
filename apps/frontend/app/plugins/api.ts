@@ -20,6 +20,20 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   }
 
+  let isRefreshing = false
+  let failedQueue: any[] = []
+
+  const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach((prom) => {
+      if (error) {
+        prom.reject(error)
+      } else {
+        prom.resolve(token)
+      }
+    })
+    failedQueue = []
+  }
+
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -73,7 +87,8 @@ export default defineNuxtPlugin((nuxtApp) => {
             authStore.isAdmin = false
             
             const route = useRoute()
-            if (route.path !== '/') {
+            const isAuthMe = originalRequest.url?.includes('/auth/me')
+            if (route.path !== '/' && !isAuthMe) {
               await navigateTo('/')
             }
           })

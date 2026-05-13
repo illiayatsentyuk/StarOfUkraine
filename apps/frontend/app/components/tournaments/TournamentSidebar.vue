@@ -15,7 +15,7 @@ aside.sidebar
 
         .divider
 
-        NuxtLink.sidebar__table-link(:to="`/tournaments/${tournamentId}/table`")
+        NuxtLink.sidebar__table-link(:to="`/tournaments/${tournament.id}/table`")
             span.icon ↗
             span ТАБЛИЦЯ РЕЗУЛЬТАТІВ
 
@@ -98,13 +98,12 @@ import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
 
 const props = defineProps<{
-    tournament: any
+    tournament: Tournament
     status: TournamentStatusInfo | null
     isAdmin: boolean
     isJury: boolean
     isAuthenticated: boolean
     isRegistrationActive: boolean
-    tournamentId: string
     isAlreadyJoined: boolean
     hasTeam: boolean
     activeTeam: any

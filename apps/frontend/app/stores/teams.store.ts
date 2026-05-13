@@ -31,7 +31,7 @@ export const useTeamsStore = defineStore('teams', () => {
         let teamIdToUse = stored || null
         
         const authStore = useLoginStore()
-        if (!authStore.user) {
+        if (!authStore.user && authStore.authenticated) {
             await authStore.fetchUser()
         }
         const user = authStore.user

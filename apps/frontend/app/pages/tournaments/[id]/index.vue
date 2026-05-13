@@ -32,7 +32,7 @@ section.tournament-detail
                     h3.section-label КОМАНДИ
                     p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
                     template(v-else)
-                        p.description(v-if="teamsStore.loading") Завантаження команд...
+                        p.description(v-if="loadingTeams") Завантаження команд...
                         p.description(v-else-if="!teams.length") Команди поки не додані.
                         .teams-grid(v-else)
                             TeamCard(
@@ -42,6 +42,8 @@ section.tournament-detail
                                 :isAdmin="authStore.isAdmin"
                                 @delete="teamsStore.deleteTeam($event)"
                             )
+
+
 
             TournamentSidebar(
                 :tournament="tournament"
@@ -55,7 +57,7 @@ section.tournament-detail
                 :hasTeam="!!teamsStore.activeTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
-                :shouldHideTeams="shouldHideTeams"
+                :shouldHideTeams="tournament.hideTeamsUntilRegistrationEnds"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @joinTournament="handleJoinTournament"
@@ -102,7 +104,8 @@ const { data: tournament, pending, error: fetchError } = await useAsyncData(
     () => tournamentStore.fetchTournamentById(tournamentId.value)
 )
 
-const teams = ref<any[]>([])
+const teams = ref<(Partial<Team> & { points?: number })[]>([])
+const loadingTeams = ref(false)
 const isDeleteModalOpen = ref(false)
 const isTeamOpen = ref(false)
 const isEditModalOpen = ref(false)
@@ -238,6 +241,9 @@ async function onTournamentDeleted() {
     await navigateTo('/')
 }
 
+const shuffleTeams = () => {
+    teams.value = [...teams.value].sort(() => Math.random() - 0.5)
+}
 </script>
 
 <style lang="scss" scoped>

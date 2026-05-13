@@ -109,10 +109,11 @@ async function handleCreateTask(payload: any) {
 
     await store.createTask({
         tournamentId: route.params.id as string,
-        name: payload.title,
-        description: payload.description,
-        maxPoints: payload.points,
-        deadline: payload.deadline,
+        name: derivedName,
+        description: derivedDescription,
+        order: safeOrder,
+        maxPoints: safeMaxPoints,
+        criteria: normalizedCriteria.length ? normalizedCriteria : undefined,
     })
     isModalOpen.value = false
 }
