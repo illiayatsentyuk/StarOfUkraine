@@ -12,7 +12,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const tournaments = ref<Tournament[]>([])
     const page = ref(1)
     const totalPages = ref(0)
-    const loading = ref(true)
+    const loading = ref(false)
     const error = ref<string | null>(null)
     const search = ref('')
     const sortBy = ref('createdAt')
