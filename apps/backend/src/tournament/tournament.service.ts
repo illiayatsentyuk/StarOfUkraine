@@ -183,7 +183,10 @@ export class TournamentService {
 
     const team = await this.prisma.team.findUnique({
       where: { id: data.teamId },
-      include: { members: { select: { id: true } } },
+      include: {
+        captain: { select: { id: true } },
+        members: { select: { id: true } }
+      },
     });
     if (!team) {
       throw new NotFoundException('Team not found');
@@ -208,16 +211,24 @@ export class TournamentService {
       );
     }
 
-    const captainAlreadyRegistered = await this.prisma.team.findFirst({
+    const userIds = new Set<string>();
+    if (team.captain?.id) userIds.add(team.captain.id);
+    team.members.forEach(m => userIds.add(m.id));
+
+    const usersAlreadyInTournament = await this.prisma.team.findMany({
       where: {
-        captainEmail: team.captainEmail,
         tournaments: { some: { id } },
         NOT: { id: team.id },
-      },
+        OR: [
+          { captain: { id: { in: Array.from(userIds) } } },
+          { members: { some: { id: { in: Array.from(userIds) } } } }
+        ]
+      }
     });
-    if (captainAlreadyRegistered) {
+
+    if (usersAlreadyInTournament.length > 0) {
       throw new BadRequestException(
-        'This captain already has another team registered for this tournament',
+        'One or more team members are already registered for this tournament in another team',
       );
     }
 
@@ -323,6 +334,7 @@ export class TournamentService {
           select: {
             id: true,
             name: true,
+            captain: { select: { id: true } },
             members: { select: { id: true } }
           }
         },
@@ -334,7 +346,7 @@ export class TournamentService {
       let isJoined = false;
       if (userId) {
         isJoined = t.teams.some(team => 
-          team.members.some(m => m.id === userId)
+          team.captain?.id === userId || team.members.some(m => m.id === userId)
         );
       }
 
@@ -381,6 +393,7 @@ export class TournamentService {
             select: {
               id: true,
               name: true,
+              captain: { select: { id: true } },
               members: { select: { id: true } }
             }
           }
@@ -393,26 +406,31 @@ export class TournamentService {
       this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
     }
 
-    // Handle isJoined
+    // Handle isJoined and joinedTeamId
     let isJoined = false;
+    let joinedTeamId: string | null = null;
     if (userId && tournament.teams) {
-      isJoined = tournament.teams.some((team) =>
-        team.members.some((m) => m.id === userId),
+      const joinedTeam = tournament.teams.find((team) =>
+        team.captain?.id === userId || team.members.some((m) => m.id === userId),
       );
+      if (joinedTeam) {
+        isJoined = true;
+        joinedTeamId = joinedTeam.id;
+      }
     }
 
     // Handle hideTeams
     const shouldHide = tournament.hideTeamsUntilRegistrationEnds && 
                       new Date() < new Date(tournament.registrationEnd);
     
-    if (shouldHide) {
-      tournament.teams = [];
-    }
-
-    return {
+    const finalTournament = {
       ...tournament,
-      isJoined
+      isJoined,
+      joinedTeamId,
+      teams: shouldHide ? [] : tournament.teams
     };
+
+    return finalTournament;
   }
 
   async getLeaderboard(tournamentId: string) {
@@ -568,6 +586,7 @@ type TournamentWithTeams = Prisma.TournamentGetPayload<{
       select: {
         id: true;
         name: true;
+        captain: { select: { id: true } };
         members: { select: { id: true } };
       };
     };

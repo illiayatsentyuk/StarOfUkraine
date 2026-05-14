@@ -11,7 +11,7 @@ NuxtLink.task-card(:to="taskLink")
         .task-card__footer__info
             span.deadline(v-if="task.deadline") Дедлайн: {{ formatDate(task.deadline) }}
             span.deadline(v-else) Без дедлайну
-            NuxtLink.detail-btn(:to="`/tournaments/${tournamentId}/tasks/${task.id}`")
+            NuxtLink.detail-btn(:to="taskLink")
                 span ДЕТАЛІ
                 i.pi.pi-arrow-right
         
@@ -49,7 +49,14 @@ const formatDate = (date: string | null) => {
     return new Date(date).toLocaleDateString('uk-UA')
 }
 
-const taskLink = computed(() => `/tournaments/${props.tournamentId}/tasks/${props.task.id}`)
+const route = useRoute()
+const taskLink = computed(() => {
+    const query = route.query.teamId ? { teamId: route.query.teamId } : {}
+    return {
+        path: `/tournaments/${props.tournamentId}/tasks/${props.task.id}`,
+        query
+    }
+})
 
 const STATUS_LABELS: Record<string, string> = {
     DRAFT: 'ЧЕРНЕТКА',

@@ -2,14 +2,12 @@
 .content-section.submission-section
     h3.section-title ВІДПРАВИТИ РЕЗУЛЬТАТ
 
-    //- Вже оцінено
     .status-banner.status-banner--evaluated(v-if="mySubmission?.status === 'EVALUATED'")
         i.pi.pi-check-circle
         .banner-text
             h4 Роботу оцінено
             p Журі перевірило вашу роботу
 
-    //- Відправлено, очікує оцінки
     .status-banner.status-banner--pending(v-else-if="mySubmission?.status === 'PENDING'")
         i.pi.pi-clock
         .banner-text
@@ -30,6 +28,11 @@
                 .input-wrapper
                     i.pi.pi-youtube
                     InputText.custom-input(v-model="submissionYoutube" placeholder="https://youtube.com/...")
+            .field
+                label Live Demo (опціонально)
+                .input-wrapper
+                    i.pi.pi-globe
+                    InputText.custom-input(v-model="submissionLive" placeholder="https://myapp.vercel.app")
             Button.submit-btn(
                 type="submit"
                 label="ОНОВИТИ РОБОТУ"
@@ -37,7 +40,6 @@
                 :disabled="!submissionGithub.trim()"
             )
 
-    //- Ще не відправлено
     form.submission-form(v-else @submit.prevent="handleSubmit")
         .field
             label(for="github") Посилання на GitHub *
@@ -64,13 +66,6 @@
                     v-model="submissionLive"
                     placeholder="https://myapp.vercel.app"
                 )
-        .field
-            label(for="summary") Короткий опис (опціонально)
-            textarea#summary.summary-input(
-                v-model="submissionSummary"
-                placeholder="Що зробили, як запустити..."
-                rows="3"
-            )
         Button.submit-btn(
             type="submit"
             label="ВІДПРАВИТИ НА ПЕРЕВІРКУ"
@@ -81,7 +76,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-
 import type { TournamentTask } from '~/types'
 
 const props = defineProps<{
@@ -97,7 +91,6 @@ const emit = defineEmits<{
 const submissionGithub = ref(props.mySubmission?.githubUrl ?? '')
 const submissionYoutube = ref(props.mySubmission?.videoUrl ?? '')
 const submissionLive = ref((props.mySubmission as any)?.liveUrl ?? '')
-const submissionSummary = ref((props.mySubmission as any)?.summary ?? '')
 const showResubmit = ref(false)
 
 function handleSubmit() {
@@ -106,7 +99,7 @@ function handleSubmit() {
         github: submissionGithub.value,
         youtube: submissionYoutube.value,
         liveUrl: submissionLive.value || undefined,
-        summary: submissionSummary.value || undefined,
+        summary: undefined,
     })
     showResubmit.value = false
 }
@@ -126,9 +119,7 @@ function handleSubmit() {
     padding: 16px;
     border: 1px solid;
 
-    i {
-        font-size: 24px;
-    }
+    i { font-size: 24px; }
 
     .banner-text {
         h4 { margin: 0; font-size: 15px; font-weight: 700; }
@@ -160,7 +151,6 @@ function handleSubmit() {
         color: #14532d;
     }
 }
-
 
 .section-title {
     font-size: 11px;
@@ -208,30 +198,8 @@ function handleSubmit() {
                 color: var(--color-text) !important;
                 transition: all 0.2s;
 
-                &:focus {
-                    border-color: var(--color-primary) !important;
-                    background: white !important;
-                    outline: none;
-                }
-            }
-        }
-
-        .summary-input {
-            width: 100%;
-            padding: 12px !important;
-            background: var(--color-bg-secondary) !important;
-            border: 1px solid var(--color-border) !important;
-            font-size: 13px !important;
-            color: var(--color-text) !important;
-            transition: all 0.2s;
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-
-            &:focus {
-                border-color: var(--color-primary) !important;
-                background: white !important;
-                outline: none;
+                &:hover { border-color: var(--color-primary) !important; }
+                &:focus { border-color: var(--color-primary) !important; background: white !important; outline: none; }
             }
         }
     }
@@ -249,15 +217,8 @@ function handleSubmit() {
         transition: all 0.2s;
         margin-top: 8px;
 
-        &:hover:not(:disabled) {
-            background: #00897b !important;
-            transform: translateY(-1px);
-        }
-
-        &:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+        &:hover:not(:disabled) { filter: brightness(0.9); transform: translateY(-1px); }
+        &:disabled { opacity: 0.6; cursor: not-allowed; }
     }
 }
 

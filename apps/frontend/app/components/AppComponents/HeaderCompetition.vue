@@ -18,14 +18,21 @@ header.header-competition
                 )
             
             template(v-if="loginStore.isAuthenticated")
+                NuxtLink.jury-link(
+                    v-if="loginStore.user.role === 'JURY' && route.params.id"
+                    :to="`/tournaments/${route.params.id}/judge`"
+                )
+                    i.pi.pi-verified
+                    span ПАНЕЛЬ ЖУРІ
+
                 Button.create-btn(
-                    v-if="!loginStore.hasTeam"
+                    v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                     type="button"
                     label="СТВОРИТИ КОМАНДУ"
                     @click="openTeamModal"
                 )
                 NuxtLink.my-team-link(
-                    v-else
+                    v-else-if="loginStore.hasTeam"
                     :to="`/teams/${loginStore.userTeam.id}`"
                 )
                     i.pi.pi-users
@@ -74,14 +81,22 @@ header.header-competition
                     )
                 
                 template(v-if="loginStore.isAuthenticated")
+                    NuxtLink.jury-link(
+                        v-if="loginStore.user.role === 'JURY' && route.params.id"
+                        :to="`/tournaments/${route.params.id}/judge`"
+                        @click="isMenuOpen = false"
+                    )
+                        i.pi.pi-verified
+                        span ПАНЕЛЬ ЖУРІ
+
                     Button.create-btn(
-                        v-if="!loginStore.hasTeam"
+                        v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                         type="button"
                         label="СТВОРИТИ КОМАНДУ"
                         @click="openTeamModal(); isMenuOpen = false"
                     )
                     NuxtLink.my-team-link(
-                        v-else
+                        v-else-if="loginStore.hasTeam"
                         :to="`/teams/${loginStore.userTeam.id}`"
                         @click="isMenuOpen = false"
                     )
@@ -313,6 +328,25 @@ function closeModal(){
             color: var(--color-primary);
             transform: translateY(-2px);
         }
+    }
+
+    .jury-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--color-primary);
+        color: white;
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        i { font-size: 14px; }
+        &:hover { background: var(--color-text); transform: translateY(-2px); }
     }
 
     .user-team {

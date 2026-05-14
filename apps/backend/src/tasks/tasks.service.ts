@@ -264,6 +264,15 @@ export class TasksService {
     });
   }
 
+  async getSubmissionForTeam(taskId: string, teamId: string) {
+    const submission = await this.prisma.submission.findUnique({
+      where: { taskId_teamId: { taskId, teamId } },
+    });
+    if (!submission) throw new NotFoundException('Submission not found');
+    return submission;
+  }
+
+
   async evaluateSubmission(
     submissionId: string,
     userId: string,

@@ -75,36 +75,13 @@
                             Button(icon="pi pi-copy" @click="copyInviteLink")
 
     //- Edit Modal
-    Dialog(
-        v-model:visible="isEditModalOpen"
-        header="Редагувати команду"
-        :style="{ width: 'min(calc(100vw - 2rem), 450px)' }"
-        modal
+    EditTeamModal(
+        v-if="isEditModalOpen"
+        :is-open="isEditModalOpen"
+        :team="team"
+        @close="isEditModalOpen = false"
+        @success="loadTeam"
     )
-        .p-fluid
-            .field
-                label Назва команди
-                InputText(v-model="editForm.name")
-            .field
-                label Організація
-                InputText(v-model="editForm.organization")
-            .field
-                label Місто
-                InputText(v-model="editForm.city")
-            .field
-                label Telegram
-                InputText(v-model="editForm.telegram")
-            .field
-                label Discord
-                InputText(v-model="editForm.discord")
-            
-            .field-checkbox
-                Checkbox(v-model="editForm.isAcceptNewMembers" :binary="true")
-                label Приймати нових учасників
-        
-        template(#footer)
-            Button(label="Скасувати" icon="pi pi-times" text @click="isEditModalOpen = false")
-            Button(label="Зберегти" icon="pi pi-check" @click="handleUpdateTeam" :loading="saving")
 </template>
 
 <script setup lang="ts">
@@ -123,30 +100,11 @@ const isMember = computed(() => team.value?.members?.some(m => m.email === authS
 const joining = ref(false)
 
 const isEditModalOpen = ref(false)
-const saving = ref(false)
-const editForm = ref({
-    name: '',
-    organization: '',
-    city: '',
-    telegram: '',
-    discord: '',
-    isAcceptNewMembers: true
-})
 
 
 async function loadTeam() {
     try {
         await teamsStore.fetchTeamById(teamId)
-        if (team.value) {
-            editForm.value = {
-                name: team.value.name,
-                organization: team.value.organization || '',
-                city: team.value.city || '',
-                telegram: team.value.telegram || '',
-                discord: team.value.discord || '',
-                isAcceptNewMembers: team.value.isAcceptNewMembers
-            }
-        }
     } catch (e) {
         router.push('/')
     }
@@ -159,15 +117,6 @@ async function handleJoinTeam() {
         await loadTeam()
     } catch (e) {}
     finally { joining.value = false }
-}
-
-async function handleUpdateTeam() {
-    saving.value = true
-    try {
-        await teamsStore.updateTeam(teamId, editForm.value)
-        isEditModalOpen.value = false
-    } catch (e) {}
-    finally { saving.value = false }
 }
 
 async function handleDeleteTeam() {

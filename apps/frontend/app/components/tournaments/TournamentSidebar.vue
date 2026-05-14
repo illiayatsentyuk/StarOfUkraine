@@ -54,7 +54,7 @@ aside.sidebar
 
             NuxtLink.sidebar__judge-link(
                 v-if="isJury && tournament.id"
-                :to="`/tournaments/${tournament.id}/tasks`"
+                :to="`/tournaments/${tournament.id}/judge`"
             )
                 Button.sidebar__judge(
                     type="button"

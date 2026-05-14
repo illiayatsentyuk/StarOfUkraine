@@ -20,17 +20,23 @@ const props = defineProps<{
     name: string
     status: TournamentStatusInfo | null
     canSeeTasks: boolean
+    joinedTeamId?: string | null
 }>()
 
 const route = useRoute()
 const router = useRouter()
 const tournamentId = computed(() => route.params.id as string)
-const teamsStore = useTeamsStore()
 
-const tasksLink = computed(() => ({
-    path: `/tournaments/${tournamentId.value}/tasks`,
-    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
-}))
+const tasksLink = computed(() => {
+    const query: Record<string, string> = {}
+    if (props.joinedTeamId) {
+        query.teamId = props.joinedTeamId
+    }
+    return {
+        path: `/tournaments/${tournamentId.value}/tasks`,
+        query: Object.keys(query).length > 0 ? query : undefined,
+    }
+})
 
 function handleTasksClick(e: MouseEvent) {
     if (tournamentId.value) {

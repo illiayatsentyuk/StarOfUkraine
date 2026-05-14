@@ -173,8 +173,8 @@ export const useTasksStore = defineStore('tasks', () => {
     const fetchMySubmission = async (taskId: string, teamId?: string) => {
         if (!teamId) return
         try {
-            const res = await api.get(`/tasks/${taskId}/submissions`)
-            const mine = res.data?.find((s: any) => s.teamId === teamId)
+            const res = await api.get(`/tasks/${taskId}/teams/${teamId}/submission`)
+            const mine = res.data
             if (mine) {
                 mySubmissions.value[taskId] = {
                     status: mine.status,

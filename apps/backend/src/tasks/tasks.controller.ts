@@ -123,6 +123,32 @@ export class TasksController {
     return this.tasksService.getSubmissionsForTask(id);
   }
 
+  @Get('tasks/:id/teams/:teamId/submission')
+  @Serialize(SubmissionResponseDto)
+  @Roles(Role.USER, Role.JURY, Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiParam({ name: 'teamId', description: 'Team ID' })
+  @ApiOperation({ summary: 'Get a specific team\'s submission for a task' })
+  @ApiOkResponse({
+    type: SubmissionResponseDto,
+    description: 'The submission for the specified team',
+    schema: { example: tasksExamples.submissionResponse },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Submission not found' })
+  getSubmissionForTeam(
+    @Param('id') taskId: string,
+    @Param('teamId') teamId: string,
+  ) {
+    return this.tasksService.getSubmissionForTeam(taskId, teamId);
+  }
+
   @Post('tournaments/:id/tasks')
   @Roles(Role.ADMIN)
   @ApiBearerAuth()

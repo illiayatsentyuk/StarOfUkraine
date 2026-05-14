@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useApi } from '~/composables/useApi'
-import type { Form, User } from '~/types'
+import type { User } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
@@ -13,10 +13,8 @@ export const useLoginStore = defineStore('login', () => {
     const loading = ref(false)
 
     const loginByGoogle = () => {
-        console.log('Login by Google triggered', config.public.apiURL)
         if (typeof window !== 'undefined') {
             const url = `${config.public.apiURL}/auth/google/login`
-            console.log('Redirecting to:', url)
             window.location.href = url
         }
     }
@@ -26,17 +24,18 @@ export const useLoginStore = defineStore('login', () => {
         try {
             await useApi().post('/auth/signup', userData)
             await fetchUser()
-        } catch {
-            user.value = null
-            isAdmin.value = false
-            toast.error('Помилка при реєстрації')
-        } finally {
-            loading.value = false
             navigateTo('/')
             authenticated.value = true
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
+        } catch (error) {
+            user.value = null
+            isAdmin.value = false
+            toast.error('Помилка при реєстрації')
+            throw error
+        } finally {
+            loading.value = false
         }
     }
 
@@ -45,17 +44,18 @@ export const useLoginStore = defineStore('login', () => {
         try {
             await useApi().post('/auth/signin', credentials)
             await fetchUser()
-        } catch {
-            user.value = null
-            isAdmin.value = false
-            toast.error('Неправильна пошта або пароль')
-        } finally {
-            loading.value = false
             navigateTo('/')
             authenticated.value = true
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
+        } catch (error) {
+            user.value = null
+            isAdmin.value = false
+            toast.error('Неправильна пошта або пароль')
+            throw error
+        } finally {
+            loading.value = false
         }
     }
 
@@ -69,11 +69,8 @@ export const useLoginStore = defineStore('login', () => {
                 isJury.value = response.data.role === 'JURY'
                 image.value = response.data.image
                 authenticated.value = true
-                console.log('DEBUG RAW USER:', response.data)
             }
-
         } catch (error) {
-            console.error('Fetch user failed:', error)
             user.value = null
             isAdmin.value = false
         } finally {

@@ -14,6 +14,7 @@ section.tournament-detail
             :tournamentId="route.params.id"
             :status="tournamentStatus"
             :canSeeTasks="canSeeTasks"
+            :joinedTeamId="tournament.joinedTeamId"
         )
 
         .tournament-detail__layout
@@ -146,8 +147,7 @@ const hasTeam = computed(() => {
 
 const canSeeTasks = computed(() => {
     if (authStore.isAdmin || authStore.isJury) return true
-    const hasStarted = tournament.value?.status === 'ONGOING' || tournament.value?.status === 'COMPLETED'
-    return isAlreadyJoined.value && hasStarted
+    return tournament.value?.status !== 'DRAFT'
 })
 
 const refreshTeams = async () => {

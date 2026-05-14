@@ -118,6 +118,10 @@ export class TournamentResponseDto {
   isJoined?: boolean;
 
   @Expose()
+  @ApiPropertyOptional({ nullable: true })
+  joinedTeamId?: string | null;
+
+  @Expose()
   @ApiPropertyOptional({ type: [TournamentTeamSnippetDto] })
   @Type(() => TournamentTeamSnippetDto)
   teams?: TournamentTeamSnippetDto[];

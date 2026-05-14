@@ -55,10 +55,10 @@ section.task-detail
 
                     NuxtLink.admin-link(
                         v-if="authStore.isJury"
-                        :to="`/tournaments/${route.params.id}/tasks/${task.id}/admin`"
+                        :to="`/tournaments/${route.params.id}/judge`"
                     )
-                        i.pi.pi-cog
-                        span ПАНЕЛЬ ПЕРЕВІРКИ
+                        i.pi.pi-verified
+                        span ПАНЕЛЬ ЖУРІ
 
     .error-state(v-else)
         p Завдання не знайдено

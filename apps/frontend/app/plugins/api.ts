@@ -4,8 +4,12 @@ import axios from 'axios'
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
 
+  const baseURL = (import.meta.server && config.apiURL) 
+    ? (config.apiURL as string) 
+    : (config.public.apiURL as string)
+
   const api = axios.create({
-    baseURL: config.public.apiURL as string,
+    baseURL,
     withCredentials: true,
   })
 
@@ -64,7 +68,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         try {
           // Attempt to refresh tokens
           await axios.post(
-            `${config.public.apiURL}/auth/refresh`,
+            `${baseURL}/auth/refresh`,
             {},
             { withCredentials: true }
           )

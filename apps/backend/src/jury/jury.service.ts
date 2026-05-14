@@ -20,12 +20,13 @@ export class JuryService {
   ) {}
 
   findAll() {
-    return this.prisma.jury.findMany();
+    return this.prisma.jury.findMany({ include: { user: true } });
   }
 
   findByTournament(tournamentId: string) {
     return this.prisma.jury.findMany({
       where: { tournaments: { some: { id: tournamentId } } },
+      include: { user: true },
     });
   }
 
@@ -59,6 +60,13 @@ export class JuryService {
                 name: true,
                 captainName: true,
                 captainEmail: true,
+              },
+            },
+            task: {
+              include: {
+                tournament: {
+                  select: { name: true },
+                },
               },
             },
             evaluations: {
