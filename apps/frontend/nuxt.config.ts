@@ -13,6 +13,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@primevue/nuxt-module',
     '@vee-validate/nuxt',
+    '@nuxtjs/i18n',
   ],
   veeValidate: {
     // Using built-in rules
@@ -65,6 +66,22 @@ export default defineNuxtConfig({
       pathPrefix: false,
     },
   ],
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', file: 'en.ts', name: 'English' },
+      { code: 'uk', iso: 'uk-UA', file: 'uk.ts', name: 'Ukrainian' },
+    ],
+    defaultLocale: 'en',
+    langDir: 'app/locales',
+    restructureDir: false,
+    strategy: 'prefix_except_default',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_redirected',
+      redirectOn: 'root',
+    },
+    vueI18n: './i18n.config.ts',
+  },
   devServer: {
     host: '0.0.0.0',
     port: 4040,

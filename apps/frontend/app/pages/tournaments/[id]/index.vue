@@ -54,9 +54,10 @@ section.tournament-detail
                 :isAuthenticated="authStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
                 :isAlreadyJoined="isAlreadyJoined"
-                :hasTeam="!!teamsStore.activeTeam"
+                :hasTeam="hasTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
+                :isLoadingAuth="authStore.loading"
                 :shouldHideTeams="tournament.hideTeamsUntilRegistrationEnds"
                 @edit="openEditModal"
                 @delete="handleDelete"
@@ -129,9 +130,18 @@ const shouldHideTeams = computed(() => {
 
 // Перевірка чи команда юзера вже зареєстрована в цьому турнірі
 const isAlreadyJoined = computed(() => {
+    // 1. Спробуємо взяти готовий статус з бекенду (найнадійніший спосіб)
+    if (tournament.value?.isJoined) return true
+
+    // 2. Фолбек для локальної перевірки (якщо список команд доступний)
     const activeTeamId = teamsStore.activeTeamId
     if (!activeTeamId || !Array.isArray(teams.value)) return false
     return teams.value.some((t) => t.id === activeTeamId)
+})
+
+const hasTeam = computed(() => {
+    if (!authStore.user) return false
+    return (authStore.user.teamsAsCaptain?.length || 0) > 0 || (authStore.user.teamsAsMember?.length || 0) > 0
 })
 
 const canSeeTasks = computed(() => {
@@ -155,7 +165,15 @@ const refreshTeams = async () => {
 const handleJoinTournament = async () => {
     if (!authStore.isAuthenticated) return
 
-    // Якщо немає команди — спочатку відкрити модалку створення
+    // Якщо активна команда не вибрана, але у юзера є команди — виберемо першу
+    if (!teamsStore.activeTeam && hasTeam.value) {
+        const firstTeamId = authStore.user?.teamsAsCaptain?.[0]?.id || authStore.user?.teamsAsMember?.[0]?.id
+        if (firstTeamId) {
+            await teamsStore.setActiveTeam(firstTeamId)
+        }
+    }
+
+    // Якщо все ще немає команди — відкрити модалку створення
     if (!teamsStore.activeTeam) {
         isTeamOpen.value = true
         return

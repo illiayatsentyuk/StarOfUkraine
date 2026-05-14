@@ -1,7 +1,7 @@
 <template lang="pug">
 .profile__hero
   .profile__avatar-ring
-    .profile__avatar-wrap
+    .profile__avatar-wrap(:class="{ 'profile__avatar-wrap--uploadable': uploadable }" @click="uploadable && $emit('upload')")
       Avatar(
         v-if="user.image"
         :image="user.image"
@@ -14,20 +14,27 @@
         size="xlarge"
         shape="circle"
       )
+      .profile__avatar-overlay(v-if="uploadable")
+        i.pi.pi-camera
   span.profile__role-pill {{ roleDisplayName }}
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
+
 const props = defineProps<{
   user: any
+  uploadable?: boolean
 }>()
 
+defineEmits<{ upload: [] }>()
+
 const roleDisplayName = computed(() => {
-  if (!props.user?.role) return 'Користувач'
+  if (!props.user?.role) return t('profile.role_user')
   const roles: Record<string, string> = {
-    ADMIN: 'Адміністратор',
-    USER: 'Користувач',
-    JURY: 'Журі'
+    ADMIN: t('profile.role_admin'),
+    USER: t('profile.role_user'),
+    JURY: t('profile.role_jury'),
   }
   return roles[props.user.role] || props.user.role
 })
@@ -59,6 +66,7 @@ const roleDisplayName = computed(() => {
   padding: 3px;
   border-radius: 50%;
   background: var(--color-bg);
+  position: relative;
 
   :deep(.p-avatar.p-avatar-xl) {
     width: 120px;
@@ -68,6 +76,31 @@ const roleDisplayName = computed(() => {
 
   :deep(.p-avatar) {
     border: 1px solid var(--color-border);
+  }
+
+  &--uploadable {
+    cursor: pointer;
+
+    &:hover .profile__avatar-overlay {
+      opacity: 1;
+    }
+  }
+}
+
+.profile__avatar-overlay {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  i {
+    color: white;
+    font-size: 1.5rem;
   }
 }
 

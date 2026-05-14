@@ -5,7 +5,7 @@ import type {
   SubmissionEvaluatedPayload,
   TaskSubmittedPayload,
 } from '../types/index';
-import type { TournamentGateway } from './tournament.gateway';
+import { TournamentGateway } from './tournament.gateway';
 
 @Controller()
 export class EventsController {

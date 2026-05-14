@@ -17,12 +17,21 @@ header.header-competition
                     @click="openModal"
                 )
             
-            template(v-if="loginStore.isAuthenticated && !teamsStore.activeTeam")
+            template(v-if="loginStore.isAuthenticated")
                 Button.create-btn(
+                    v-if="!loginStore.hasTeam"
                     type="button"
                     label="СТВОРИТИ КОМАНДУ"
                     @click="openTeamModal"
                 )
+                NuxtLink.my-team-link(
+                    v-else
+                    :to="`/teams/${loginStore.userTeam.id}`"
+                )
+                    i.pi.pi-users
+                    span МОЯ КОМАНДА
+
+            LanguageSwitcher
 
             .auth-section
                 template(v-if="loginStore.user")
@@ -30,9 +39,9 @@ header.header-competition
                         NuxtLink.user-name-link(to="/profile")
                             span.user-name(data-testid="user-email") {{ loginStore.user.name || loginStore.user.email }}
                         
-                        .user-team(v-if="teamsStore.activeTeam")
+                        .user-team(v-if="loginStore.userTeam")
                             span.team-label КОМАНДА:
-                            span.team-name {{ teamsStore.activeTeam.name }}
+                            span.team-name {{ loginStore.userTeam.name }}
 
                         Button.logout-btn(
                             type="button"
@@ -64,21 +73,29 @@ header.header-competition
                         @click="openModal(); isMenuOpen = false"
                     )
                 
-                template(v-if="loginStore.isAuthenticated && !teamsStore.activeTeam")
+                template(v-if="loginStore.isAuthenticated")
                     Button.create-btn(
+                        v-if="!loginStore.hasTeam"
                         type="button"
                         label="СТВОРИТИ КОМАНДУ"
                         @click="openTeamModal(); isMenuOpen = false"
                     )
+                    NuxtLink.my-team-link(
+                        v-else
+                        :to="`/teams/${loginStore.userTeam.id}`"
+                        @click="isMenuOpen = false"
+                    )
+                        i.pi.pi-users
+                        span МОЯ КОМАНДА
 
             .mobile-menu__user(v-if="loginStore.user")
                 NuxtLink.user-link(to="/profile" @click="isMenuOpen = false")
                     i.pi.pi-user
                     span {{ loginStore.user.name || loginStore.user.email }}
                 
-                .user-team(v-if="teamsStore.activeTeam")
+                .user-team(v-if="loginStore.userTeam")
                     span.team-label КОМАНДА:
-                    span.team-name {{ teamsStore.activeTeam.name }}
+                    span.team-name {{ loginStore.userTeam.name }}
                 
                 Button.logout-btn(
                     type="button"
@@ -89,6 +106,9 @@ header.header-competition
                 )
             template(v-else)
                 NuxtLink.login-btn(to="/auth" @click="isMenuOpen = false") УВІЙТИ
+
+            .mobile-menu__lang
+                LanguageSwitcher
 
 CreateTournamentModal(:isOpen="isOpen" @close="closeModal")
 CreateTeamModal(:isTeamOpen="isTeamOpen" @close="closeModal")
@@ -267,33 +287,36 @@ function closeModal(){
         }
     }
 
-    .user-team {
-        display: flex;
+    .my-team-link {
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
+        gap: 8px;
+        padding: 10px 16px;
         background: var(--color-bg-secondary);
         border: 1px solid var(--color-border);
-        border-radius: 4px;
-        
-        .team-label {
-            font-family: var(--font-display);
-            font-size: 9px;
-            font-weight: 700;
-            color: var(--color-text-muted);
-            letter-spacing: 1px;
+        color: var(--color-text);
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        i {
+            color: var(--color-primary);
+            font-size: 14px;
         }
 
-        .team-name {
-            font-family: var(--font-sans);
-            font-size: 12px;
-            font-weight: 600;
+        &:hover {
+            border-color: var(--color-primary);
             color: var(--color-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 120px;
+            transform: translateY(-2px);
         }
+    }
+
+    .user-team {
+        display: none;
     }
 
     .login-btn {
@@ -407,6 +430,12 @@ function closeModal(){
         padding: 40px 24px;
         background: var(--color-bg);
     }   
+
+    &__lang {
+        display: flex;
+        padding-top: 8px;
+        border-top: 1px solid var(--color-border);
+    }
 
     &__actions {
         display: flex;

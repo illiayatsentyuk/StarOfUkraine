@@ -196,7 +196,7 @@ export class AuthController {
     description: 'User not found',
     schema: { example: authExamples.userNotFound },
   })
-  @Serialize(UserDto)
+  // Removed @Serialize(UserDto) to allow raw Prisma output with nested teams
   me(@GetCurrentUserId() userId: string) {
     return this.authService.getMe(userId);
   }

@@ -47,7 +47,9 @@ export default defineNuxtPlugin((nuxtApp) => {
         originalRequest.url?.includes('/auth/refresh') ||
         originalRequest.url?.includes('/auth/logout')
 
-      if (status === 401 && !originalRequest._retry && !isAuthRoute) {
+      const isAuthMe = originalRequest.url?.includes('/auth/me')
+
+      if ((status === 401 || status === 403) && !originalRequest._retry && !isAuthRoute) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject })

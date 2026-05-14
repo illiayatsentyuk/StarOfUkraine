@@ -54,7 +54,7 @@ aside.sidebar
 
             NuxtLink.sidebar__judge-link(
                 v-if="isJury && tournament.id"
-                :to="`/tournaments/${tournament.id}/evaluations`"
+                :to="`/tournaments/${tournament.id}/tasks`"
             )
                 Button.sidebar__judge(
                     type="button"
@@ -83,8 +83,8 @@ aside.sidebar
             )
 
             NuxtLink.sidebar__team-link(
-                v-if="isAuthenticated && hasTeam && activeTeam"
-                :to="`/teams/${activeTeam.id}`"
+                v-if="isAuthenticated && hasTeam"
+                :to="`/teams/${activeTeam?.id || firstTeamId}`"
             )
                 Button.sidebar__manage-team(
                     type="button"
@@ -96,6 +96,7 @@ aside.sidebar
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
+import { useLoginStore } from '~/stores/auth.store'
 
 const props = defineProps<{
     tournament: Tournament
@@ -109,6 +110,7 @@ const props = defineProps<{
     activeTeam: any
     joining: boolean
     shouldHideTeams: boolean
+    isLoadingAuth?: boolean
 }>()
 
 defineEmits<{
@@ -117,9 +119,19 @@ defineEmits<{
     joinTournament: []
 }>()
 
-const joinLabel = computed(() =>
-    props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
-)
+const loginStore = useLoginStore()
+const tournamentId = computed(() => useRoute().params.id as string)
+
+const firstTeamId = computed(() => {
+    const user = loginStore.user
+    if (!user) return null
+    return user.teamsAsCaptain?.[0]?.id || user.teamsAsMember?.[0]?.id || null
+})
+
+const joinLabel = computed(() => {
+    if (props.isLoadingAuth) return 'ЗАВАНТАЖЕННЯ...'
+    return props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
+})
 </script>
 
 <style scoped lang="scss">

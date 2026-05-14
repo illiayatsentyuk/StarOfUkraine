@@ -62,6 +62,7 @@ describe('TournamentService', () => {
     teamSizeMax: 7,
     status: TournamentStatus.DRAFT,
     hideTeamsUntilRegistrationEnds: true,
+    teams: [],
   };
 
   beforeEach(async () => {
@@ -107,18 +108,21 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findFirst.mockResolvedValue(null);
       mockPrisma.tournament.create.mockResolvedValue(tournamentMock);
 
-      const result = await service.create({
-        name: tournamentMock.name,
-        description: tournamentMock.description,
-        startDate: tournamentMock.startDate,
-        registrationStart: tournamentMock.registrationStart,
-        registrationEnd: tournamentMock.registrationEnd,
-        maxTeams: tournamentMock.maxTeams,
-        rounds: tournamentMock.rounds,
-        teamSizeMin: tournamentMock.teamSizeMin,
-        teamSizeMax: tournamentMock.teamSizeMax,
-        status: tournamentMock.status,
-      }, 'admin-user-id');
+      const result = await service.create(
+        {
+          name: tournamentMock.name,
+          description: tournamentMock.description,
+          startDate: tournamentMock.startDate,
+          registrationStart: tournamentMock.registrationStart,
+          registrationEnd: tournamentMock.registrationEnd,
+          maxTeams: tournamentMock.maxTeams,
+          rounds: tournamentMock.rounds,
+          teamSizeMin: tournamentMock.teamSizeMin,
+          teamSizeMax: tournamentMock.teamSizeMax,
+          status: tournamentMock.status,
+        },
+        'admin-user-id',
+      );
 
       expect(result).toEqual(tournamentMock);
       expect(mockPrisma.tournament.findFirst).toHaveBeenCalledWith({
@@ -135,16 +139,19 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findFirst.mockResolvedValue(tournamentMock);
 
       await expect(
-        service.create({
-          name: tournamentMock.name,
-          startDate: tournamentMock.startDate,
-          registrationStart: tournamentMock.registrationStart,
-          registrationEnd: tournamentMock.registrationEnd,
-          maxTeams: tournamentMock.maxTeams,
-          rounds: tournamentMock.rounds,
-          teamSizeMin: tournamentMock.teamSizeMin,
-          teamSizeMax: tournamentMock.teamSizeMax,
-        }, 'admin-user-id'),
+        service.create(
+          {
+            name: tournamentMock.name,
+            startDate: tournamentMock.startDate,
+            registrationStart: tournamentMock.registrationStart,
+            registrationEnd: tournamentMock.registrationEnd,
+            maxTeams: tournamentMock.maxTeams,
+            rounds: tournamentMock.rounds,
+            teamSizeMin: tournamentMock.teamSizeMin,
+            teamSizeMax: tournamentMock.teamSizeMax,
+          },
+          'admin-user-id',
+        ),
       ).rejects.toThrow(new BadRequestException('Tournament already exists'));
     });
   });
@@ -178,7 +185,7 @@ describe('TournamentService', () => {
       const result = await service.findAll({ page: 2, limit: 10 });
 
       expect(result).toEqual({
-        data: [tournamentMock],
+        data: [{ ...tournamentMock, isJoined: false }],
         currentPage: 2,
         nextPage: null,
         previousPage: 1,
@@ -189,11 +196,21 @@ describe('TournamentService', () => {
         skip: 10,
         take: 10,
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-        include: { teams: true },
+        include: {
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              members: { select: { id: true } },
+            },
+          },
+        },
       });
       expect(mockCache.set).toHaveBeenCalledWith(
         CacheKeys.LIST(0, hashQuery({ page: 2, limit: 10 })),
-        expect.objectContaining({ data: [tournamentMock] }),
+        expect.objectContaining({
+          data: [{ ...tournamentMock, isJoined: false }],
+        }),
         CACHE_TTL.LIST,
       );
     });
@@ -379,7 +396,7 @@ describe('TournamentService', () => {
 
       const result = await service.findOne('tournament-1');
 
-      expect(result).toEqual(tournamentMock);
+      expect(result).toEqual({ ...tournamentMock, isJoined: false });
       expect(mockPrisma.tournament.findUnique).not.toHaveBeenCalled();
     });
 
@@ -387,7 +404,7 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
       const result = await service.findOne('tournament-1');
-      expect(result).toEqual(tournamentMock);
+      expect(result).toEqual({ ...tournamentMock, isJoined: false });
       expect(mockCache.set).toHaveBeenCalledWith(
         CacheKeys.ONE('tournament-1', 0),
         tournamentMock,

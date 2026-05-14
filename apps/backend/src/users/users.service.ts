@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { TournamentStatus } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import { Role } from 'src/enum';
 import { PrismaService } from '../prisma/prisma.service';
-import { FindUsersDto } from './dto';
-import { TournamentStatus } from '@prisma/client';
+import { FindUsersDto, UpdateUserDto } from './dto';
 
 @Injectable()
 export class UsersService {
@@ -50,6 +50,39 @@ export class UsersService {
     return this.prisma.user.update({ where: { id: userId }, data: { role } });
   }
 
+  updateMe(userId: string, dto: UpdateUserDto) {
+    this.logger.debug({ userId }, 'Updating user profile');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nameId: true,
+        image: true,
+        role: true,
+      },
+    });
+  }
+
+  updateAvatar(userId: string, filename: string) {
+    const imageUrl = `/uploads/avatars/${filename}`;
+    this.logger.debug({ userId, imageUrl }, 'Updating user avatar');
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { image: imageUrl },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        nameId: true,
+        image: true,
+        role: true,
+      },
+    });
+  }
+
   async getDashboard(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -66,7 +99,12 @@ export class UsersService {
             name: true,
             tournaments: {
               where: {
-                status: { in: [TournamentStatus.ONGOING, TournamentStatus.REGISTRATION_OPEN] },
+                status: {
+                  in: [
+                    TournamentStatus.ONGOING,
+                    TournamentStatus.REGISTRATION_OPEN,
+                  ],
+                },
               },
               select: {
                 id: true,
@@ -121,7 +159,7 @@ export class UsersService {
       ? user.teamsAsMember.find((t) =>
           t.tournaments.some((tr) => tr.id === activeTournament.id),
         )
-      : user.teamsAsMember[0] ?? null;
+      : (user.teamsAsMember[0] ?? null);
 
     const latestSubmission = currentTeam?.submissions?.[0] ?? null;
 
@@ -138,7 +176,11 @@ export class UsersService {
         ? { id: currentTeam.id, name: currentTeam.name }
         : null,
       activeTournament: activeTournament
-        ? { id: activeTournament.id, name: activeTournament.name, status: activeTournament.status }
+        ? {
+            id: activeTournament.id,
+            name: activeTournament.name,
+            status: activeTournament.status,
+          }
         : null,
       activeTask,
       latestSubmission,

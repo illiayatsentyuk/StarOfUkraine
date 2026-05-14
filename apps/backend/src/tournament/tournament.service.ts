@@ -62,7 +62,7 @@ export class TournamentService {
     );
   }
 
-  async create(data: CreateTournamentDto) {
+  async create(data: CreateTournamentDto, userId?: string) {
     const existingTournament = await this.prisma.tournament.findFirst({
       where: {
         name: data.name,
@@ -260,7 +260,7 @@ export class TournamentService {
     return updated;
   }
 
-  async findAll(query: FindTournamentQueryDto) {
+  async findAll(query: FindTournamentQueryDto, userId?: string) {
     const listV = await this.getListVersion();
     const cacheKey = CacheKeys.LIST(listV, hashQuery(query));
 
@@ -319,11 +319,36 @@ export class TournamentService {
       take: Number(limit),
       orderBy,
       include: {
-        teams: true,
+        teams: {
+          select: {
+            id: true,
+            name: true,
+            members: { select: { id: true } }
+          }
+        },
       },
     });
 
-    const result = buildPage(tournaments, page, maximumPage, limit);
+    // Determine isJoined for each tournament and hide teams if needed
+    const processedData = tournaments.map(t => {
+      let isJoined = false;
+      if (userId) {
+        isJoined = t.teams.some(team => 
+          team.members.some(m => m.id === userId)
+        );
+      }
+
+      const shouldHide = t.hideTeamsUntilRegistrationEnds && 
+                        new Date() < new Date(t.registrationEnd);
+
+      return {
+        ...t,
+        isJoined,
+        teams: shouldHide ? [] : t.teams
+      };
+    });
+
+    const result = buildPage(processedData, page, maximumPage, limit);
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.LIST);
 
@@ -334,33 +359,60 @@ export class TournamentService {
     return result;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const oneV = await this.getOneVersion(id);
     const cacheKey = CacheKeys.ONE(id, oneV);
 
     const cached =
-      await this.cacheManager.get<
-        Awaited<ReturnType<typeof this.prisma.tournament.findUnique>>
-      >(cacheKey);
+      await this.cacheManager.get<TournamentWithTeams>(cacheKey);
+
+    let tournament: TournamentWithTeams | null;
     if (cached) {
       this.logger.debug(
         { tournamentId: id, oneVersion: oneV },
         'Tournament cache hit',
       );
-      return cached;
+      tournament = structuredClone(cached); // Deep copy to avoid mutating cache
+    } else {
+      tournament = await this.prisma.tournament.findUnique({
+        where: { id },
+        include: {
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              members: { select: { id: true } }
+            }
+          }
+        }
+      });
+      if (!tournament) {
+        throw new NotFoundException('Tournament not found');
+      }
+      await this.cacheManager.set(cacheKey, tournament, CACHE_TTL.ONE);
+      this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
     }
 
-    const tournament = await this.prisma.tournament.findUnique({
-      where: { id },
-    });
-    if (!tournament) {
-      throw new NotFoundException('Tournament not found');
+    // Handle isJoined
+    let isJoined = false;
+    if (userId && tournament.teams) {
+      isJoined = tournament.teams.some((team) =>
+        team.members.some((m) => m.id === userId),
+      );
     }
 
-    await this.cacheManager.set(cacheKey, tournament, CACHE_TTL.ONE);
+    // Handle hideTeams
+    const shouldHide = tournament.hideTeamsUntilRegistrationEnds && 
+                      new Date() < new Date(tournament.registrationEnd);
+    
+    if (shouldHide) {
+      tournament.teams = [];
+    }
 
-    this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
-    return tournament;
+    return {
+      ...tournament,
+      isJoined
+    };
   }
 
   async getLeaderboard(tournamentId: string) {
@@ -510,6 +562,18 @@ export class TournamentService {
   }
 }
 
+type TournamentWithTeams = Prisma.TournamentGetPayload<{
+  include: {
+    teams: {
+      select: {
+        id: true;
+        name: true;
+        members: { select: { id: true } };
+      };
+    };
+  };
+}>;
+
 type CriterionScore = { id: string; avgPoints: number };
 
 type LeaderboardRow = {
@@ -526,12 +590,15 @@ function computeCriteriaAverages(
   const sums = new Map<string, { total: number; count: number }>();
 
   for (const ev of evals) {
-    const scoresObj = ev.scores as { rubric?: Array<{ id: string; points: number }> } | null;
+    const scoresObj = ev.scores as {
+      rubric?: Array<{ id: string; points: number }>;
+    } | null;
     const rubric = scoresObj?.rubric;
     if (!Array.isArray(rubric)) continue;
 
     for (const item of rubric) {
-      if (typeof item.id !== 'string' || typeof item.points !== 'number') continue;
+      if (typeof item.id !== 'string' || typeof item.points !== 'number')
+        continue;
       const entry = sums.get(item.id) ?? { total: 0, count: 0 };
       entry.total += item.points;
       entry.count += 1;

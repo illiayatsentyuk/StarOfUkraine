@@ -36,6 +36,9 @@ VeeForm.form-content(
       @blur="emitFieldBlur(field, handleBlur, $event)"
     )
 
+  .forgot-password-row(v-if="isLogin")
+    NuxtLink.forgot-password-link(to="/forgot-password") Забули пароль?
+
   VeeField(
     v-if="!isLogin"
     v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
@@ -329,6 +332,24 @@ function emitFieldBlur(
       &:hover {
         border-bottom-color: var(--color-primary);
       }
+    }
+  }
+
+  .forgot-password-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: calc(-1 * var(--space-2));
+  }
+
+  .forgot-password-link {
+    font-size: var(--font-size-sm);
+    font-family: var(--font-sans);
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: var(--color-primary);
     }
   }
 

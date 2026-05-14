@@ -313,9 +313,13 @@ describe('TeamService', () => {
         name: 'New Team Name',
       });
 
-      const result = await service.update('team-1', {
-        name: 'New Team Name',
-      }, Role.ADMIN);
+      const result = await service.update(
+        'team-1',
+        {
+          name: 'New Team Name',
+        },
+        Role.ADMIN,
+      );
 
       expect(result.name).toBe('New Team Name');
       expect(mockPrisma.team.update).toHaveBeenCalled();

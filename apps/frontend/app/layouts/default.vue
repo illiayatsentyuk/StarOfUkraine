@@ -2,7 +2,8 @@
 .layout
   HeaderCompetition
   main.layout__main
-      slot
+    slot
+  AppFooter
 </template>
 
 <style scoped lang="scss">

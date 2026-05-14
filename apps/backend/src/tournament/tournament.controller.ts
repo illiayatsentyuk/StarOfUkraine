@@ -70,8 +70,11 @@ export class TournamentController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
   @Serialize(TournamentResponseDto)
-  create(@Body() data: CreateTournamentDto) {
-    return this.tournamentService.create(data);
+  create(
+    @Body() data: CreateTournamentDto,
+    @GetCurrentUserId() userId: string,
+  ) {
+    return this.tournamentService.create(data, userId);
   }
 
   @Patch(':id')
@@ -220,8 +223,11 @@ export class TournamentController {
   })
   @ApiResponse({ status: 400, description: 'Page number is out of range' })
   @Serialize(PaginatedTournamentsResponseDto)
-  findAll(@Query() query: FindTournamentQueryDto) {
-    return this.tournamentService.findAll(query);
+  findAll(
+    @Query() query: FindTournamentQueryDto,
+    @GetCurrentUserId() userId: string,
+  ) {
+    return this.tournamentService.findAll(query, userId);
   }
 
   @Public()
@@ -235,8 +241,8 @@ export class TournamentController {
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @Serialize(TournamentResponseDto)
-  findOne(@Param('id') id: string) {
-    return this.tournamentService.findOne(id);
+  findOne(@Param('id') id: string, @GetCurrentUserId() userId: string) {
+    return this.tournamentService.findOne(id, userId);
   }
 
   @Public()

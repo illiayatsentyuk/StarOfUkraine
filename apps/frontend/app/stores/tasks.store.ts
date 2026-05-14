@@ -10,7 +10,6 @@ export const useTasksStore = defineStore('tasks', () => {
     const error = ref<string | null>(null)
     const tasks = ref<TournamentTask[]>([])
     const submissions = ref<TaskSubmission[]>([])
-    // taskId → { status, githubUrl, videoUrl } — власні подачі поточного юзера
     const mySubmissions = ref<Record<string, { status: 'PENDING' | 'EVALUATED'; githubUrl: string; videoUrl: string; liveUrl?: string; summary?: string }>>({})
 
     const fetchTasks = async (tournamentId: string) => {
