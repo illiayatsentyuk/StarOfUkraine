@@ -114,22 +114,25 @@ VeeForm.form-content(
 
   VeeField(
     v-if="!isLogin"
-    v-slot="{ field, errors, errorMessage }"
+    v-slot="{ field, errors, errorMessage, handleChange }"
     name="acceptTerms"
     rules="required"
-    type="checkbox"
   )
     .terms-check(
       :class="{ 'terms-check--invalid': Boolean(fieldErrorText(errorMessage, errors)) }"
     )
-      label.terms-check__field-label(for="terms") Згода з умовами *
-      .error-message(v-if="fieldErrorText(errorMessage, errors)") {{ fieldErrorText(errorMessage, errors) }}
       .terms-check__row
-        input#terms(type="checkbox" v-bind="field")
+        input#terms(
+          type="checkbox"
+          :name="field.name"
+          :checked="field.value === true"
+          @change="handleChange($event.target.checked)"
+        )
         label.terms-check__legal(for="terms")
           | Я приймаю 
           a(href="#" @click.prevent.stop) Умови використання
           |  та надаю згоду на обробку даних.
+      .error-message(v-if="fieldErrorText(errorMessage, errors)") {{ fieldErrorText(errorMessage, errors) }}
   
   button.submit-btn(type="submit" :disabled="loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
 </template>
