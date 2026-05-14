@@ -53,7 +53,7 @@ section.tournaments-list
         )
             span {{ s.label }}
 
-    .loading-overlay(v-if="store.loading && store.tournaments.length === 0")
+    .loading-overlay(v-if="(store.loading && store.tournaments.length === 0) || !store.initialized")
         Loader
 
     .tournaments-list__grid(v-else-if="store.filteredTournaments.length > 0")
@@ -63,7 +63,7 @@ section.tournaments-list
             :tournament="tournament"
         )
 
-    .no-data(v-else-if="!store.loading")
+    .no-data(v-else-if="!store.loading && store.initialized")
         p {{ $t('tournament.no_data') }}
 
     .tournaments-list__footer(v-if="store.filteredTournaments.length > 0")

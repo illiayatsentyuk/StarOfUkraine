@@ -13,13 +13,13 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const page = ref(1)
     const totalPages = ref(0)
     const loading = ref(false)
+    const initialized = ref(false)
     const error = ref<string | null>(null)
     const search = ref('')
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
     const statusFilter = ref<TournamentStatusFilter>('all')
     
-    //think about delete
     const hasMore = computed(() => page.value <= totalPages.value)
     const filteredTournaments = computed(() => {
         if (statusFilter.value === 'all') return tournaments.value
@@ -46,7 +46,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const api = useApi()
             const response = await api.get(`/tournaments/list`, {
-                //think about query or params
                 params: {
                     page: page.value,
                     limit: LIMIT,
@@ -76,12 +75,12 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             return data
         } catch (err: unknown) {
             console.error('Помилка API при завантаженні турнірів:', err)
-            const message =
-                err instanceof Error ? err.message : 'Помилка завантаження'
+            const message = err instanceof Error ? err.message : 'Помилка завантаження'
             error.value = message
             throw err
         } finally {
             loading.value = false
+            initialized.value = true
         }
     }
 
@@ -89,9 +88,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         try {
             const api = useApi()
             const response = await api.post(`/tournaments`, tournament)
-
             if (!response.data) throw new Error('Не вдалося створити турнір')
-
             const createdTournament = response.data
             tournaments.value.unshift(createdTournament)
             toast.success('Турнір успішно створено')
@@ -136,7 +133,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             const api = useApi()
             const response = await api.patch(`/tournaments/${id}`, tournament)
             if (!response.data) throw new Error('Не вдалося оновити турнір')
-
             const updatedTournament = response.data
             tournaments.value = tournaments.value.map((t) => (t.id === id ? updatedTournament : t))
             toast.success('Турнір успішно оновлено')
@@ -163,7 +159,6 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         }
     }
 
-
     const debouncedSearch = useDebounceFn(() => {
         loadFromDatabase(true)
     }, 300)
@@ -174,6 +169,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         tournaments,
         filteredTournaments,
         loading,
+        initialized,
         error,
         hasMore,
         search,
