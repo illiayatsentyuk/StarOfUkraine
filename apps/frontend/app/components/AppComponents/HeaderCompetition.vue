@@ -2,7 +2,7 @@
 header.header-competition
     .header-competition__left
         .header-competition__logo
-            NuxtLink(to="/") STAR OF UKRAINE
+            NuxtLink(:to="localePath('/')") STAR OF UKRAINE
     
     .header-competition__center(v-if="showSearchBar")
         SearchBar(v-model="localSearch" :loading="store.loading")
@@ -13,7 +13,7 @@ header.header-competition
             template(v-if="loginStore.isAdmin")
                 Button.create-btn(
                     type="button"
-                    label="СТВОРИТИ ТУРНІР"
+                    :label="$t('nav.create_tournament').toUpperCase()"
                     @click="openModal"
                 )
             
@@ -28,7 +28,7 @@ header.header-competition
                 Button.create-btn(
                     v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                     type="button"
-                    label="СТВОРИТИ КОМАНДУ"
+                    :label="$t('nav.create_team').toUpperCase()"
                     @click="openTeamModal"
                 )
                 NuxtLink.my-team-link(
@@ -43,22 +43,22 @@ header.header-competition
             .auth-section
                 template(v-if="loginStore.user")
                     .user-info
-                        NuxtLink.user-name-link(to="/profile")
+                        NuxtLink.user-name-link(:to="localePath('/profile')")
                             span.user-name(data-testid="user-email") {{ loginStore.user.name || loginStore.user.email }}
                         
-                        .user-team(v-if="loginStore.userTeam")
-                            span.team-label КОМАНДА:
-                            span.team-name {{ loginStore.userTeam.name }}
+                        .user-team(v-if="teamsStore.activeTeam")
+                            span.team-label {{ $t('nav.team_label').toUpperCase() }}
+                            span.team-name {{ teamsStore.activeTeam.name }}
 
                         Button.logout-btn(
                             type="button"
                             icon="pi pi-sign-out"
-                            label="ВИЙТИ"
+                            :label="$t('nav.logout').toUpperCase()"
                             text
                             @click="loginStore.logout"
                         )
                 template(v-else)
-                    NuxtLink.login-btn(to="/auth") УВІЙТИ
+                    NuxtLink.login-btn(:to="localePath('/auth')") {{ $t('nav.login').toUpperCase() }}
         
         //- Mobile Burger Trigger
         Button.burger-btn(
@@ -76,7 +76,7 @@ header.header-competition
                 template(v-if="loginStore.isAdmin")
                     Button.create-btn(
                         type="button"
-                        label="СТВОРИТИ ТУРНІР"
+                        :label="$t('nav.create_tournament').toUpperCase()"
                         @click="openModal(); isMenuOpen = false"
                     )
                 
@@ -92,7 +92,7 @@ header.header-competition
                     Button.create-btn(
                         v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                         type="button"
-                        label="СТВОРИТИ КОМАНДУ"
+                        :label="$t('nav.create_team').toUpperCase()"
                         @click="openTeamModal(); isMenuOpen = false"
                     )
                     NuxtLink.my-team-link(
@@ -104,23 +104,23 @@ header.header-competition
                         span МОЯ КОМАНДА
 
             .mobile-menu__user(v-if="loginStore.user")
-                NuxtLink.user-link(to="/profile" @click="isMenuOpen = false")
+                NuxtLink.user-link(:to="localePath('/profile')" @click="isMenuOpen = false")
                     i.pi.pi-user
                     span {{ loginStore.user.name || loginStore.user.email }}
                 
-                .user-team(v-if="loginStore.userTeam")
-                    span.team-label КОМАНДА:
-                    span.team-name {{ loginStore.userTeam.name }}
+                .user-team(v-if="teamsStore.activeTeam")
+                    span.team-label {{ $t('nav.team_label').toUpperCase() }}
+                    span.team-name {{ teamsStore.activeTeam.name }}
                 
                 Button.logout-btn(
                     type="button"
                     icon="pi pi-sign-out"
-                    label="ВИЙТИ"
+                    :label="$t('nav.logout').toUpperCase()"
                     text
                     @click="loginStore.logout(); isMenuOpen = false"
                 )
             template(v-else)
-                NuxtLink.login-btn(to="/auth" @click="isMenuOpen = false") УВІЙТИ
+                NuxtLink.login-btn(:to="localePath('/auth')" @click="isMenuOpen = false") {{ $t('nav.login').toUpperCase() }}
 
             .mobile-menu__lang
                 LanguageSwitcher
@@ -135,6 +135,7 @@ import { useTournamentsStore } from '../../stores/tournaments.store'
 import { useTeamsStore } from '~/stores/teams.store'
 import { useLoginStore } from '~/stores/auth.store'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const store = useTournamentsStore()
 const loginStore = useLoginStore()

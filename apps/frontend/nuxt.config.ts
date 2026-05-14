@@ -70,7 +70,7 @@ export default defineNuxtConfig({
   i18n: {
     locales: [
       { code: 'en', iso: 'en-US', file: 'en.ts', name: 'English' },
-      { code: 'uk', iso: 'uk-UA', file: 'uk.ts', name: 'Ukrainian' },
+      { code: 'ua', iso: 'uk-UA', file: 'ua.ts', name: 'Українська' },
     ],
     defaultLocale: 'en',
     langDir: 'app/locales',

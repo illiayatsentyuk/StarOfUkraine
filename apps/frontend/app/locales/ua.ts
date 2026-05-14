@@ -21,6 +21,9 @@ export default {
     about: 'Про нас',
     login: 'Увійти',
     logout: 'Вийти',
+    create_tournament: 'Створити турнір',
+    create_team: 'Створити команду',
+    team_label: 'Команда:',
   },
 
   profile: {
@@ -49,7 +52,22 @@ export default {
       completed: 'Завершено',
       cancelled: 'Скасовано',
     },
-    listing_title: 'Найближчі турніри',
+    listing_title: 'Активні турніри',
+    archive_link: 'Архів турнірів',
+    no_data: 'Турнірів поки немає.',
+    loading_more: 'Завантаження...',
+    load_more: 'Завантажити ще',
+    filter_all: 'Всі',
+    filter_by_date: 'За датою',
+    filter_by_name: 'За назвою',
+    filter_by_max_teams: 'К-ть команд',
+    filter_by_team_size_min: 'Мін. склад',
+    filter_by_team_size_max: 'Макс. склад',
+    filter_by_rounds: 'Раунди',
+    filter_by_reg_start: 'Поч. реєстрації',
+    filter_by_reg_end: 'Кін. реєстрації',
+    status_all: 'Всі статуси',
+    status_draft: 'Очікування',
   },
 
   footer: {

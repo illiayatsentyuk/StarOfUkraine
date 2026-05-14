@@ -1,7 +1,7 @@
 <template lang="pug">
 section.table-page
     .table-page__nav
-        NuxtLink.back-link(:to="`/tournaments/${route.params.id}`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}`)")
             span.icon ←
             span.text НАЗАД ДО ТУРНІРУ
 
@@ -16,6 +16,11 @@ section.table-page
     .loading-state(v-if="loading")
         i.pi.pi-spin.pi-spinner
         span Завантаження...
+
+    .hidden-state(v-else-if="shouldHideTeams")
+        i.pi.pi-eye-slash.empty-icon
+        h2 Список команд приховано
+        p Таблиця буде доступна після завершення реєстрації.
 
     .empty-state(v-else-if="!sortedTeams.length")
         i.pi.pi-inbox.empty-icon
@@ -46,24 +51,39 @@ section.table-page
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
-const teamsStore = useTeamsStore()
+const api = useApi()
+const authStore = useLoginStore()
+const tournamentStore = useTournamentsStore()
 
 const loading = ref(true)
 const teams = ref<any[]>([])
+const tournament = ref<any>(null)
 
 const tournamentId = computed(() => route.params.id as string)
+
+const shouldHideTeams = computed(() => {
+    if (authStore.isAdmin || authStore.isJury) return false
+    if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
+    if (!tournament.value?.registrationEnd) return false
+    return new Date(tournament.value.registrationEnd) > new Date()
+})
 
 const sortedTeams = computed(() =>
     [...teams.value].sort((a, b) => (b.points ?? -1) - (a.points ?? -1))
 )
 
 async function refreshTeams() {
+    if (shouldHideTeams.value) {
+        teams.value = []
+        return
+    }
     try {
-        const response = await teamsStore.loadFromDatabase(true)
-        teams.value = response?.data || []
+        const response = await api.get(`/tournaments/${tournamentId.value}/teams`)
+        teams.value = response.data || []
     } catch {
-        // ignore — store shows its own toast
+        // ignore
     }
 }
 
@@ -76,6 +96,11 @@ const { connected } = useTournamentSocket(tournamentId, {
 })
 
 onMounted(async () => {
+    try {
+        tournament.value = await tournamentStore.fetchTournamentById(tournamentId.value)
+    } catch {
+        // ignore, teams will just show
+    }
     await refreshTeams()
     loading.value = false
 })
@@ -257,6 +282,7 @@ onMounted(async () => {
 }
 
 .loading-state,
+.hidden-state,
 .empty-state {
     display: flex;
     flex-direction: column;

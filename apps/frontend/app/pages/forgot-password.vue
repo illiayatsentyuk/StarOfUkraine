@@ -37,12 +37,13 @@
       p.success-panel__hint Перевірте теку «Спам», якщо листа немає у вхідних.
 
     .card-footer
-      NuxtLink.footer-link.footer-link--row(to="/auth")
+      NuxtLink.footer-link.footer-link--row(:to="localePath('/auth')")
         i.pi.pi-arrow-left
         span Повернутися до входу
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const toast = useServerSafeToast()
 const loading = ref(false)
 const emailSent = ref(false)

@@ -1,7 +1,7 @@
 <template lang="pug">
 .jury-page
     .jury-page__nav
-        NuxtLink.back-link(:to="`/tournaments/${tournamentId}`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${tournamentId}`)")
             i.pi.pi-arrow-left.icon
             span.text НАЗАД ДО ТУРНІРУ
     
@@ -14,6 +14,7 @@
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
 const tournamentId = computed(() => route.params.id as string)
 

@@ -44,16 +44,17 @@ export default defineNuxtPlugin((nuxtApp) => {
       const originalRequest = error.config
       const status = error.response?.status
 
-      // Avoid refresh for auth routes where it doesn't make sense or causes loops
-      const isAuthRoute = 
-        originalRequest.url?.includes('/auth/signin') || 
-        originalRequest.url?.includes('/auth/signup') || 
+      // Skip auth routes (refresh/login/logout) and /auth/me — the latter is
+      // expected to 401 for unauthenticated visitors browsing public pages,
+      // so attempting a refresh would just trigger spurious redirects.
+      const skipRefresh =
+        originalRequest.url?.includes('/auth/signin') ||
+        originalRequest.url?.includes('/auth/signup') ||
         originalRequest.url?.includes('/auth/refresh') ||
-        originalRequest.url?.includes('/auth/logout')
+        originalRequest.url?.includes('/auth/logout') ||
+        originalRequest.url?.includes('/auth/me')
 
-      const isAuthMe = originalRequest.url?.includes('/auth/me')
-
-      if ((status === 401 || status === 403) && !originalRequest._retry && !isAuthRoute) {
+      if (status === 401 && !originalRequest._retry && !skipRefresh) {
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject })
@@ -66,15 +67,12 @@ export default defineNuxtPlugin((nuxtApp) => {
         isRefreshing = true
 
         try {
-          // Attempt to refresh tokens
           await axios.post(
             `${baseURL}/auth/refresh`,
             {},
             { withCredentials: true }
           )
 
-          // IMPORTANT: After refresh, we need to sync the user state 
-          // because the role (ADMIN/USER) might have changed or needs to be re-read from the new token
           await nuxtApp.runWithContext(async () => {
              const authStore = useLoginStore()
              await authStore.fetchUser()
@@ -84,21 +82,20 @@ export default defineNuxtPlugin((nuxtApp) => {
           return api(originalRequest)
         } catch (refreshError) {
           processQueue(refreshError, null)
-          
-          // If refresh fails, clear user state and redirect to home/login
-          await nuxtApp.runWithContext(async () => {
+
+          // Refresh failed — clear local auth state but DO NOT navigate.
+          // Page-level middleware (`middleware/auth.ts`) decides whether the
+          // current route requires authentication; forcing a redirect here
+          // would kick unauthenticated visitors off legitimately public pages.
+          await nuxtApp.runWithContext(() => {
             const authStore = useLoginStore()
             authStore.user = null
-            authStore.authenticated = false
             authStore.isAdmin = false
-            
-            const route = useRoute()
-            const isAuthMe = originalRequest.url?.includes('/auth/me')
-            if (route.path !== '/' && !isAuthMe) {
-              await navigateTo('/')
-            }
+            authStore.isJury = false
+            authStore.image = null
+            authStore.authenticated = false
           })
-          
+
           return Promise.reject(refreshError)
         } finally {
           isRefreshing = false
@@ -109,5 +106,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   )
 
-  return { provide: { api } }
+  return {
+    provide: {
+      api,
+    },
+  }
 })

@@ -1,7 +1,7 @@
 <template lang="pug">
 section.task-detail
     .task-detail__nav
-        NuxtLink.back-link(:to="`/tournaments/${route.params.id}/tasks`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}/tasks`)")
             i.pi.pi-arrow-left
             span НАЗАД ДО ЗАВДАНЬ
 
@@ -55,19 +55,24 @@ section.task-detail
 
                     NuxtLink.admin-link(
                         v-if="authStore.isJury"
+<<<<<<< HEAD
                         :to="`/tournaments/${route.params.id}/judge`"
+=======
+                        :to="localePath(`/tournaments/${route.params.id}/tasks/${task.id}/admin`)"
+>>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
                     )
                         i.pi.pi-verified
                         span ПАНЕЛЬ ЖУРІ
 
     .error-state(v-else)
         p Завдання не знайдено
-        NuxtLink.retry-link(:to="`/tournaments/${route.params.id}/tasks`") Повернутися до списку
+        NuxtLink.retry-link(:to="localePath(`/tournaments/${route.params.id}/tasks`)") Повернутися до списку
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()

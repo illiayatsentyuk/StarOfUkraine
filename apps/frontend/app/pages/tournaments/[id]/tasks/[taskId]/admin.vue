@@ -1,7 +1,7 @@
 <template lang="pug">
 section.task-admin-page
     .admin-nav
-        NuxtLink.back-link(:to="`/tournaments/${route.params.id}/tasks/${route.params.taskId}`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}/tasks/${route.params.taskId}`)")
             i.pi.pi-arrow-left
             span НАЗАД ДО ЗАВДАННЯ
 
@@ -29,6 +29,7 @@ section.task-admin-page
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const store = useTasksStore()
 

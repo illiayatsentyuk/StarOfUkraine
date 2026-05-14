@@ -14,135 +14,6 @@
       :initialValues="authInitialValues"
       @submit="handleRegister"
     )
-      VeeField(
-        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-        name="email"
-        rules="required|email"
-      )
-        AppInput.auth-field-full(
-          :model-value="field.value"
-          :name="field.name"
-          type="email"
-          label="Електронна пошта *"
-          placeholder="example@mail.com"
-          :error-message="fieldErrorText(errorMessage, errors)"
-          @update:model-value="emitFieldValue(field, handleChange, $event)"
-          @blur="emitFieldBlur(field, handleBlur, $event)"
-        )
-
-      VeeField(
-        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-        name="password"
-        rules="required|min:8"
-      )
-        AppInput.auth-field-full(
-          :model-value="field.value"
-          :name="field.name"
-          type="text"
-          label="Пароль *"
-          placeholder="........"
-          is-password-field
-          :error-message="fieldErrorText(errorMessage, errors)"
-          @update:model-value="emitFieldValue(field, handleChange, $event)"
-          @blur="emitFieldBlur(field, handleBlur, $event)"
-        )
-
-      .forgot-row(v-if="isLogin")
-        NuxtLink.forgot-row__link(to="/forgot-password") Забули пароль?
-
-      VeeField(
-        v-if="!isLogin"
-        v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-        name="confirmPassword"
-        rules="required|confirmed:@password"
-      )
-        AppInput.auth-field-full(
-          :model-value="field.value"
-          :name="field.name"
-          type="password"
-          label="Повтор пароля *"
-          placeholder="........"
-          :error-message="fieldErrorText(errorMessage, errors)"
-          @update:model-value="emitFieldValue(field, handleChange, $event)"
-          @blur="emitFieldBlur(field, handleBlur, $event)"
-        )
-
-      // Секція особистих даних
-      .personal-info-box(v-if="!isLogin")
-        .box-title
-          i.pi.pi-user.icon-user
-          h3 Особисті дані
-
-        VeeField(
-          v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-          name="fullName"
-          rules="required"
-        )
-          AppInput(
-            :model-value="field.value"
-            :name="field.name"
-            type="text"
-            label="Повне ім'я *"
-            placeholder="Іван Іваненко"
-            :error-message="fieldErrorText(errorMessage, errors)"
-            @update:model-value="emitFieldValue(field, handleChange, $event)"
-            @blur="emitFieldBlur(field, handleBlur, $event)"
-          )
-
-        .row
-          VeeField(
-            v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-            name="birthDate"
-          )
-            AppInput(
-              :model-value="field.value"
-              :name="field.name"
-              type="date"
-              label="Дата народження"
-              is-mini
-              :error-message="fieldErrorText(errorMessage, errors)"
-              @update:model-value="emitFieldValue(field, handleChange, $event)"
-              @blur="emitFieldBlur(field, handleBlur, $event)"
-            )
-
-          VeeField(
-            v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
-            name="gender"
-          )
-            AppInput(
-              :model-value="field.value"
-              :name="field.name"
-              type="select"
-              label="Стать"
-              is-mini
-              :error-message="fieldErrorText(errorMessage, errors)"
-              @update:model-value="emitFieldValue(field, handleChange, $event)"
-              @blur="emitFieldBlur(field, handleBlur, $event)"
-            )
-              option(value="" disabled selected) Оберіть
-              option(value="male") Чоловіча
-              option(value="female") Жіноча
-
-      VeeField(
-        v-if="!isLogin"
-        v-slot="{ field, errors, errorMessage }"
-        name="acceptTerms"
-        rules="required"
-        type="checkbox"
-      )
-        .terms-check(
-          :class="{ 'terms-check--invalid': Boolean(fieldErrorText(errorMessage, errors)) }"
-        )
-          label.terms-check__field-label(for="terms") Згода з умовами *
-          .error-message(v-if="fieldErrorText(errorMessage, errors)") {{ fieldErrorText(errorMessage, errors) }}
-          .terms-check__row
-            input#terms(type="checkbox" v-bind="field")
-            label.terms-check__legal(for="terms")
-              | Я приймаю 
-              a(href="#" @click.prevent.stop) Умови використання
-              |  та надаю згоду на обробку даних.
-      
-      button.submit-btn(type="submit" :disabled="loginStore.loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
     
     .card-footer
       template(v-if="isLogin")
@@ -154,6 +25,8 @@
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
+
 const authInitialValues = {
   email: '',
   password: '',
@@ -171,7 +44,7 @@ const route = useRoute()
 // Автоматичний редирект, як тільки користувач залогінився
 watch(() => loginStore.user, (user) => {
   if (user) {
-    navigateTo('/')
+    navigateTo(localePath('/'))
   }
 }, { immediate: true })
 

@@ -49,12 +49,13 @@
         p {{ $t('privacy.contact_body') }}
 
     .privacy-page__back
-      NuxtLink.back-link(to="/")
+      NuxtLink.back-link(:to="localePath('/')")
         i.pi.pi-arrow-left
         span {{ $t('common.back_home') }}
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const lastUpdated = 'May 2026'
 </script>
 

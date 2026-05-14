@@ -529,6 +529,71 @@ export class TournamentService {
     return rows;
   }
 
+  async getTeams(tournamentId: string) {
+    const tournament = await this.prisma.tournament.findUnique({
+      where: { id: tournamentId },
+      select: { id: true },
+    });
+    if (!tournament) {
+      throw new NotFoundException('Tournament not found');
+    }
+
+    const teams = await this.prisma.team.findMany({
+      where: { tournaments: { some: { id: tournamentId } } },
+      select: {
+        id: true,
+        name: true,
+        captainName: true,
+        captainEmail: true,
+        city: true,
+        organization: true,
+        isAcceptNewMembers: true,
+        createdAt: true,
+        updatedAt: true,
+        members: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            nameId: true,
+            image: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        captain: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            nameId: true,
+            image: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        submissions: {
+          where: { task: { tournamentId } },
+          select: {
+            evaluations: { select: { totalScore: true } },
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return teams.map((team) => ({
+      ...team,
+      points: team.submissions.reduce(
+        (sum, sub) =>
+          sum + sub.evaluations.reduce((s, e) => s + e.totalScore, 0),
+        0,
+      ),
+    }));
+  }
+
   private buildTournamentOrderBy(
     sortBy: TournamentsSortBy,
     sortOrder: SortOrder,

@@ -31,12 +31,13 @@ interface Props {
 
 defineProps<Props>()
 
+const localePath = useLocalePath()
 const route = useRoute()
 const tournamentId = computed(() => route.params.id as string)
 const teamsStore = useTeamsStore()
 
 const makeTaskLink = (id: string) => ({
-    path: `/tournaments/${tournamentId.value}/tasks/${id}`,
+    path: localePath(`/tournaments/${tournamentId.value}/tasks/${id}`),
     query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
 })
 </script>

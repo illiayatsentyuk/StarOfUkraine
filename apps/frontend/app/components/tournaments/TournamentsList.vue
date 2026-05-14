@@ -1,10 +1,10 @@
 <template lang="pug">
 section.tournaments-list
     .tournaments-list__header
-        h2.tournaments-list__title АКТИВНІ ТУРНІРИ
-        NuxtLink.archive-link(to="/tournaments/archive")
+        h2.tournaments-list__title {{ $t('tournament.listing_title').toUpperCase() }}
+        NuxtLink.archive-link(:to="localePath('/tournaments/archive')")
             i.pi.pi-box
-            span АРХІВ ТУРНІРІВ
+            span {{ $t('tournament.archive_link').toUpperCase() }}
 
     .filter-bar
         button.filter-btn(
@@ -64,7 +64,7 @@ section.tournaments-list
         )
 
     .no-data(v-else-if="!store.loading")
-        p Турнірів поки немає.
+        p {{ $t('tournament.no_data') }}
 
     .tournaments-list__footer(v-if="store.filteredTournaments.length > 0")
         button.load-more(
@@ -73,34 +73,35 @@ section.tournaments-list
             type="button"
         )
             .btn-content
-                span {{ store.loading ? 'ЗАВАНТАЖЕННЯ...' : 'ЗАВАНТАЖИТИ ЩЕ' }}
+                span {{ store.loading ? $t('tournament.loading_more').toUpperCase() : $t('tournament.load_more').toUpperCase() }}
 </template>
 
 <script lang="ts" setup>
+const localePath = useLocalePath()
+const { t } = useI18n()
 const store = useTournamentsStore()
 const filtersStore = useFiltersTournamentsStore()
 
+const filters = computed(() => [
+    { key: 'all', label: t('tournament.filter_all') },
+    { key: 'byDate', label: t('tournament.filter_by_date') },
+    { key: 'byName', label: t('tournament.filter_by_name') },
+    { key: 'byMaxTeams', label: t('tournament.filter_by_max_teams') },
+    { key: 'byTeamSizeMin', label: t('tournament.filter_by_team_size_min') },
+    { key: 'byTeamSizeMax', label: t('tournament.filter_by_team_size_max') },
+    { key: 'byRounds', label: t('tournament.filter_by_rounds') },
+    { key: 'byRegistrationStart', label: t('tournament.filter_by_reg_start') },
+    { key: 'byRegistrationEnd', label: t('tournament.filter_by_reg_end') },
+])
 
-const filters = [
-    { key: 'all', label: 'Всі' },
-    { key: 'byDate', label: 'За датою' },
-    { key: 'byName', label: 'За назвою' },
-    { key: 'byMaxTeams', label: 'К-ть команд' },
-    { key: 'byTeamSizeMin', label: 'Мін. склад' },
-    { key: 'byTeamSizeMax', label: 'Макс. склад' },
-    { key: 'byRounds', label: 'Раунди' },
-    { key: 'byRegistrationStart', label: 'Поч. реєстрації' },
-    { key: 'byRegistrationEnd', label: 'Кін. реєстрації' },
-]
-
-const statusFilters = [
-    { key: 'all', label: 'Всі статуси' },
-    { key: 'DRAFT', label: 'Очікування' },
-    { key: 'REGISTRATION_OPEN', label: 'Реєстрація відкрита' },
-    { key: 'ONGOING', label: 'Триває' },
-    { key: 'COMPLETED', label: 'Завершено' },
-    { key: 'CANCELLED', label: 'Скасовано' },
-] as const
+const statusFilters = computed(() => [
+    { key: 'all', label: t('tournament.status_all') },
+    { key: 'DRAFT', label: t('tournament.status_draft') },
+    { key: 'REGISTRATION_OPEN', label: t('tournament.status.registration_open') },
+    { key: 'ONGOING', label: t('tournament.status.ongoing') },
+    { key: 'COMPLETED', label: t('tournament.status.completed') },
+    { key: 'CANCELLED', label: t('tournament.status.cancelled') },
+])
 
 onMounted(() => {
     store.loadFromDatabase(true)

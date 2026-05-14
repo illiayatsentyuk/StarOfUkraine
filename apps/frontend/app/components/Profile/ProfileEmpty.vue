@@ -5,8 +5,12 @@
       i.pi.pi-user
     p.profile__empty-title Немає активної сесії
     p.profile__empty-text Увійдіть, щоб переглянути профіль і керувати обліковим записом.
-    NuxtLink.profile__empty-cta(to="/auth") Увійти
+    NuxtLink.profile__empty-cta(:to="localePath('/auth')") Увійти
 </template>
+
+<script setup lang="ts">
+const localePath = useLocalePath()
+</script>
 
 <style scoped lang="scss">
 .profile__card {

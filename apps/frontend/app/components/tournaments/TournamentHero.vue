@@ -23,10 +23,12 @@ const props = defineProps<{
     joinedTeamId?: string | null
 }>()
 
+const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
 const tournamentId = computed(() => route.params.id as string)
 
+<<<<<<< HEAD
 const tasksLink = computed(() => {
     const query: Record<string, string> = {}
     if (props.joinedTeamId) {
@@ -37,6 +39,12 @@ const tasksLink = computed(() => {
         query: Object.keys(query).length > 0 ? query : undefined,
     }
 })
+=======
+const tasksLink = computed(() => ({
+    path: localePath(`/tournaments/${tournamentId.value}/tasks`),
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+}))
+>>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 
 function handleTasksClick(e: MouseEvent) {
     if (tournamentId.value) {

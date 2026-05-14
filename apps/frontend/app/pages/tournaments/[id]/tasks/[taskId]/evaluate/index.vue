@@ -1,111 +1,82 @@
 <template lang="pug">
-section.evaluate-dashboard
-    aside.sidebar
-        .sidebar__header
-            NuxtLink.back-btn(:to="`/tournaments/${route.params.id}/tasks/${route.params.taskId}`")
-                i.pi.pi-arrow-left
-                span НАЗАД
-            h2.title СПИСОК РОБІТ
-            .progress-container
-                .progress-bar
-                    .progress-fill(:style="{ width: `${progressPercentage}%` }")
-                span.progress-text {{ evaluatedCount }} / {{ submissions.length }} ОЦІНЕНО
+section.evaluate-page
+    .evaluate-page__nav
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}/tasks/${route.params.taskId}`)")
+            span.icon ←
+            span.text НАЗАД ДО ЗАВДАННЯ
 
-        .submissions-nav
-            button.sub-item(
+    .loading-state(v-if="loading && !task")
+        i.pi.pi-spin.pi-spinner
+        span Завантаження...
+
+    template(v-else-if="task")
+        header.evaluate-page__hero
+            h1.title ОЦІНЮВАННЯ
+            p.subtitle {{ task.name }}
+
+        .empty-state(v-if="!submissions.length")
+            i.pi.pi-inbox.empty-icon
+            h2 Відповідей ще немає
+
+        .submissions(v-else)
+            .submission-card(
                 v-for="sub in submissions"
                 :key="sub.id"
-                :class="{ 'active': selectedSubId === sub.id, 'done': sub.status === 'EVALUATED' }"
-                @click="selectedSubId = sub.id"
+                :class="{ 'submission-card--evaluated': sub.status === 'EVALUATED' }"
             )
-                .sub-item__indicator
-                    i.pi.pi-check(v-if="sub.status === 'EVALUATED'")
-                    i.pi.pi-circle(v-else)
-                .sub-item__info
-                    span.team-name {{ sub.team?.name || sub.teamId }}
-                    span.status-label {{ sub.status === 'EVALUATED' ? 'ОЦІНЕНО' : 'ОЧІКУЄ' }}
+                .submission-card__header
+                    .team-info
+                        .team-avatar {{ sub.team.name[0].toUpperCase() }}
+                        .team-details
+                            h3.team-name {{ sub.team.name }}
+                            span.sub-date Відправлено {{ formatDate(sub.updatedAt) }}
+                    .status-tag(:class="sub.status") {{ sub.status === 'EVALUATED' ? 'ОЦІНЕНО' : 'ОЧІКУЄ' }}
 
-    main.main-content
-        .loading-state(v-if="loading && !task")
-            i.pi.pi-spin.pi-spinner
-            span Завантаження...
+                .submission-card__body
+                    .links
+                        a.link-item(v-if="sub.githubUrl" :href="sub.githubUrl" target="_blank")
+                            i.pi.pi-github
+                            span GitHub
+                        a.link-item(v-if="sub.videoUrl" :href="sub.videoUrl" target="_blank")
+                            i.pi.pi-youtube
+                            span Video
+                        a.link-item(v-if="sub.liveUrl" :href="sub.liveUrl" target="_blank")
+                            i.pi.pi-external-link
+                            span Live
 
-        template(v-else-if="selectedSub")
-            header.main-header
-                .header-top
-                    h1.task-name {{ task?.name }}
-                    .status-badge(:class="selectedSub.status") {{ selectedSub.status === 'EVALUATED' ? 'ОЦІНЕНО' : 'ОЧІКУЄ ОЦІНКИ' }}
-                .team-hero
-                    span.label КОМАНДА:
-                    h2.team-display {{ selectedSub.team?.name || selectedSub.teamId }}
-
-            .evaluation-grid
-                .content-column
-                    .info-card
-                        h3.card-title МАТЕРІАЛИ РОБОТИ
-                        .links-grid
-                            a.material-link(v-if="selectedSub.githubUrl" :href="selectedSub.githubUrl" target="_blank")
-                                i.pi.pi-github
-                                span GITHUB REPO
-                            a.material-link(v-if="selectedSub.videoUrl" :href="selectedSub.videoUrl" target="_blank")
-                                i.pi.pi-youtube
-                                span VIDEO PRESENTATION
-                            a.material-link(v-if="selectedSub.liveUrl" :href="selectedSub.liveUrl" target="_blank")
-                                i.pi.pi-external-link
-                                span LIVE DEMO
-                        
-                        .summary-box(v-if="selectedSub.summary")
-                            h4.box-label КОРОТКИЙ ОПИС
-                            p.box-content {{ selectedSub.summary }}
-
-                .grading-column
-                    .grading-card
-                        h3.card-title ОЦІНЮВАННЯ ЗА КРИТЕРІЯМИ
-                        
-                        .rubric-list
-                            .rubric-item(v-for="item in rubric" :key="item.id")
-                                .rubric-info
-                                    span.label {{ item.label }}
-                                    span.max-points Макс: {{ item.maxPoints }}
-                                .rubric-control
-                                    input.points-input(
-                                        type="number"
-                                        v-model.number="scores[selectedSubId][item.id]"
-                                        :min="0"
-                                        :max="item.maxPoints"
-                                    )
-                                    .points-slider
-                                        .slider-track
-                                            .slider-fill(:style="{ width: `${(scores[selectedSubId][item.id] / item.maxPoints) * 100}%` }")
-                        
-                        .total-score
-                            span ЗАГАЛЬНИЙ БАЛ:
-                            span.score-value {{ getTotal(selectedSubId) }}
-                        
-                        .comment-section
-                            label.field-label КОМЕНТАР ЖУРІ *
-                            textarea.comment-input(
-                                v-model="comments[selectedSubId]"
-                                rows="4"
-                                placeholder="Напишіть конструктивний відгук для команди..."
+                    .grading(v-if="task.criteria?.rubric?.length")
+                        .criteria-item(v-for="item in task.criteria.rubric" :key="item.id")
+                            .criteria-info
+                                span.label {{ item.label }}
+                                span.max (макс. {{ item.maxPoints }})
+                            input.score-input(
+                                type="number"
+                                v-model.number="scores[sub.id][item.id]"
+                                :min="0"
+                                :max="item.maxPoints"
+                                :class="{ 'error': scores[sub.id][item.id] > item.maxPoints }"
                             )
 
-                        .actions
-                            button.save-btn(
-                                :disabled="submitting[selectedSubId]"
-                                @click="submit(selectedSubId)"
-                            )
-                                i.pi(:class="submitting[selectedSubId] ? 'pi-spin pi-spinner' : 'pi-check'")
-                                span {{ submitting[selectedSubId] ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ ТА ПЕРЕЙТИ ДАЛІ' }}
+                    .no-criteria(v-else)
+                        i.pi.pi-exclamation-circle
+                        span Критерії не встановлені
 
-        .empty-state(v-else-if="!loading")
-            i.pi.pi-inbox
-            h2 Оберіть роботу для оцінювання
+                .submission-card__footer
+                    .total
+                        span СУМА:
+                        span.points {{ calculateTotal(sub.id) }}
+                    Button.save-btn(
+                        :label="sub.status === 'EVALUATED' ? 'ОНОВИТИ' : 'ЗБЕРЕГТИ'"
+                        :loading="submitting[sub.id]"
+                        @click="submitGrade(sub.id)"
+                    )
+
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const api = useApi()
 const toast = useServerSafeToast()
@@ -113,484 +84,147 @@ const toast = useServerSafeToast()
 const loading = ref(true)
 const task = ref<any>(null)
 const submissions = ref<any[]>([])
-const selectedSubId = ref<string | null>(null)
-const submitting = ref<Record<string, boolean>>({})
 const scores = ref<Record<string, Record<string, number>>>({})
-const comments = ref<Record<string, string>>({})
+const submitting = ref<Record<string, boolean>>({})
 
-const selectedSub = computed(() => 
-    submissions.value.find(s => s.id === selectedSubId.value)
-)
+function formatDate(date: string) {
+    return new Date(date).toLocaleDateString('uk-UA')
+}
 
-const rubric = computed<Array<{ id: string; label: string; maxPoints: number }>>(() => {
-    const c = task.value?.criteria
-    if (!c || !Array.isArray(c.rubric)) return []
-    return c.rubric
-})
+function calculateTotal(subId: string) {
+    const subScores = scores.value[subId]
+    if (!subScores) return 0
+    return Object.values(subScores).reduce((acc, val) => acc + (Number(val) || 0), 0)
+}
 
-const evaluatedCount = computed(() => 
-    submissions.value.filter(s => s.status === 'EVALUATED').length
-)
-
-const progressPercentage = computed(() => 
-    submissions.value.length ? (evaluatedCount.value / submissions.value.length) * 100 : 0
-)
-
-function initSubmission(sub: any) {
+function initScores(sub: any) {
     if (!scores.value[sub.id]) {
         const entry: Record<string, number> = {}
-        for (const item of rubric.value) entry[item.id] = 0
+        const rubric = task.value?.criteria?.rubric || []
+        rubric.forEach((item: any) => {
+            const existing = sub.evaluations?.[0]?.scores?.find((s: any) => s.id === item.id)
+            entry[item.id] = existing ? existing.points : 0
+        })
         scores.value[sub.id] = entry
     }
-    if (!comments.value[sub.id]) comments.value[sub.id] = ''
 }
 
-function getTotal(subId: string): number {
-    const entry = scores.value[subId]
-    if (!entry) return 0
-    return Object.values(entry).reduce((s, v) => s + (v || 0), 0)
-}
+async function submitGrade(subId: string) {
+    const subScores = scores.value[subId]
+    const rubric = task.value?.criteria?.rubric || []
 
-async function submit(subId: string) {
-    const scoreMap = scores.value[subId] || {}
-    const comment = comments.value[subId]?.trim()
-    if (!comment) {
-        toast.warning('Додайте коментар перед збереженням')
-        return
+    for (const item of rubric) {
+        if (subScores[item.id] > item.maxPoints) {
+            toast.error(`Максимум для "${item.label}" - ${item.maxPoints}`)
+            return
+        }
     }
 
-    const scoreEntries = rubric.value.map((item) => ({
+    const scoreEntries = rubric.map((item: any) => ({
         id: item.id,
-        points: scoreMap[item.id] ?? 0,
+        points: subScores[item.id] || 0
     }))
 
     submitting.value[subId] = true
     try {
-        await api.post(`/submissions/${subId}/evaluate`, {
-            scores: scoreEntries,
-            comment,
-        })
-        const sub = submissions.value.find((s) => s.id === subId)
+        await api.post(`/submissions/${subId}/evaluate`, { scores: scoreEntries })
+        toast.success('Оцінку збережено')
+        const sub = submissions.value.find(s => s.id === subId)
         if (sub) sub.status = 'EVALUATED'
-        toast.success('Оцінку збережено!')
-        
-        // Auto-select next pending submission
-        const nextPending = submissions.value.find(s => s.status === 'PENDING')
-        if (nextPending) {
-            selectedSubId.value = nextPending.id
-        }
-    } catch (err: any) {
-        toast.error(err?.response?.data?.message || 'Помилка збереження')
+    } catch (e: any) {
+        toast.error(e.response?.data?.message || 'Помилка')
     } finally {
         submitting.value[subId] = false
     }
 }
 
 onMounted(async () => {
-    const taskId = route.params.taskId as string
     try {
-        const [taskRes, subsRes] = await Promise.all([
-            api.get(`/tasks/${taskId}`),
-            api.get(`/tasks/${taskId}/submissions`),
+        const [taskRes, subRes] = await Promise.all([
+            api.get(`/tasks/${route.params.taskId}`),
+            api.get(`/submissions/task/${route.params.taskId}`)
         ])
         task.value = taskRes.data
-        submissions.value = subsRes.data
-        for (const sub of submissions.value) initSubmission(sub)
-        
-        if (submissions.value.length > 0) {
-            const firstPending = submissions.value.find(s => s.status === 'PENDING')
-            selectedSubId.value = firstPending ? firstPending.id : submissions.value[0].id
-        }
+        submissions.value = subRes.data
+        submissions.value.forEach(s => initScores(s))
     } catch {
-        toast.error('Не вдалося завантажити дані')
+        toast.error('Помилка завантаження')
     } finally {
         loading.value = false
     }
 })
+
+definePageMeta({
+    middleware: ['auth']
+})
 </script>
 
 <style scoped lang="scss">
-.evaluate-dashboard {
-    display: flex;
-    height: 100vh;
-    background: #000;
-    color: #fff;
-    overflow: hidden;
+.evaluate-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 64px 48px;
 
-    @media (max-width: 1024px) {
-        flex-direction: column;
-        height: auto;
-        overflow: visible;
-    }
-}
-
-.sidebar {
-    width: 380px;
-    background: #0d0d0d;
-    border-right: 1px solid #222;
-    display: flex;
-    flex-direction: column;
-
-    @media (max-width: 1024px) {
-        width: 100%;
-        height: auto;
+    @include media($md) {
+        padding: 32px 24px;
     }
 
-    &__header {
-        padding: 32px;
-        border-bottom: 1px solid #222;
-
-        .back-btn {
-            display: flex;
+    &__nav {
+        margin-bottom: 48px;
+        .back-link {
+            display: inline-flex;
             align-items: center;
             gap: 8px;
-            color: var(--color-primary);
             text-decoration: none;
+            color: var(--color-text-muted);
+            font-weight: 600;
             font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            margin-bottom: 24px;
-            &:hover { opacity: 0.8; }
+            letter-spacing: 1.5px;
+            &:hover { color: var(--color-primary); }
         }
+    }
 
-        .title {
-            font-family: var(--font-display);
-            font-size: 14px;
-            letter-spacing: 2px;
-            font-weight: 800;
-            margin: 0 0 20px 0;
-            color: #fff;
-        }
+    &__hero {
+        margin-bottom: 48px;
+        border-bottom: 2px solid var(--color-text);
+        padding-bottom: 32px;
+        .title { font-family: var(--font-display); font-size: 48px; font-weight: 800; margin: 0; }
+        .subtitle { font-size: 18px; color: var(--color-text-muted); margin-top: 8px; }
     }
 }
 
-.progress-container {
-    .progress-bar {
-        height: 4px;
-        background: #222;
-        margin-bottom: 8px;
-        .progress-fill {
-            height: 100%;
-            background: var(--color-primary);
-            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-    }
-    .progress-text {
-        font-size: 10px;
-        font-weight: 700;
-        color: #666;
-    }
-}
-
-.submissions-nav {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-
-    .sub-item {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 20px;
-        background: transparent;
-        border: 1px solid transparent;
-        cursor: pointer;
-        text-align: left;
-        transition: all 0.2s;
-        margin-bottom: 8px;
-
-        &:hover { background: #1a1a1a; }
-        &.active {
-            background: #222;
-            border-color: #444;
-        }
-
-        &.done {
-            opacity: 0.6;
-            .sub-item__indicator { color: #16a34a; }
-        }
-
-        &__indicator {
-            font-size: 18px;
-            color: #444;
-        }
-
-        &__info {
-            display: flex;
-            flex-direction: column;
-            .team-name {
-                font-family: var(--font-display);
-                font-weight: 700;
-                font-size: 14px;
-                color: #fff;
-            }
-            .status-label {
-                font-size: 10px;
-                font-weight: 600;
-                color: #666;
-                text-transform: uppercase;
-                margin-top: 4px;
-            }
-        }
-    }
-}
-
-.main-content {
-    flex: 1;
-    overflow-y: auto;
-    padding: 60px;
-    background: #000;
-
-    @media (max-width: 1024px) {
-        padding: 32px 16px;
-    }
-}
-
-.main-header {
-    margin-bottom: 48px;
-
-    .header-top {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 12px;
-    }
-
-    .task-name {
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--color-primary);
-        letter-spacing: 2px;
-    }
-
-    .status-badge {
-        font-size: 10px;
-        font-weight: 800;
-        padding: 4px 12px;
-        border: 1px solid;
-        &.PENDING { border-color: #666; color: #666; }
-        &.EVALUATED { border-color: #16a34a; color: #16a34a; }
-    }
-
-    .team-hero {
-        .label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #444;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .team-display {
-            font-family: var(--font-display);
-            font-size: 48px;
-            font-weight: 800;
-            margin: 0;
-            letter-spacing: -1px;
-        }
-    }
-}
-
-.evaluation-grid {
+.submissions {
     display: grid;
-    grid-template-columns: 1fr 450px;
-    gap: 48px;
-    align-items: start;
-
-    @media (max-width: 1280px) {
-        grid-template-columns: 1fr;
-    }
-}
-
-.card-title {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    color: #fff;
-    margin-bottom: 24px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #222;
-}
-
-.info-card {
-    .links-grid {
-        display: flex;
-        gap: 16px;
-        margin-bottom: 32px;
-        flex-wrap: wrap;
-    }
-
-    .material-link {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 16px 24px;
-        background: #111;
-        border: 1px solid #222;
-        color: #fff;
-        text-decoration: none;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 1px;
-        transition: all 0.2s;
-
-        &:hover {
-            border-color: var(--color-primary);
-            background: #1a1a1a;
-        }
-    }
-
-    .summary-box {
-        background: #0d0d0d;
-        padding: 32px;
-        border: 1px solid #222;
-        .box-label {
-            font-size: 10px;
-            font-weight: 800;
-            color: #444;
-            margin-bottom: 16px;
-        }
-        .box-content {
-            font-size: 15px;
-            line-height: 1.6;
-            color: #ccc;
-        }
-    }
-}
-
-.grading-card {
-    background: #0d0d0d;
-    padding: 32px;
-    border: 1px solid #222;
-    position: sticky;
-    top: 0;
-}
-
-.rubric-list {
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
     gap: 32px;
-    margin-bottom: 40px;
 }
 
-.rubric-item {
-    .rubric-info {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 12px;
-        .label { font-size: 13px; font-weight: 700; }
-        .max-points { font-size: 11px; color: #666; }
-    }
-
-    .rubric-control {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-
-        .points-input {
-            width: 70px;
-            padding: 12px;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            color: #fff;
-            font-family: var(--font-display);
-            font-size: 18px;
-            font-weight: 800;
-            text-align: center;
-            &:focus { border-color: var(--color-primary); outline: none; }
-        }
-
-        .points-slider {
-            flex: 1;
-            .slider-track {
-                height: 4px;
-                background: #222;
-                .slider-fill {
-                    height: 100%;
-                    background: var(--color-primary);
-                    transition: width 0.2s;
-                }
-            }
-        }
-    }
-}
-
-.total-score {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 24px 0;
-    border-top: 1px solid #222;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    color: #666;
-
-    .score-value {
-        font-family: var(--font-display);
-        font-size: 32px;
-        color: var(--color-primary);
-    }
-}
-
-.field-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 800;
-    color: #444;
-    margin-bottom: 12px;
-}
-
-.comment-input {
-    width: 100%;
-    background: #1a1a1a;
-    border: 1px solid #333;
-    padding: 16px;
-    color: #fff;
-    font-family: inherit;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 32px;
-    &:focus { border-color: var(--color-primary); outline: none; }
-}
-
-.save-btn {
-    width: 100%;
-    padding: 20px;
-    background: var(--color-primary);
-    border: none;
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    transition: all 0.2s;
-
-    &:hover:not(:disabled) { background: #fff; color: #000; }
-    &:disabled { opacity: 0.5; cursor: not-allowed; }
-}
-
-.empty-state {
-    height: 60vh;
+.submission-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #444;
-    i { font-size: 64px; margin-bottom: 24px; }
-    h2 { font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; }
+
+    &--evaluated { border-color: var(--color-primary); }
+
+    &__header {
+        padding: 24px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between;
+        .team-info { display: flex; gap: 16px; .team-avatar { width: 48px; height: 48px; background: var(--color-bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; } .team-name { margin: 0; font-size: 18px; } .sub-date { font-size: 12px; color: var(--color-text-muted); } }
+        .status-tag { padding: 4px 8px; font-size: 10px; font-weight: 800; background: var(--color-bg); &.EVALUATED { color: var(--color-primary); background: var(--color-primary-soft); } }
+    }
+
+    &__body {
+        padding: 24px; flex: 1;
+        .links { display: flex; gap: 16px; margin-bottom: 24px; .link-item { display: flex; align-items: center; gap: 8px; color: var(--color-text); text-decoration: none; font-size: 13px; font-weight: 600; &:hover { color: var(--color-primary); } } }
+        .grading { .criteria-item { margin-bottom: 16px; .criteria-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px; .max { color: var(--color-text-muted); } } .score-input { width: 100%; padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: white; font-weight: 800; &.error { border-color: #ef4444; } } } }
+    }
+
+    &__footer {
+        padding: 24px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;
+        .total { display: flex; align-items: baseline; gap: 8px; span { font-size: 12px; font-weight: 800; color: var(--color-text-muted); } .points { font-size: 24px; font-weight: 900; color: var(--color-primary); } }
+        .save-btn { background: var(--color-primary); border: none; padding: 12px 24px; font-weight: 800; color: white !important; }
+    }
 }
 
-.loading-state {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    color: #666;
-}
+.loading-state, .empty-state { padding: 100px 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; .empty-icon { font-size: 48px; color: var(--color-text-muted); } }
 </style>
