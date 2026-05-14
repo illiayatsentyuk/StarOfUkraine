@@ -15,11 +15,7 @@ aside.sidebar
 
         .divider
 
-<<<<<<< HEAD
-        NuxtLink.sidebar__table-link(:to="`/tournaments/${tournament.id}/table`")
-=======
         NuxtLink.sidebar__table-link(:to="localePath(`/tournaments/${tournamentId}/table`)")
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
             span.icon ↗
             span ТАБЛИЦЯ РЕЗУЛЬТАТІВ
 
@@ -74,11 +70,7 @@ aside.sidebar
 
             NuxtLink.sidebar__judge-link(
                 v-if="isJury && tournament.id"
-<<<<<<< HEAD
-                :to="`/tournaments/${tournament.id}/judge`"
-=======
                 :to="localePath(`/tournaments/${tournament.id}/admin`)"
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
             )
                 Button.sidebar__judge(
                     type="button"
@@ -118,13 +110,8 @@ aside.sidebar
             )
 
             NuxtLink.sidebar__team-link(
-<<<<<<< HEAD
-                v-if="isAuthenticated && hasTeam"
-                :to="`/teams/${activeTeam?.id || firstTeamId}`"
-=======
                 v-if="isAuthenticated && hasTeam && activeTeam"
                 :to="localePath(`/teams/${activeTeam.id}`)"
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
             )
                 Button.sidebar__manage-team(
                     type="button"
@@ -152,12 +139,9 @@ const props = defineProps<{
     activeTeam: any
     joining: boolean
     shouldHideTeams: boolean
-<<<<<<< HEAD
     isLoadingAuth?: boolean
-=======
     teams: Array<{ id: string; name: string; points?: number }>
     loadingTeams: boolean
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 }>()
 
 defineEmits<{

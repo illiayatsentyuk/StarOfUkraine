@@ -55,11 +55,7 @@ section.task-detail
 
                     NuxtLink.admin-link(
                         v-if="authStore.isJury"
-<<<<<<< HEAD
-                        :to="`/tournaments/${route.params.id}/judge`"
-=======
                         :to="localePath(`/tournaments/${route.params.id}/tasks/${task.id}/admin`)"
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
                     )
                         i.pi.pi-verified
                         span ПАНЕЛЬ ЖУРІ

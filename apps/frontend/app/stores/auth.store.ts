@@ -108,8 +108,8 @@ export const useLoginStore = defineStore('login', () => {
         loading.value = true
         try {
             const response = await useApi().patch('/users/me', { name })
-            if (response.data) {
-                user.value = { ...user.value!, ...response.data }
+            if (response.data && user.value) {
+                user.value = { ...user.value, ...response.data }
             }
         } catch {
             toast.error('Помилка при оновленні імені')
@@ -124,8 +124,8 @@ export const useLoginStore = defineStore('login', () => {
             const formData = new FormData()
             formData.append('file', file)
             const response = await useApi().patch('/users/me/avatar', formData)
-            if (response.data) {
-                user.value = { ...user.value!, ...response.data }
+            if (response.data && user.value) {
+                user.value = { ...user.value, ...response.data }
                 image.value = response.data.image
             }
         } catch {

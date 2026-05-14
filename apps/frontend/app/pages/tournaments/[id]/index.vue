@@ -40,25 +40,23 @@ section.tournament-detail
                                 v-for="team in teams"
                                 :key="team.id"
                                 :team="team"
-                                :isAdmin="authStore.isAdmin"
+                                :isAdmin="loginStore.isAdmin"
                                 @delete="teamsStore.deleteTeam($event)"
                             )
-
-
 
             TournamentSidebar(
                 :tournament="tournament"
                 :tournamentId="tournamentId"
                 :status="tournamentStatus"
-                :isAdmin="authStore.isAdmin"
-                :isJury="authStore.isJury"
-                :isAuthenticated="authStore.isAuthenticated"
+                :isAdmin="loginStore.isAdmin"
+                :isJury="loginStore.isJury"
+                :isAuthenticated="loginStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
                 :isAlreadyJoined="isAlreadyJoined"
                 :hasTeam="hasTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
-                :isLoadingAuth="authStore.loading"
+                :isLoadingAuth="loginStore.loading"
                 :shouldHideTeams="shouldHideTeams"
                 :teams="teams"
                 :loadingTeams="loadingTeams"
@@ -72,21 +70,21 @@ section.tournament-detail
         NuxtLink(:to="localePath('/')") Повернутися до списку
 
     DeleteModal(
-        v-if="tournament && authStore.isAdmin"
+        v-if="tournament && loginStore.isAdmin"
         :isOpen="isDeleteModalOpen"
         :tournament="tournament"
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
     EditTournamentModal(
-        v-if="tournament && authStore.isAdmin"
+        v-if="tournament && loginStore.isAdmin"
         :isOpen="isEditModalOpen"
         :tournament="tournament"
         @close="isEditModalOpen = false"
         @updated="onTournamentUpdated"
     )
     CreateTeamModal(
-        v-if="tournament && authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury"
+        v-if="tournament && loginStore.isAuthenticated && !loginStore.isAdmin && !loginStore.isJury"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
         @success="onTeamCreated"
@@ -97,7 +95,7 @@ section.tournament-detail
 const localePath = useLocalePath()
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
-const authStore = useLoginStore()
+const loginStore = useLoginStore()
 const teamsStore = useTeamsStore()
 const toast = useServerSafeToast()
 
@@ -126,7 +124,7 @@ const isRegistrationActive = computed(() => {
 })
 
 const shouldHideTeams = computed(() => {
-    if (authStore.isAdmin || authStore.isJury) return false
+    if (loginStore.isAdmin || loginStore.isJury) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()
@@ -144,12 +142,12 @@ const isAlreadyJoined = computed(() => {
 })
 
 const hasTeam = computed(() => {
-    if (!authStore.user) return false
-    return (authStore.user.teamsAsCaptain?.length || 0) > 0 || (authStore.user.teamsAsMember?.length || 0) > 0
+    if (!loginStore.user) return false
+    return (loginStore.user.teamsAsCaptain?.length || 0) > 0 || (loginStore.user.teamsAsMember?.length || 0) > 0
 })
 
 const canSeeTasks = computed(() => {
-    if (authStore.isAdmin || authStore.isJury) return true
+    if (loginStore.isAdmin || loginStore.isJury) return true
     return tournament.value?.status !== 'DRAFT'
 })
 
@@ -172,11 +170,11 @@ const refreshTeams = async () => {
 
 // Головна дія: вступити в турнір
 const handleJoinTournament = async () => {
-    if (!authStore.isAuthenticated) return
+    if (!loginStore.isAuthenticated) return
 
     // Якщо активна команда не вибрана, але у юзера є команди — виберемо першу
     if (!teamsStore.activeTeam && hasTeam.value) {
-        const firstTeamId = authStore.user?.teamsAsCaptain?.[0]?.id || authStore.user?.teamsAsMember?.[0]?.id
+        const firstTeamId = loginStore.user?.teamsAsCaptain?.[0]?.id || loginStore.user?.teamsAsMember?.[0]?.id
         if (firstTeamId) {
             await teamsStore.setActiveTeam(firstTeamId)
         }

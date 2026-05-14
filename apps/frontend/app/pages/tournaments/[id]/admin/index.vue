@@ -14,10 +14,10 @@ section.judge-dashboard
         i.pi.pi-spin.pi-spinner
         span Завантаження...
 
-    .empty-tasks(v-else-if="!store.tasks.length")
-        i.pi.pi-inbox
-        h3 Завдань поки немає
-        p Спочатку створіть завдання для турніру
+    .empty-tasks(v-else-if="!evaluableTasks.length")
+        i.pi.pi-info-circle
+        h3 Немає закритих завдань
+        p Оцінювання доступне тільки після переведення завдання у статус "ЗДАЧУ ЗАКРИТО"
 
     .dashboard-grid(v-else)
         aside.teams-sidebar
@@ -38,7 +38,7 @@ section.judge-dashboard
                     .team-avatar {{ team.name[0] }}
                     .team-info
                         span.name {{ team.name }}
-                        span.meta {{ getSubmittedCount(team.id) }}/{{ store.tasks.length }} здано
+                        span.meta {{ getSubmittedCount(team.id) }}/{{ evaluableTasks.length }} здано
                     i.pi.pi-chevron-right
 
         main.submissions-view
@@ -51,12 +51,12 @@ section.judge-dashboard
                             span.lbl БАЛІВ
 
                 .tasks-grid
-                    .task-submission-card(v-for="task in store.tasks" :key="task.id")
+                    .task-submission-card(v-for="task in evaluableTasks" :key="task.id")
                         .task-header
                             h3 {{ task.name }}
                             span.points-max {{ getTaskMaxPoints(task) }} pts max
 
-                        template(v-if="getSubmission(selectedTeam.id, task.id)")
+                        .card-content(v-if="getSubmission(selectedTeam.id, task.id)")
                             .submission-links
                                 a.link-btn(
                                     :href="getSubmission(selectedTeam.id, task.id).githubUrl"
@@ -82,12 +82,15 @@ section.judge-dashboard
                             .submission-summary(v-if="getSubmission(selectedTeam.id, task.id).summary")
                                 h4 Опис від команди:
                                 p {{ getSubmission(selectedTeam.id, task.id).summary }}
+                            .submission-summary.is-empty(v-else)
+                                h4 Опис від команди:
+                                p.empty-text Опис до роботи не надано.
 
                             .graded-info(v-if="getSubmission(selectedTeam.id, task.id).status === 'EVALUATED'")
                                 i.pi.pi-check-circle
                                 span ОЦІНЕНО
 
-                            .grading-form(v-else-if="authStore.isJury")
+                            .grading-form(v-else-if="loginStore.isJury")
                                 .criteria-list(v-if="task.criteria?.rubric?.length")
                                     .criterion-row(v-for="c in task.criteria.rubric" :key="c.id")
                                         span.c-label {{ c.label }}
@@ -136,6 +139,7 @@ const store = useTasksStore()
 const tournamentStore = useTournamentsStore()
 const api = useApi()
 const toast = useServerSafeToast()
+const loginStore = useLoginStore()
 
 const tournamentId = route.params.id as string
 const selectedTeamId = ref<string | null>(null)
@@ -210,13 +214,17 @@ const selectedTeam = computed(() =>
     teams.value.find(t => t.id === selectedTeamId.value) ?? null
 )
 
+const evaluableTasks = computed(() =>
+    store.tasks.filter(t => t.status === 'SUBMISSION_CLOSED' || t.status === 'EVALUATED')
+)
+
 function getSubmission(teamId: string, taskId: string) {
     const subs = submissionsMap.value.get(taskId) ?? []
     return subs.find((s: any) => s.teamId === teamId) ?? null
 }
 
 function getSubmittedCount(teamId: string) {
-    return store.tasks.filter(t => getSubmission(teamId, t.id)).length
+    return evaluableTasks.value.filter(t => getSubmission(teamId, t.id)).length
 }
 
 function getTeamTotalScore(teamId: string) {
@@ -232,6 +240,20 @@ function getTaskMaxPoints(task: any) {
 
 async function handleGrade(submission: any, task: any) {
     const rubric: any[] = task.criteria?.rubric ?? []
+    
+    // Validation
+    for (const c of rubric) {
+        const points = Number(gradingData.value[`${submission.id}__${c.id}`] ?? 0)
+        if (points > c.maxPoints) {
+            toast.error(`Критерій "${c.label}" не може перевищувати ${c.maxPoints} балів`)
+            return
+        }
+        if (points < 0) {
+            toast.error(`Критерій "${c.label}" не може бути менше 0`)
+            return
+        }
+    }
+
     const scores = rubric.map((c: any) => ({
         id: c.id,
         points: Number(gradingData.value[`${submission.id}__${c.id}`] ?? 0),
@@ -241,7 +263,9 @@ async function handleGrade(submission: any, task: any) {
     grading.value[submission.id] = true
     try {
         await store.gradeSubmission(submission.id, scores, comment)
-        // Update local status
+        toast.success('Оцінку збережено')
+        
+        // Update local status ONLY on success
         const subs = submissionsMap.value.get(task.id) ?? []
         const idx = subs.findIndex((s: any) => s.id === submission.id)
         if (idx !== -1) {
@@ -249,6 +273,8 @@ async function handleGrade(submission: any, task: any) {
             submissionsMap.value.set(task.id, [...subs])
             submissionsMap.value = new Map(submissionsMap.value)
         }
+    } catch (e: any) {
+        toast.error(e.response?.data?.message || 'Помилка при збереженні оцінки')
     } finally {
         grading.value[submission.id] = false
     }
@@ -477,6 +503,14 @@ async function handleGrade(submission: any, task: any) {
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         padding: 24px;
+        display: flex;
+        flex-direction: column;
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
 
         .task-header {
             display: flex;
@@ -512,6 +546,15 @@ async function handleGrade(submission: any, task: any) {
             padding: 12px;
             background: var(--color-bg);
             border-left: 3px solid var(--color-primary);
+            min-height: 80px;
+
+            &.is-empty {
+                border-left-color: var(--color-border);
+                .empty-text {
+                    font-style: italic;
+                    color: var(--color-text-muted);
+                }
+            }
             h4 {
                 font-size: 11px;
                 font-weight: 800;
