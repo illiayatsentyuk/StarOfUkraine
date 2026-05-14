@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { useApi } from '~/composables/useApi'
-import type { Form, User } from '~/types'
+import type { User } from '~/types'
 
 export const useLoginStore = defineStore('login', () => {
     const config = useRuntimeConfig()
@@ -14,7 +14,8 @@ export const useLoginStore = defineStore('login', () => {
 
     const loginByGoogle = () => {
         if (typeof window !== 'undefined') {
-            window.location.href = `${config.public.apiURL}/auth/google/login`
+            const url = `${config.public.apiURL}/auth/google/login`
+            window.location.href = url
         }
     }
 
@@ -23,17 +24,18 @@ export const useLoginStore = defineStore('login', () => {
         try {
             await useApi().post('/auth/signup', userData)
             await fetchUser()
-        } catch {
-            user.value = null
-            isAdmin.value = false
-            toast.error('Помилка при реєстрації')
-        } finally {
-            loading.value = false
             navigateTo('/')
             authenticated.value = true
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
+        } catch (error) {
+            user.value = null
+            isAdmin.value = false
+            toast.error('Помилка при реєстрації')
+            throw error
+        } finally {
+            loading.value = false
         }
     }
 
@@ -42,17 +44,18 @@ export const useLoginStore = defineStore('login', () => {
         try {
             await useApi().post('/auth/signin', credentials)
             await fetchUser()
-        } catch {
-            user.value = null
-            isAdmin.value = false
-            toast.error('Неправильна пошта або пароль')
-        } finally {
-            loading.value = false
             navigateTo('/')
             authenticated.value = true
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
+        } catch (error) {
+            user.value = null
+            isAdmin.value = false
+            toast.error('Неправильна пошта або пароль')
+            throw error
+        } finally {
+            loading.value = false
         }
     }
 
@@ -105,8 +108,8 @@ export const useLoginStore = defineStore('login', () => {
         loading.value = true
         try {
             const response = await useApi().patch('/users/me', { name })
-            if (response.data) {
-                user.value = { ...user.value!, ...response.data }
+            if (response.data && user.value) {
+                user.value = { ...user.value, ...response.data }
             }
         } catch {
             toast.error('Помилка при оновленні імені')
@@ -121,8 +124,8 @@ export const useLoginStore = defineStore('login', () => {
             const formData = new FormData()
             formData.append('file', file)
             const response = await useApi().patch('/users/me/avatar', formData)
-            if (response.data) {
-                user.value = { ...user.value!, ...response.data }
+            if (response.data && user.value) {
+                user.value = { ...user.value, ...response.data }
                 image.value = response.data.image
             }
         } catch {
@@ -132,5 +135,12 @@ export const useLoginStore = defineStore('login', () => {
         }
     }
 
-    return { user, isAdmin, isJury, image, isAuthenticated, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail, updateName, uploadAvatar }
+    const userTeam = computed(() => {
+        if (!user.value) return null
+        return user.value.teamsAsCaptain?.[0] || user.value.teamsAsMember?.[0] || null
+    })
+
+    const hasTeam = computed(() => !!userTeam.value)
+
+    return { user, isAdmin, isJury, image, isAuthenticated, hasTeam, userTeam, loading, loginByGoogle, fetchUser, init, logout, signupByEmail, loginByEmail, updateName, uploadAvatar }
 })

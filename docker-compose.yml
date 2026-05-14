@@ -35,6 +35,7 @@ services:
       - '4040:4040'
     environment:
       NUXT_PUBLIC_API_URL: http://localhost:3000
+      NUXT_API_URL: http://backend:3000
       # Windows + Docker Desktop: Vite/Nuxt often do not hot-reload on bind mounts without polling
       CHOKIDAR_USEPOLLING: 'true'
       WATCHPACK_POLLING: 'true'

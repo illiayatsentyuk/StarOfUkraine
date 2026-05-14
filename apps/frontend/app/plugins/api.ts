@@ -4,8 +4,12 @@ import axios from 'axios'
 export default defineNuxtPlugin((nuxtApp) => {
   const config = useRuntimeConfig()
 
+  const baseURL = (import.meta.server && config.apiURL) 
+    ? (config.apiURL as string) 
+    : (config.public.apiURL as string)
+
   const api = axios.create({
-    baseURL: config.public.apiURL as string,
+    baseURL,
     withCredentials: true,
   })
 
@@ -64,7 +68,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 
         try {
           await axios.post(
-            `${config.public.apiURL}/auth/refresh`,
+            `${baseURL}/auth/refresh`,
             {},
             { withCredentials: true }
           )
@@ -89,6 +93,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             authStore.isAdmin = false
             authStore.isJury = false
             authStore.image = null
+            authStore.authenticated = false
           })
 
           return Promise.reject(refreshError)
@@ -101,5 +106,9 @@ export default defineNuxtPlugin((nuxtApp) => {
     }
   )
 
-  return { provide: { api } }
+  return {
+    provide: {
+      api,
+    },
+  }
 })

@@ -1,5 +1,13 @@
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { Role } from '../../enum';
+
+export class UserTeamDto {
+  @Expose()
+  id: string;
+
+  @Expose()
+  name: string;
+}
 
 export class UserDto {
   @Expose()
@@ -19,4 +27,12 @@ export class UserDto {
 
   @Expose()
   role: Role;
+
+  @Expose()
+  @Type(() => UserTeamDto)
+  teamsAsCaptain?: UserTeamDto[] = [];
+
+  @Expose()
+  @Type(() => UserTeamDto)
+  teamsAsMember?: UserTeamDto[] = [];
 }

@@ -75,9 +75,7 @@ export const useTasksStore = defineStore('tasks', () => {
         payload: { teamId: string; githubUrl: string; videoUrl: string; liveUrl?: string; summary?: string },
     ) => {
         loading.value = true
-        error.value = null
         try {
-            const api = useApi()
             await api.post(`/tasks/${taskId}/submit`, payload)
             mySubmissions.value[taskId] = {
                 status: 'PENDING',
@@ -86,26 +84,10 @@ export const useTasksStore = defineStore('tasks', () => {
                 liveUrl: payload.liveUrl,
                 summary: payload.summary,
             }
-            toast.success('Завдання успішно відправлено')
+            toast.success('Роботу успішно відправлено!')
         } catch (err: any) {
-            toast.error('Помилка відправки завдання')
-            error.value = err?.message || 'Помилка відправки'
+            toast.error(err?.response?.data?.message || 'Помилка відправки')
             throw err
-        } finally {
-            loading.value = false
-        }
-    }
-
-    const fetchSubmissions = async (taskId: string) => {
-        loading.value = true
-        error.value = null
-        try {
-            const api = useApi()
-            const response = await api.get(`/tasks/${taskId}/submissions`)
-            submissions.value = Array.isArray(response.data) ? response.data : []
-        } catch (err: any) {
-            toast.error('Помилка завантаження робіт')
-            error.value = err?.message || 'Помилка завантаження робіт'
         } finally {
             loading.value = false
         }
@@ -138,58 +120,51 @@ export const useTasksStore = defineStore('tasks', () => {
     /** ADMIN: DRAFT → ACTIVE */
     const activateTask = async (taskId: string) => {
         loading.value = true
-        error.value = null
         try {
-            const api = useApi()
             await api.post(`/tasks/${taskId}/activate`)
             const idx = tasks.value.findIndex(t => t.id === taskId)
-            if (idx !== -1 && tasks.value[idx]) {
-                tasks.value[idx].status = 'ACTIVE' as any
-            }
-            toast.success('Завдання активовано — прийом робіт відкрито')
+            if (idx !== -1) tasks.value[idx].status = 'ACTIVE'
+            toast.success('Завдання активовано')
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Помилка активації')
-            error.value = err?.message || 'Помилка активації'
-            throw err
+            toast.error('Помилка активації')
         } finally {
             loading.value = false
         }
     }
 
-    /** ADMIN: ACTIVE → SUBMISSION_CLOSED */
+    const fetchSubmissions = async (taskId: string) => {
+        loading.value = true
+        try {
+            const res = await api.get(`/tasks/${taskId}/submissions`)
+            submissions.value = res.data ?? []
+        } catch (err: any) {
+            toast.error('Помилка завантаження робіт')
+        } finally {
+            loading.value = false
+        }
+    }
+
     const closeSubmissions = async (taskId: string) => {
         loading.value = true
-        error.value = null
         try {
-            const api = useApi()
             await api.post(`/tasks/${taskId}/close-submissions`)
             const idx = tasks.value.findIndex(t => t.id === taskId)
-            if (idx !== -1 && tasks.value[idx]) {
-                tasks.value[idx].status = 'SUBMISSION_CLOSED' as any
-            }
+            if (idx !== -1) tasks.value[idx].status = 'SUBMISSION_CLOSED'
             toast.success('Прийом робіт закрито')
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Помилка закриття')
-            error.value = err?.message || 'Помилка закриття'
-            throw err
+            toast.error('Помилка закриття')
         } finally {
             loading.value = false
         }
     }
 
-    /** ADMIN: assign submissions to jury via /jury/tournaments/:id/assign */
     const assignJury = async (tournamentId: string, submissionsPerJury: number = 5) => {
         loading.value = true
-        error.value = null
         try {
-            const api = useApi()
             const res = await api.post(`/jury/tournaments/${tournamentId}/assign`, { submissionsPerJury })
             toast.success(`Розподіл завершено: ${res.data.assignmentsCreated} призначень`)
-            return res.data
         } catch (err: any) {
-            toast.error(err?.response?.data?.message || 'Помилка розподілу')
-            error.value = err?.message || 'Помилка розподілу'
-            throw err
+            toast.error('Помилка розподілу')
         } finally {
             loading.value = false
         }
@@ -198,11 +173,8 @@ export const useTasksStore = defineStore('tasks', () => {
     const fetchMySubmission = async (taskId: string, teamId?: string) => {
         if (!teamId) return
         try {
-            const api = useApi()
-            // New API returns all submissions for task — find ours by teamId
-            const response = await api.get(`/tasks/${taskId}/submissions`)
-            const all = Array.isArray(response.data) ? response.data : []
-            const mine = all.find((s: any) => s.teamId === teamId || s.team?.id === teamId)
+            const res = await api.get(`/tasks/${taskId}/teams/${teamId}/submission`)
+            const mine = res.data
             if (mine) {
                 mySubmissions.value[taskId] = {
                     status: mine.status,
@@ -213,33 +185,8 @@ export const useTasksStore = defineStore('tasks', () => {
                 }
             }
         } catch (err) {
-            // Submission might not exist yet — not an error
             console.debug('No submission for task', taskId)
         }
-    }
-
-    // Legacy: kept for backwards compat
-    const updateTaskStatus = async (taskId: string, status: string) => {
-        if (status === 'ACTIVE') return activateTask(taskId)
-        if (status === 'SUBMISSION_CLOSED') return closeSubmissions(taskId)
-        if (status === 'EVALUATED') {
-            // No direct endpoint — just update local state
-            const idx = tasks.value.findIndex(t => t.id === taskId)
-            if (idx !== -1 && tasks.value[idx]) {
-                tasks.value[idx].status = status as any
-            }
-        }
-    }
-
-    // Legacy alias
-    const distributeSubmissions = async (taskId: string, _config: any) => {
-        // Find tournamentId from the task
-        const task = tasks.value.find(t => t.id === taskId)
-        if (!task?.tournamentId) {
-            toast.error('Не вдалося знайти турнір для розподілу')
-            return
-        }
-        return assignJury(task.tournamentId, _config?.maxSubmissionsPerJury ?? 5)
     }
 
     return {
@@ -250,13 +197,12 @@ export const useTasksStore = defineStore('tasks', () => {
         mySubmissions,
         fetchTasks,
         createTask,
+        submitTask,
         fetchSubmissions,
         fetchMySubmission,
         gradeSubmission,
         activateTask,
         closeSubmissions,
         assignJury,
-        updateTaskStatus,
-        distributeSubmissions,
     }
 })

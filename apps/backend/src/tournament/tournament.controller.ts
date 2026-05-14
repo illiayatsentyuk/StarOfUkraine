@@ -217,12 +217,6 @@ export class TournamentController {
     enum: TournamentStatus,
     description: 'Filter by tournament status',
   })
-  @ApiQuery({
-    name: 'createdByMe',
-    required: false,
-    type: Boolean,
-    description: 'Filter tournaments created by the current user (admin)',
-  })
   @ApiResponse({
     status: 200,
     description: 'List of tournaments returned',
@@ -248,8 +242,8 @@ export class TournamentController {
   })
   @ApiResponse({ status: 404, description: 'Tournament not found' })
   @Serialize(TournamentResponseDto)
-  findOne(@Param('id') id: string) {
-    return this.tournamentService.findOne(id);
+  findOne(@Param('id') id: string, @GetCurrentUserId() userId: string) {
+    return this.tournamentService.findOne(id, userId);
   }
 
   @Public()

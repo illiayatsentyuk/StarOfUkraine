@@ -76,18 +76,7 @@ async function fetchJuryMembers() {
         const res = await api.get('/jury', {
             params: { tournamentId: props.tournamentId },
         })
-        const rows = Array.isArray(res.data) ? res.data : []
-        const membersWithUsers = await Promise.all(
-            rows.map(async (member: any) => {
-                try {
-                    const userRes = await api.get(`/users/${member.userId}`)
-                    return { ...member, user: userRes.data }
-                } catch {
-                    return member
-                }
-            }),
-        )
-        juryMembers.value = membersWithUsers
+        juryMembers.value = Array.isArray(res.data) ? res.data : []
     } catch (e) {
         console.error('Failed to fetch jury', e)
     } finally {
@@ -271,53 +260,77 @@ onMounted(() => {
 
 .jury-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+    gap: 20px;
 }
 
 .jury-card {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: var(--color-bg);
+    gap: 16px;
+    padding: 20px;
+    background: #fff;
     border: 1px solid var(--color-border);
-    position: relative;
+    transition: all 0.2s ease;
+
+    &:hover {
+        border-color: var(--color-primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
 
     .member-avatar {
-        width: 40px;
-        height: 40px;
-        background: var(--color-text);
-        color: white;
+        width: 48px;
+        height: 48px;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        color: var(--color-primary);
         display: flex;
         align-items: center;
         justify-content: center;
         font-weight: 800;
         font-size: 18px;
+        border-radius: 50%;
+        flex-shrink: 0;
     }
 
     .member-info {
         flex: 1;
+        overflow: hidden;
         .name {
             display: block;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 15px;
+            color: var(--color-text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .email {
             display: block;
-            font-size: 11px;
+            font-size: 12px;
             color: var(--color-text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
 
     .remove-btn {
-        background: none;
-        border: none;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
         color: var(--color-text-muted);
         cursor: pointer;
-        padding: 8px;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: all 0.2s;
         &:hover {
-            color: var(--color-primary);
+            background: var(--color-error);
+            border-color: var(--color-error);
+            color: white;
         }
     }
 }

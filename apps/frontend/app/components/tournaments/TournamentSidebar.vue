@@ -74,7 +74,7 @@ aside.sidebar
             )
                 Button.sidebar__judge(
                     type="button"
-                    label="ПАНЕЛЬ СУДДІВСТВА"
+                    label="ПАНЕЛЬ ЖУРІ"
                     icon="pi pi-users"
                 )
 
@@ -123,6 +123,7 @@ aside.sidebar
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
+import { useLoginStore } from '~/stores/auth.store'
 
 const localePath = useLocalePath()
 
@@ -138,6 +139,7 @@ const props = defineProps<{
     activeTeam: any
     joining: boolean
     shouldHideTeams: boolean
+    isLoadingAuth?: boolean
     teams: Array<{ id: string; name: string; points?: number }>
     loadingTeams: boolean
 }>()
@@ -148,11 +150,19 @@ defineEmits<{
     joinTournament: []
 }>()
 
+const loginStore = useLoginStore()
 const tournamentId = computed(() => useRoute().params.id as string)
 
-const joinLabel = computed(() =>
-    props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
-)
+const firstTeamId = computed(() => {
+    const user = loginStore.user
+    if (!user) return null
+    return user.teamsAsCaptain?.[0]?.id || user.teamsAsMember?.[0]?.id || null
+})
+
+const joinLabel = computed(() => {
+    if (props.isLoadingAuth) return 'ЗАВАНТАЖЕННЯ...'
+    return props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
+})
 </script>
 
 <style scoped lang="scss">

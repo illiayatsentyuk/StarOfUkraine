@@ -53,7 +53,6 @@ model User {
   teamsAsCaptain       Team[]       @relation("TeamCaptain")
   teamsAsMember        Team[]       @relation("TeamMembers")
   jury                 Jury?
-  createdTournaments   Tournament[] @relation("TournamentCreator")
 }
 
 model Account {
@@ -113,15 +112,12 @@ model Tournament {
   status                        TournamentStatus @default(DRAFT)
   hideTeamsUntilRegistrationEnds Boolean         @default(false)
   evaluationFinishedAt          DateTime?
-  createdById                   String?
-  createdBy                     User?            @relation("TournamentCreator", fields: [createdById], references: [id])
   teams                         Team[]           @relation("TournamentTeams")
   jurors                        Jury[]
   tasks                         Task[]
   createdAt                     DateTime        @default(now())
   updatedAt                     DateTime        @updatedAt
 
-  @@index([createdById])
 }
 
 model Task {

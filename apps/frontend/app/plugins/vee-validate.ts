@@ -36,6 +36,24 @@ export default defineNuxtPlugin(() => {
     return date.getTime() >= minDate.getTime()
   })
 
+  defineRule('not_past_date', (value: unknown) => {
+    if (value == null || value === '') return true
+    const date = new Date(value as any)
+    if (Number.isNaN(date.getTime())) return 'Некоректна дата'
+    date.setHours(0, 0, 0, 0)
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return date.getTime() >= today.getTime()
+  })
+
+  defineRule('before_date', (value: unknown, [target]: [any]) => {
+    if (!value || !target) return true
+    const date = new Date(value as any)
+    const targetDate = new Date(target as any)
+    if (Number.isNaN(date.getTime()) || Number.isNaN(targetDate.getTime())) return true
+    return date.getTime() <= targetDate.getTime()
+  })
+
   configure({
     validateOnBlur: true,
     generateMessage: (ctx) => {
@@ -62,6 +80,8 @@ export default defineNuxtPlugin(() => {
         min_value: `Мінімальне значення ${minLimit ?? ''}`,
         max_value: `Максимальне значення ${maxLimit ?? ''}`,
         min_date_future: `Дата повинна бути не раніше ніж через ${param0 ?? '3'} дні(в) від сьогодні`,
+        not_past_date: 'Дата не може бути в минулому',
+        before_date: 'Дата повинна бути не пізніше за дату початку турніру',
       }
       return messages[ctx.rule?.name || ''] || `${ctx.field} is invalid`
     },

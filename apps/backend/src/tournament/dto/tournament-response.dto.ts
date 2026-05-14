@@ -106,16 +106,20 @@ export class TournamentResponseDto {
   evaluationFinishedAt: Date | null;
 
   @Expose()
-  @ApiPropertyOptional({ nullable: true })
-  createdById: string | null;
-
-  @Expose()
   @ApiProperty()
   createdAt: Date;
 
   @Expose()
   @ApiProperty()
   updatedAt: Date;
+
+  @Expose()
+  @ApiProperty()
+  isJoined?: boolean;
+
+  @Expose()
+  @ApiPropertyOptional({ nullable: true })
+  joinedTeamId?: string | null;
 
   @Expose()
   @ApiPropertyOptional({ type: [TournamentTeamSnippetDto] })

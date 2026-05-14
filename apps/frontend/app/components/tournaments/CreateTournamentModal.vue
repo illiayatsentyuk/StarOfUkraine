@@ -22,12 +22,12 @@
             .form-row
                 .form-group
                     label.form-label ДАТА СТАРТУ *
-                    VeeField(name="startDate" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
+                    VeeField(name="startDate" rules="required|not_past_date" v-slot="{ field, errorMessage, handleChange }")
                         FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
                     label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
-                    VeeField(name="registrationStart" rules="required|min_date_future:3" v-slot="{ field, errorMessage, handleChange }")
+                    VeeField(name="registrationStart" rules="required|not_past_date|before_date:@startDate" v-slot="{ field, errorMessage, handleChange }")
                         FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
             

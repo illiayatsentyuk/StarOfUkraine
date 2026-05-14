@@ -20,7 +20,10 @@ section.task-detail
 
             // Main content: Task Description
             main.task-main
-                TaskDetailHero(:task="task")
+                TaskDetailHero(
+                    :task="task"
+                    :isAdmin="authStore.isAdmin"
+                )
                 
                 .content-card
                     .content-section
@@ -54,8 +57,8 @@ section.task-detail
                         v-if="authStore.isJury"
                         :to="localePath(`/tournaments/${route.params.id}/tasks/${task.id}/admin`)"
                     )
-                        i.pi.pi-cog
-                        span ПАНЕЛЬ ПЕРЕВІРКИ
+                        i.pi.pi-verified
+                        span ПАНЕЛЬ ЖУРІ
 
     .error-state(v-else)
         p Завдання не знайдено

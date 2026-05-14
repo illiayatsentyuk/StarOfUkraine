@@ -7,21 +7,24 @@ section.tasks-page
 
     TasksHero(
         :loading="store.loading"
-        :taskCount="store.tasks.length"
+        :taskCount="visibleTasks.length"
         :isAdmin="authStore.isAdmin"
+        :tournamentId="route.params.id"
         @create="isModalOpen = true"
+        @assign-jury="store.assignJury(route.params.id)"
     )
 
     .loading-state(v-if="store.loading")
         i.pi.pi-spin.pi-spinner
         span Завантаження завдань...
 
-    .tasks-grid(v-else-if="store.tasks.length > 0")
+    .tasks-grid(v-else-if="visibleTasks.length > 0")
         TaskCard(
-            v-for="task in store.tasks"
+            v-for="task in visibleTasks"
             :key="task.id"
             :task="task"
             :tournamentId="route.params.id"
+            :isAdmin="authStore.isAdmin"
         )
 
     .empty-state(v-else)
@@ -38,13 +41,18 @@ section.tasks-page
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import CreateTaskModal from '~/components/Tasks/CreateTaskModal.vue'
 
 const localePath = useLocalePath()
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()
+
+const visibleTasks = computed(() => {
+    if (authStore.isAdmin || authStore.isJury) return store.tasks
+    return store.tasks.filter(t => t.status !== 'DRAFT')
+})
 
 const isModalOpen = ref(false)
 
@@ -58,18 +66,7 @@ onMounted(async () => {
     await teamsStore.initActiveTeam()
     const tournament = await tournamentsStore.fetchTournamentById(tournamentId)
     
-    if (tournament) {
-        const isJoined = tournament.teams?.some((t: any) => t.id === teamsStore.activeTeamId)
-        const hasStarted = tournament.status === 'ONGOING' || tournament.status === 'COMPLETED'
-        const canSee = authStore.isAdmin || authStore.isJury || (isJoined && hasStarted)
-        
-        if (!canSee) {
-            navigateTo(`/tournaments/${tournamentId}`)
-            return
-        }
-    }
-
-    store.fetchTasks(tournamentId)
+    await store.fetchTasks(tournamentId)
 })
 
 async function handleCreateTask(payload: any) {

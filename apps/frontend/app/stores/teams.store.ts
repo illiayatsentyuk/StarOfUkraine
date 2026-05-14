@@ -154,8 +154,12 @@ export const useTeamsStore = defineStore('teams', () => {
             return created
         } catch (err: any) {
             console.error('Помилка API при створенні команди:', err)
-            toast.error('Не вдалося створити команду')
-            error.value = err.message || 'Помилка створення'
+            const msg = err.response?.data?.message || err.message || 'Не вдалося створити команду'
+            const localizedMsg = msg === 'Team already exists' 
+                ? 'Команда з такою назвою вже існує' 
+                : msg
+            toast.error(localizedMsg)
+            error.value = localizedMsg
             throw err
         } finally {
             loading.value = false

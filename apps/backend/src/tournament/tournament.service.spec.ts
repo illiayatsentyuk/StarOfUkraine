@@ -31,6 +31,9 @@ describe('TournamentService', () => {
       findMany: jest.fn(),
       findUnique: jest.fn(),
     },
+    user: {
+      findMany: jest.fn(),
+    },
   };
 
   const mockCache = {
@@ -62,6 +65,7 @@ describe('TournamentService', () => {
     teamSizeMax: 7,
     status: TournamentStatus.DRAFT,
     hideTeamsUntilRegistrationEnds: true,
+    teams: [],
   };
 
   beforeEach(async () => {
@@ -184,7 +188,7 @@ describe('TournamentService', () => {
       const result = await service.findAll({ page: 2, limit: 10 });
 
       expect(result).toEqual({
-        data: [tournamentMock],
+        data: [{ ...tournamentMock, isJoined: false }],
         currentPage: 2,
         nextPage: null,
         previousPage: 1,
@@ -195,11 +199,22 @@ describe('TournamentService', () => {
         skip: 10,
         take: 10,
         orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
-        include: { teams: true },
+        include: {
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              captain: { select: { id: true } },
+              members: { select: { id: true } },
+            },
+          },
+        },
       });
       expect(mockCache.set).toHaveBeenCalledWith(
         CacheKeys.LIST(0, hashQuery({ page: 2, limit: 10 })),
-        expect.objectContaining({ data: [tournamentMock] }),
+        expect.objectContaining({
+          data: [{ ...tournamentMock, isJoined: false }],
+        }),
         CACHE_TTL.LIST,
       );
     });
@@ -385,7 +400,7 @@ describe('TournamentService', () => {
 
       const result = await service.findOne('tournament-1');
 
-      expect(result).toEqual(tournamentMock);
+      expect(result).toEqual({ ...tournamentMock, isJoined: false, joinedTeamId: null });
       expect(mockPrisma.tournament.findUnique).not.toHaveBeenCalled();
     });
 
@@ -393,7 +408,7 @@ describe('TournamentService', () => {
       mockPrisma.tournament.findUnique.mockResolvedValue(tournamentMock);
 
       const result = await service.findOne('tournament-1');
-      expect(result).toEqual(tournamentMock);
+      expect(result).toEqual({ ...tournamentMock, isJoined: false, joinedTeamId: null });
       expect(mockCache.set).toHaveBeenCalledWith(
         CacheKeys.ONE('tournament-1', 0),
         tournamentMock,
@@ -481,6 +496,7 @@ describe('TournamentService', () => {
         members: [{ id: 'user-1' }, { id: 'user-2' }],
       });
       mockPrisma.team.findFirst.mockResolvedValue(null);
+      mockPrisma.team.findMany.mockResolvedValue([]);
       const updated = { ...openTournament, teams: [{ id: 'team-1' }] };
       mockPrisma.tournament.update.mockResolvedValue(updated);
 

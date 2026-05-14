@@ -56,12 +56,4 @@ export class FindTournamentQueryDto {
   @IsEnum(TournamentStatus)
   status?: TournamentStatus;
 
-  @ApiPropertyOptional({
-    description: 'Filter only tournaments created by the current user (admin)',
-    example: true,
-  })
-  @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
-  @IsBoolean()
-  createdByMe?: boolean;
 }

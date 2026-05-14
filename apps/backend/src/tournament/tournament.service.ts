@@ -32,7 +32,7 @@ export class TournamentService {
     @Inject('CACHE_MANAGER') private cacheManager: Cache,
     @InjectPinoLogger(TournamentService.name)
     private readonly logger: PinoLogger,
-  ) {}
+  ) { }
 
   private async getListVersion(): Promise<number> {
     return (await this.cacheManager.get<number>(CacheKeys.LIST_VERSION)) ?? 0;
@@ -62,7 +62,7 @@ export class TournamentService {
     );
   }
 
-  async create(data: CreateTournamentDto, createdById: string) {
+  async create(data: CreateTournamentDto, userId?: string) {
     const existingTournament = await this.prisma.tournament.findFirst({
       where: {
         name: data.name,
@@ -86,7 +86,6 @@ export class TournamentService {
         hideTeamsUntilRegistrationEnds:
           data.hideTeamsUntilRegistrationEnds ?? false,
         minJuryPerSubmission: data.minJuryPerSubmission ?? 2,
-        createdById,
       },
     });
 
@@ -184,10 +183,25 @@ export class TournamentService {
 
     const team = await this.prisma.team.findUnique({
       where: { id: data.teamId },
-      include: { members: { select: { id: true } } },
+      include: {
+        captain: { select: { id: true } },
+        members: { select: { id: true } }
+      },
     });
     if (!team) {
       throw new NotFoundException('Team not found');
+    }
+
+    const memberCount = team.members.length;
+    if (tournament.teamSizeMin && memberCount < tournament.teamSizeMin) {
+      throw new BadRequestException(
+        `Team must have at least ${tournament.teamSizeMin} members to join this tournament (currently: ${memberCount})`,
+      );
+    }
+    if (tournament.teamSizeMax && memberCount > tournament.teamSizeMax) {
+      throw new BadRequestException(
+        `Team cannot have more than ${tournament.teamSizeMax} members in this tournament (currently: ${memberCount})`,
+      );
     }
 
     const alreadyJoined = teams.some((t) => t.id === team.id);
@@ -197,16 +211,24 @@ export class TournamentService {
       );
     }
 
-    const captainAlreadyRegistered = await this.prisma.team.findFirst({
+    const userIds = new Set<string>();
+    if (team.captain?.id) userIds.add(team.captain.id);
+    team.members.forEach(m => userIds.add(m.id));
+
+    const usersAlreadyInTournament = await this.prisma.team.findMany({
       where: {
-        captainEmail: team.captainEmail,
         tournaments: { some: { id } },
         NOT: { id: team.id },
-      },
+        OR: [
+          { captain: { id: { in: Array.from(userIds) } } },
+          { members: { some: { id: { in: Array.from(userIds) } } } }
+        ]
+      }
     });
-    if (captainAlreadyRegistered) {
+
+    if (usersAlreadyInTournament.length > 0) {
       throw new BadRequestException(
-        'This captain already has another team registered for this tournament',
+        'One or more team members are already registered for this tournament in another team',
       );
     }
 
@@ -253,16 +275,14 @@ export class TournamentService {
     const listV = await this.getListVersion();
     const cacheKey = CacheKeys.LIST(listV, hashQuery(query));
 
-    if (!query.createdByMe) {
-      const cached =
-        await this.cacheManager.get<ReturnType<typeof buildPage>>(cacheKey);
-      if (cached) {
-        this.logger.debug(
-          { listVersion: listV, cacheKey },
-          'Tournament list cache hit',
-        );
-        return cached;
-      }
+    const cached =
+      await this.cacheManager.get<ReturnType<typeof buildPage>>(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        { listVersion: listV, cacheKey },
+        'Tournament list cache hit',
+      );
+      return cached;
     }
 
     const name = (query.name ?? '').trim();
@@ -289,9 +309,6 @@ export class TournamentService {
     if (status) {
       where.status = status;
     }
-    if (query.createdByMe && userId) {
-      where.createdById = userId;
-    }
     const whereOrUndefined = Object.keys(where).length ? where : undefined;
 
     const totalCount = await (whereOrUndefined
@@ -313,11 +330,37 @@ export class TournamentService {
       take: Number(limit),
       orderBy,
       include: {
-        teams: true,
+        teams: {
+          select: {
+            id: true,
+            name: true,
+            captain: { select: { id: true } },
+            members: { select: { id: true } }
+          }
+        },
       },
     });
 
-    const result = buildPage(tournaments, page, maximumPage, limit);
+    // Determine isJoined for each tournament and hide teams if needed
+    const processedData = tournaments.map(t => {
+      let isJoined = false;
+      if (userId) {
+        isJoined = t.teams.some(team => 
+          team.captain?.id === userId || team.members.some(m => m.id === userId)
+        );
+      }
+
+      const shouldHide = t.hideTeamsUntilRegistrationEnds && 
+                        new Date() < new Date(t.registrationEnd);
+
+      return {
+        ...t,
+        isJoined,
+        teams: shouldHide ? [] : t.teams
+      };
+    });
+
+    const result = buildPage(processedData, page, maximumPage, limit);
 
     await this.cacheManager.set(cacheKey, result, CACHE_TTL.LIST);
 
@@ -328,33 +371,66 @@ export class TournamentService {
     return result;
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId?: string) {
     const oneV = await this.getOneVersion(id);
     const cacheKey = CacheKeys.ONE(id, oneV);
 
     const cached =
-      await this.cacheManager.get<
-        Awaited<ReturnType<typeof this.prisma.tournament.findUnique>>
-      >(cacheKey);
+      await this.cacheManager.get<TournamentWithTeams>(cacheKey);
+
+    let tournament: TournamentWithTeams | null;
     if (cached) {
       this.logger.debug(
         { tournamentId: id, oneVersion: oneV },
         'Tournament cache hit',
       );
-      return cached;
+      tournament = structuredClone(cached); // Deep copy to avoid mutating cache
+    } else {
+      tournament = await this.prisma.tournament.findUnique({
+        where: { id },
+        include: {
+          teams: {
+            select: {
+              id: true,
+              name: true,
+              captain: { select: { id: true } },
+              members: { select: { id: true } }
+            }
+          }
+        }
+      });
+      if (!tournament) {
+        throw new NotFoundException('Tournament not found');
+      }
+      await this.cacheManager.set(cacheKey, tournament, CACHE_TTL.ONE);
+      this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
     }
 
-    const tournament = await this.prisma.tournament.findUnique({
-      where: { id },
-    });
-    if (!tournament) {
-      throw new NotFoundException('Tournament not found');
+    // Handle isJoined and joinedTeamId
+    let isJoined = false;
+    let joinedTeamId: string | null = null;
+    if (userId && tournament.teams) {
+      const joinedTeam = tournament.teams.find((team) =>
+        team.captain?.id === userId || team.members.some((m) => m.id === userId),
+      );
+      if (joinedTeam) {
+        isJoined = true;
+        joinedTeamId = joinedTeam.id;
+      }
     }
 
-    await this.cacheManager.set(cacheKey, tournament, CACHE_TTL.ONE);
+    // Handle hideTeams
+    const shouldHide = tournament.hideTeamsUntilRegistrationEnds && 
+                      new Date() < new Date(tournament.registrationEnd);
+    
+    const finalTournament = {
+      ...tournament,
+      isJoined,
+      joinedTeamId,
+      teams: shouldHide ? [] : tournament.teams
+    };
 
-    this.logger.debug({ tournamentId: id }, 'Tournament loaded from database');
-    return tournament;
+    return finalTournament;
   }
 
   async getLeaderboard(tournamentId: string) {
@@ -568,6 +644,19 @@ export class TournamentService {
     return [primary, { id: 'asc' }];
   }
 }
+
+type TournamentWithTeams = Prisma.TournamentGetPayload<{
+  include: {
+    teams: {
+      select: {
+        id: true;
+        name: true;
+        captain: { select: { id: true } };
+        members: { select: { id: true } };
+      };
+    };
+  };
+}>;
 
 type CriterionScore = { id: string; avgPoints: number };
 

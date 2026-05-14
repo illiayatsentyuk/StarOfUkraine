@@ -14,19 +14,21 @@ header.tournament-detail__hero
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useTeamsStore } from '~/stores/teams.store'
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const props = defineProps<{
     name: string
     status: TournamentStatusInfo | null
     canSeeTasks: boolean
+    joinedTeamId?: string | null
 }>()
 
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
-const tournamentId = computed(() => route.params.id as string)
 const teamsStore = useTeamsStore()
+const tournamentId = computed(() => route.params.id as string)
 
 const tasksLink = computed(() => ({
     path: localePath(`/tournaments/${tournamentId.value}/tasks`),

@@ -75,6 +75,39 @@ class AssignmentEvaluationDto {
   comment?: string;
 }
 
+class AssignmentTournamentDto {
+  @Expose()
+  @ApiProperty()
+  name: string;
+}
+
+class AssignmentTaskDto {
+  @Expose()
+  @ApiProperty()
+  id: string;
+
+  @Expose()
+  @ApiProperty()
+  name: string;
+
+  @Expose()
+  @ApiProperty()
+  tournamentId: string;
+
+  @Expose()
+  @Type(() => AssignmentTournamentDto)
+  @ApiProperty({ type: AssignmentTournamentDto })
+  tournament: AssignmentTournamentDto;
+
+  @Expose()
+  @ApiProperty()
+  criteria: Record<string, unknown>;
+
+  @Expose()
+  @ApiProperty()
+  order: number;
+}
+
 class AssignmentSubmissionDto {
   @Expose()
   @ApiProperty()
@@ -112,6 +145,11 @@ class AssignmentSubmissionDto {
   @Type(() => AssignmentTeamDto)
   @ApiProperty({ type: AssignmentTeamDto })
   team: AssignmentTeamDto;
+
+  @Expose()
+  @Type(() => AssignmentTaskDto)
+  @ApiProperty({ type: AssignmentTaskDto })
+  task: AssignmentTaskDto;
 
   @Expose()
   @Type(() => AssignmentEvaluationDto)

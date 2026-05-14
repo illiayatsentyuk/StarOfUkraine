@@ -17,12 +17,26 @@ header.header-competition
                     @click="openModal"
                 )
             
-            template(v-if="loginStore.isAuthenticated && !teamsStore.activeTeam")
+            template(v-if="loginStore.isAuthenticated")
+                NuxtLink.jury-link(
+                    v-if="loginStore.user.role === 'JURY' && route.params.id"
+                    :to="`/tournaments/${route.params.id}/judge`"
+                )
+                    i.pi.pi-verified
+                    span ПАНЕЛЬ ЖУРІ
+
                 Button.create-btn(
+                    v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                     type="button"
                     :label="$t('nav.create_team').toUpperCase()"
                     @click="openTeamModal"
                 )
+                NuxtLink.my-team-link(
+                    v-else-if="loginStore.hasTeam"
+                    :to="`/teams/${loginStore.userTeam.id}`"
+                )
+                    i.pi.pi-users
+                    span МОЯ КОМАНДА
 
             LanguageSwitcher
 
@@ -66,12 +80,28 @@ header.header-competition
                         @click="openModal(); isMenuOpen = false"
                     )
                 
-                template(v-if="loginStore.isAuthenticated && !teamsStore.activeTeam")
+                template(v-if="loginStore.isAuthenticated")
+                    NuxtLink.jury-link(
+                        v-if="loginStore.user.role === 'JURY' && route.params.id"
+                        :to="`/tournaments/${route.params.id}/judge`"
+                        @click="isMenuOpen = false"
+                    )
+                        i.pi.pi-verified
+                        span ПАНЕЛЬ ЖУРІ
+
                     Button.create-btn(
+                        v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                         type="button"
                         :label="$t('nav.create_team').toUpperCase()"
                         @click="openTeamModal(); isMenuOpen = false"
                     )
+                    NuxtLink.my-team-link(
+                        v-else-if="loginStore.hasTeam"
+                        :to="`/teams/${loginStore.userTeam.id}`"
+                        @click="isMenuOpen = false"
+                    )
+                        i.pi.pi-users
+                        span МОЯ КОМАНДА
 
             .mobile-menu__user(v-if="loginStore.user")
                 NuxtLink.user-link(:to="localePath('/profile')" @click="isMenuOpen = false")
@@ -273,33 +303,55 @@ function closeModal(){
         }
     }
 
-    .user-team {
-        display: flex;
+    .my-team-link {
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
+        gap: 8px;
+        padding: 10px 16px;
         background: var(--color-bg-secondary);
         border: 1px solid var(--color-border);
-        border-radius: 4px;
-        
-        .team-label {
-            font-family: var(--font-display);
-            font-size: 9px;
-            font-weight: 700;
-            color: var(--color-text-muted);
-            letter-spacing: 1px;
+        color: var(--color-text);
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        i {
+            color: var(--color-primary);
+            font-size: 14px;
         }
 
-        .team-name {
-            font-family: var(--font-sans);
-            font-size: 12px;
-            font-weight: 600;
+        &:hover {
+            border-color: var(--color-primary);
             color: var(--color-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 120px;
+            transform: translateY(-2px);
         }
+    }
+
+    .jury-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--color-primary);
+        color: white;
+        font-family: var(--font-display);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        text-decoration: none;
+        transition: all 0.2s ease;
+
+        i { font-size: 14px; }
+        &:hover { background: var(--color-text); transform: translateY(-2px); }
+    }
+
+    .user-team {
+        display: none;
     }
 
     .login-btn {

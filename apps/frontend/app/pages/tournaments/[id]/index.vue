@@ -14,6 +14,7 @@ section.tournament-detail
             :tournamentId="route.params.id"
             :status="tournamentStatus"
             :canSeeTasks="canSeeTasks"
+            :joinedTeamId="tournament.joinedTeamId"
         )
 
         .tournament-detail__layout
@@ -28,20 +29,34 @@ section.tournament-detail
                         :maxTeams="tournament.maxTeams"
                     )
 
-
+                .content-section
+                    h3.section-label КОМАНДИ
+                    p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
+                    template(v-else)
+                        p.description(v-if="loadingTeams") Завантаження команд...
+                        p.description(v-else-if="!teams.length") Команди поки не додані.
+                        .teams-grid(v-else)
+                            TeamCard(
+                                v-for="team in teams"
+                                :key="team.id"
+                                :team="team"
+                                :isAdmin="loginStore.isAdmin"
+                                @delete="teamsStore.deleteTeam($event)"
+                            )
 
             TournamentSidebar(
                 :tournament="tournament"
                 :tournamentId="tournamentId"
                 :status="tournamentStatus"
-                :isAdmin="authStore.isAdmin"
-                :isJury="authStore.isJury"
-                :isAuthenticated="authStore.isAuthenticated"
+                :isAdmin="loginStore.isAdmin"
+                :isJury="loginStore.isJury"
+                :isAuthenticated="loginStore.isAuthenticated"
                 :isRegistrationActive="isRegistrationActive"
                 :isAlreadyJoined="isAlreadyJoined"
-                :hasTeam="!!teamsStore.activeTeam"
+                :hasTeam="hasTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
+                :isLoadingAuth="loginStore.loading"
                 :shouldHideTeams="shouldHideTeams"
                 :teams="teams"
                 :loadingTeams="loadingTeams"
@@ -55,21 +70,21 @@ section.tournament-detail
         NuxtLink(:to="localePath('/')") Повернутися до списку
 
     DeleteModal(
-        v-if="tournament && authStore.isAdmin"
+        v-if="tournament && loginStore.isAdmin"
         :isOpen="isDeleteModalOpen"
         :tournament="tournament"
         @close="isDeleteModalOpen = false"
         @delete="onTournamentDeleted"
     )
     EditTournamentModal(
-        v-if="tournament && authStore.isAdmin"
+        v-if="tournament && loginStore.isAdmin"
         :isOpen="isEditModalOpen"
         :tournament="tournament"
         @close="isEditModalOpen = false"
         @updated="onTournamentUpdated"
     )
     CreateTeamModal(
-        v-if="tournament && authStore.isAuthenticated && !authStore.isAdmin && !authStore.isJury"
+        v-if="tournament && loginStore.isAuthenticated && !loginStore.isAdmin && !loginStore.isJury"
         :isTeamOpen="isTeamOpen"
         @close="isTeamOpen = false"
         @success="onTeamCreated"
@@ -80,9 +95,9 @@ section.tournament-detail
 const localePath = useLocalePath()
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
-const authStore = useLoginStore()
+const loginStore = useLoginStore()
 const teamsStore = useTeamsStore()
-const api = useApi()
+const toast = useServerSafeToast()
 
 const tournamentId = computed(() => route.params.id as string)
 
@@ -109,7 +124,7 @@ const isRegistrationActive = computed(() => {
 })
 
 const shouldHideTeams = computed(() => {
-    if (authStore.isAdmin || authStore.isJury) return false
+    if (loginStore.isAdmin || loginStore.isJury) return false
     if (!tournament.value?.hideTeamsUntilRegistrationEnds) return false
     if (!tournament.value?.registrationEnd) return false
     return new Date(tournament.value.registrationEnd) > new Date()
@@ -117,15 +132,23 @@ const shouldHideTeams = computed(() => {
 
 // Перевірка чи команда юзера вже зареєстрована в цьому турнірі
 const isAlreadyJoined = computed(() => {
+    // 1. Спробуємо взяти готовий статус з бекенду (найнадійніший спосіб)
+    if (tournament.value?.isJoined) return true
+
+    // 2. Фолбек для локальної перевірки (якщо список команд доступний)
     const activeTeamId = teamsStore.activeTeamId
-    if (!activeTeamId) return false
+    if (!activeTeamId || !Array.isArray(teams.value)) return false
     return teams.value.some((t) => t.id === activeTeamId)
 })
 
+const hasTeam = computed(() => {
+    if (!loginStore.user) return false
+    return (loginStore.user.teamsAsCaptain?.length || 0) > 0 || (loginStore.user.teamsAsMember?.length || 0) > 0
+})
+
 const canSeeTasks = computed(() => {
-    if (authStore.isAdmin || authStore.isJury) return true
-    const hasStarted = tournament.value?.status === 'ONGOING' || tournament.value?.status === 'COMPLETED'
-    return isAlreadyJoined.value && hasStarted
+    if (loginStore.isAdmin || loginStore.isJury) return true
+    return tournament.value?.status !== 'DRAFT'
 })
 
 const refreshTeams = async () => {
@@ -135,6 +158,7 @@ const refreshTeams = async () => {
     }
     loadingTeams.value = true
     try {
+        const api = useApi()
         const response = await api.get(`/tournaments/${tournamentId.value}/teams`)
         teams.value = response.data || []
     } catch {
@@ -146,11 +170,33 @@ const refreshTeams = async () => {
 
 // Головна дія: вступити в турнір
 const handleJoinTournament = async () => {
-    if (!authStore.isAuthenticated) return
+    if (!loginStore.isAuthenticated) return
 
-    // Якщо немає команди — спочатку відкрити модалку створення
+    // Якщо активна команда не вибрана, але у юзера є команди — виберемо першу
+    if (!teamsStore.activeTeam && hasTeam.value) {
+        const firstTeamId = loginStore.user?.teamsAsCaptain?.[0]?.id || loginStore.user?.teamsAsMember?.[0]?.id
+        if (firstTeamId) {
+            await teamsStore.setActiveTeam(firstTeamId)
+        }
+    }
+
+    // Якщо все ще немає команди — відкрити модалку створення
     if (!teamsStore.activeTeam) {
         isTeamOpen.value = true
+        return
+    }
+
+    const team = teamsStore.activeTeam
+    const memberCount = team?.members?.length || 0
+
+    // Валідація кількості учасників
+    if (tournament.value?.teamSizeMin && memberCount < tournament.value.teamSizeMin) {
+        toast.error(`У вашій команді недостатньо учасників. Для цього турніру потрібно мінімум ${tournament.value.teamSizeMin} (зараз: ${memberCount}). Запросіть друзів у команду!`)
+        return
+    }
+
+    if (tournament.value?.teamSizeMax && memberCount > tournament.value.teamSizeMax) {
+        toast.error(`У вашій команді забагато учасників. Максимальна кількість для цього турніру: ${tournament.value.teamSizeMax} (зараз: ${memberCount}).`)
         return
     }
 
@@ -166,9 +212,19 @@ const handleJoinTournament = async () => {
     }
 }
 
-// Після створення команди — автоматично приєднуємо до турніру
+// Після створення команди — автоматично приєднуємо до турніру, якщо склад відповідає вимогам
 const onTeamCreated = async ({ teamId }: { teamId: string }) => {
     await teamsStore.setActiveTeam(teamId)
+    
+    // Отримуємо актуальні дані про нову команду (вона завжди має 1 учасника - капітана)
+    const team = await teamsStore.fetchTeamById(teamId)
+    const memberCount = 1
+
+    if (tournament.value?.teamSizeMin && memberCount < tournament.value.teamSizeMin) {
+        toast.warning(`Команду створено! Але для участі у цьому турнірі вам потрібно запросити ще як мінімум ${tournament.value.teamSizeMin - 1} учасн.(иків). Ви зможете зареєструватися, коли склад буде повним.`)
+        return
+    }
+
     joining.value = true
     try {
         await tournamentStore.joinTournament(tournamentId.value, teamId)

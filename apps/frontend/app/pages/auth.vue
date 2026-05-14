@@ -5,7 +5,7 @@
 
     AuthSocial(
       :isLogin="isLogin"
-      @loginGoogle="loginStore.loginByGoogle()"
+      @login-google="() => loginStore.loginByGoogle()"
     )
     
     AuthForm(
@@ -49,9 +49,8 @@ watch(() => loginStore.user, (user) => {
 }, { immediate: true })
 
 onMounted(() => {
-  // Якщо ми повернулися після Google Auth з успіхом
   if (route.query.oauth === 'success') {
-    console.log('Google Auth success, waiting for user data...')
+    // success handled by watcher
   }
 })
 
@@ -66,13 +65,19 @@ interface FormData {
 }
 
 const handleRegister = async (values: FormData) => {
-  if (isLogin.value) {
-    await loginStore.loginByEmail({
-      email: values.email,
-      password: values.password
-    })
-  } else {
-    await loginStore.signupByEmail(values)
+  const toast = useServerSafeToast()
+  try {
+    if (isLogin.value) {
+      await loginStore.loginByEmail({
+        email: values.email,
+        password: values.password
+      })
+    } else {
+      await loginStore.signupByEmail(values)
+    }
+  } catch (e: any) {
+    const msg = e.response?.data?.message || 'Помилка авторизації'
+    toast.error(msg)
   }
 }
 </script>

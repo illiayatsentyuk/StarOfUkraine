@@ -3,13 +3,20 @@ header.tasks-page__hero
   .hero-content
     h1.title ЗАВДАННЯ ТУРНІРУ
     p.subtitle(v-if="!loading") Доступно завдань: {{ taskCount }}
-  Button.create-btn(
-    v-if="isAdmin"
-    type="button"
-    label=" СТВОРИТИ ЗАВДАННЯ"
-    icon="pi pi-plus"
-    @click="$emit('create')"
-  )
+  .hero-actions(v-if="isAdmin")
+    Button.admin-btn.assign-btn(
+      type="button"
+      label="РОЗПОДІЛИТИ ЖУРІ"
+      icon="pi pi-users"
+      :loading="loading"
+      @click="emit('assignJury')"
+    )
+    Button.admin-btn.create-btn(
+      type="button"
+      label="СТВОРИТИ ЗАВДАННЯ"
+      icon="pi pi-plus"
+      @click="emit('create')"
+    )
 </template>
 
 <script setup lang="ts">
@@ -17,10 +24,12 @@ defineProps<{
   loading: boolean
   taskCount: number
   isAdmin: boolean
+  tournamentId: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'create'): void
+  (e: 'assignJury'): void
 }>()
 </script>
 
@@ -68,24 +77,40 @@ defineEmits<{
     font-weight: 500;
   }
 
-  :deep(.create-btn) {
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  :deep(.admin-btn) {
     display: inline-flex;
     gap: 12px;
-    background: var(--color-primary);
-    border: 1px solid var(--color-primary);
-    color: white;
+    background: var(--color-surface);
+    border: 1px solid var(--color-text);
+    color: var(--color-text);
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 12px;
-    padding: 16px 32px;
+    font-size: 11px;
+    padding: 14px 24px;
     border-radius: 0;
     letter-spacing: 1.5px;
     transition: all 0.2s;
 
     &:hover {
       background: var(--color-text);
-      border-color: var(--color-text);
+      color: var(--color-bg);
       transform: translateY(-2px);
+    }
+
+    &.create-btn {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: white;
+      &:hover {
+        background: var(--color-text);
+        border-color: var(--color-text);
+      }
     }
   }
 }

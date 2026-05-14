@@ -25,76 +25,55 @@ section.evaluate-page
                 :class="{ 'submission-card--evaluated': sub.status === 'EVALUATED' }"
             )
                 .submission-card__header
-                    .team-name {{ sub.team?.name || sub.teamId }}
-                    .submission-card__status(
-                        :class="sub.status === 'EVALUATED' ? 'status--done' : 'status--pending'"
-                    ) {{ sub.status === 'EVALUATED' ? 'ОЦІНЕНО' : 'ОЧІКУЄ' }}
+                    .team-info
+                        .team-avatar {{ sub.team.name[0].toUpperCase() }}
+                        .team-details
+                            h3.team-name {{ sub.team.name }}
+                            span.sub-date Відправлено {{ formatDate(sub.updatedAt) }}
+                    .status-tag(:class="sub.status") {{ sub.status === 'EVALUATED' ? 'ОЦІНЕНО' : 'ОЧІКУЄ' }}
 
-                .submission-card__links
-                    a.link(
-                        v-if="sub.githubUrl"
-                        :href="sub.githubUrl"
-                        target="_blank"
-                        rel="noopener"
-                    )
-                        i.pi.pi-github
-                        span GitHub
-                    a.link(
-                        v-if="sub.videoUrl"
-                        :href="sub.videoUrl"
-                        target="_blank"
-                        rel="noopener"
-                    )
-                        i.pi.pi-youtube
-                        span Відео
-                    a.link(
-                        v-if="sub.liveUrl"
-                        :href="sub.liveUrl"
-                        target="_blank"
-                        rel="noopener"
-                    )
-                        i.pi.pi-external-link
-                        span Демо
+                .submission-card__body
+                    .links
+                        a.link-item(v-if="sub.githubUrl" :href="sub.githubUrl" target="_blank")
+                            i.pi.pi-github
+                            span GitHub
+                        a.link-item(v-if="sub.videoUrl" :href="sub.videoUrl" target="_blank")
+                            i.pi.pi-youtube
+                            span Video
+                        a.link-item(v-if="sub.liveUrl" :href="sub.liveUrl" target="_blank")
+                            i.pi.pi-external-link
+                            span Live
 
-                p.submission-card__summary(v-if="sub.summary") {{ sub.summary }}
+                    .grading(v-if="task.criteria?.rubric?.length")
+                        .criteria-item(v-for="item in task.criteria.rubric" :key="item.id")
+                            .criteria-info
+                                span.label {{ item.label }}
+                                span.max (макс. {{ item.maxPoints }})
+                            input.score-input(
+                                type="number" :min="0" :max="item.maxPoints"
+                                v-model.number="scores[sub.id][item.id]"
+                                :class="{ 'error': scores[sub.id][item.id] > item.maxPoints }"
+                            )
 
-                .rubric(v-if="rubric.length")
-                    h4.rubric__title КРИТЕРІЇ ОЦІНЮВАННЯ
-                    .rubric__item(v-for="item in rubric" :key="item.id")
-                        .rubric__label
-                            span {{ item.label }}
-                            span.rubric__max / {{ item.maxPoints }}
-                        input.rubric__input(
-                            type="number"
-                            :min="0"
-                            :max="item.maxPoints"
-                            v-model.number="scores[sub.id][item.id]"
-                            :placeholder="`0–${item.maxPoints}`"
-                        )
-                    .rubric__total
-                        span ЗАГАЛОМ
-                        span.rubric__total-value {{ getTotal(sub.id) }}
-
-                .comment-wrap
-                    label.comment-label КОМЕНТАР
-                    textarea.comment-input(
-                        v-model="comments[sub.id]"
-                        rows="3"
-                        placeholder="Обов'язковий коментар журі..."
-                    )
+                    .no-criteria(v-else)
+                        i.pi.pi-exclamation-circle
+                        span Критерії не встановлені
 
                 .submission-card__footer
-                    button.btn-submit(
-                        :disabled="submitting[sub.id]"
-                        @click="submit(sub.id)"
+                    .total
+                        span СУМА:
+                        span.points {{ calculateTotal(sub.id) }}
+                    Button.save-btn(
+                        :label="sub.status === 'EVALUATED' ? 'ОНОВИТИ' : 'ЗБЕРЕГТИ'"
+                        :loading="submitting[sub.id]"
+                        @click="submitGrade(sub.id)"
                     )
-                        i.pi(
-                            :class="submitting[sub.id] ? 'pi-spin pi-spinner' : 'pi-check'"
-                        )
-                        span {{ submitting[sub.id] ? 'Збереження...' : 'Зберегти оцінку' }}
+
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+
 const localePath = useLocalePath()
 const route = useRoute()
 const api = useApi()
@@ -103,96 +82,93 @@ const toast = useServerSafeToast()
 const loading = ref(true)
 const task = ref<any>(null)
 const submissions = ref<any[]>([])
-const submitting = ref<Record<string, boolean>>({})
 const scores = ref<Record<string, Record<string, number>>>({})
-const comments = ref<Record<string, string>>({})
+const submitting = ref<Record<string, boolean>>({})
 
-const rubric = computed<Array<{ id: string; label: string; maxPoints: number }>>(() => {
-    const c = task.value?.criteria
-    if (!c || !Array.isArray(c.rubric)) return []
-    return c.rubric
-})
+function formatDate(date: string) {
+    return new Date(date).toLocaleDateString('uk-UA')
+}
 
-function initSubmission(sub: any) {
+function calculateTotal(subId: string) {
+    const subScores = scores.value[subId]
+    if (!subScores) return 0
+    return Object.values(subScores).reduce((acc, val) => acc + (Number(val) || 0), 0)
+}
+
+function initScores(sub: any) {
     if (!scores.value[sub.id]) {
         const entry: Record<string, number> = {}
-        for (const item of rubric.value) entry[item.id] = 0
+        const rubric = task.value?.criteria?.rubric || []
+        rubric.forEach((item: any) => {
+            const existing = sub.evaluations?.[0]?.scores?.find((s: any) => s.id === item.id)
+            entry[item.id] = existing ? existing.points : 0
+        })
         scores.value[sub.id] = entry
     }
-    if (!comments.value[sub.id]) comments.value[sub.id] = ''
 }
 
-function getTotal(subId: string): number {
-    const entry = scores.value[subId]
-    if (!entry) return 0
-    return Object.values(entry).reduce((s, v) => s + (v || 0), 0)
-}
+async function submitGrade(subId: string) {
+    const subScores = scores.value[subId]
+    const rubric = task.value?.criteria?.rubric || []
 
-async function submit(subId: string) {
-    const scoreMap = scores.value[subId] || {}
-    const comment = comments.value[subId]?.trim()
-    if (!comment) {
-        toast.warning('Додайте коментар перед збереженням')
-        return
+    for (const item of rubric) {
+        if (subScores[item.id] > item.maxPoints) {
+            toast.error(`Максимум для "${item.label}" - ${item.maxPoints}`)
+            return
+        }
     }
 
-    const scoreEntries = rubric.value.map((item) => ({
+    const scoreEntries = rubric.map((item: any) => ({
         id: item.id,
-        points: scoreMap[item.id] ?? 0,
+        points: subScores[item.id] || 0
     }))
 
     submitting.value[subId] = true
     try {
-        await api.post(`/submissions/${subId}/evaluate`, {
-            scores: scoreEntries,
-            comment,
-        })
-        const sub = submissions.value.find((s) => s.id === subId)
+        await api.post(`/submissions/${subId}/evaluate`, { scores: scoreEntries })
+        toast.success('Оцінку збережено')
+        const sub = submissions.value.find(s => s.id === subId)
         if (sub) sub.status = 'EVALUATED'
-        toast.success('Оцінку збережено!')
-    } catch (err: any) {
-        toast.error(err?.response?.data?.message || 'Помилка збереження')
+    } catch (e: any) {
+        toast.error(e.response?.data?.message || 'Помилка')
     } finally {
         submitting.value[subId] = false
     }
 }
 
 onMounted(async () => {
-    const taskId = route.params.taskId as string
     try {
-        const [taskRes, subsRes] = await Promise.all([
-            api.get(`/tasks/${taskId}`),
-            api.get(`/tasks/${taskId}/submissions`),
+        const [taskRes, subRes] = await Promise.all([
+            api.get(`/tasks/${route.params.taskId}`),
+            api.get(`/submissions/task/${route.params.taskId}`)
         ])
         task.value = taskRes.data
-        submissions.value = subsRes.data
-        for (const sub of submissions.value) initSubmission(sub)
+        submissions.value = subRes.data
+        submissions.value.forEach(s => initScores(s))
     } catch {
-        toast.error('Не вдалося завантажити дані')
+        toast.error('Помилка завантаження')
     } finally {
         loading.value = false
     }
+})
+
+definePageMeta({
+    middleware: ['auth']
 })
 </script>
 
 <style scoped lang="scss">
 .evaluate-page {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 60px 48px 80px;
-    animation: fadeIn 0.4s ease-out;
+    padding: 64px 48px;
 
     @include media($md) {
-        padding: 32px 24px 40px;
+        padding: 32px 24px;
     }
 
     &__nav {
         margin-bottom: 48px;
-
-        @include media($md) {
-            margin-bottom: 32px;
-        }
-
         .back-link {
             display: inline-flex;
             align-items: center;
@@ -202,12 +178,7 @@ onMounted(async () => {
             font-weight: 600;
             font-size: 11px;
             letter-spacing: 1.5px;
-            transition: all 0.2s ease;
-
-            &:hover {
-                color: var(--color-primary);
-                transform: translateX(-4px);
-            }
+            &:hover { color: var(--color-primary); }
         }
     }
 
@@ -215,282 +186,43 @@ onMounted(async () => {
         margin-bottom: 48px;
         border-bottom: 2px solid var(--color-text);
         padding-bottom: 32px;
-
-        @include media($md) {
-            margin-bottom: 32px;
-            padding-bottom: 24px;
-        }
-
-        .title {
-            font-family: var(--font-display);
-            font-size: clamp(32px, 6vw, 56px);
-            font-weight: 700;
-            line-height: 0.95;
-            letter-spacing: -2px;
-            margin: 0 0 12px 0;
-            color: var(--color-text);
-            text-transform: uppercase;
-        }
-
-        .subtitle {
-            font-size: var(--font-size-lg);
-            color: var(--color-text-muted);
-            margin: 0;
-        }
+        .title { font-family: var(--font-display); font-size: 48px; font-weight: 800; margin: 0; }
+        .subtitle { font-size: 18px; color: var(--color-text-muted); margin-top: 8px; }
     }
 }
 
 .submissions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-8);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 32px;
 }
 
 .submission-card {
-    border: 1px solid var(--color-border);
     background: var(--color-surface);
-    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+    display: flex;
+    flex-direction: column;
 
-    &--evaluated {
-        border-color: #22c55e;
-        opacity: 0.75;
-    }
+    &--evaluated { border-color: var(--color-primary); }
 
     &__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: var(--space-5);
+        padding: 24px; border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between;
+        .team-info { display: flex; gap: 16px; .team-avatar { width: 48px; height: 48px; background: var(--color-bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; } .team-name { margin: 0; font-size: 18px; } .sub-date { font-size: 12px; color: var(--color-text-muted); } }
+        .status-tag { padding: 4px 8px; font-size: 10px; font-weight: 800; background: var(--color-bg); &.EVALUATED { color: var(--color-primary); background: var(--color-primary-soft); } }
     }
 
-    .team-name {
-        font-family: var(--font-display);
-        font-size: var(--font-size-xl);
-        font-weight: 700;
-        color: var(--color-text);
-    }
-
-    &__status {
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        padding: 4px 10px;
-        border: 1px solid;
-
-        &.status--done {
-            color: #22c55e;
-            border-color: #22c55e;
-        }
-
-        &.status--pending {
-            color: var(--color-text-muted);
-            border-color: var(--color-border);
-        }
-    }
-
-    &__links {
-        display: flex;
-        gap: var(--space-3);
-        flex-wrap: wrap;
-        margin-bottom: var(--space-5);
-
-        .link {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: 1px solid var(--color-border);
-            color: var(--color-text);
-            text-decoration: none;
-            font-size: var(--font-size-sm);
-            font-weight: 600;
-            transition: border-color 0.2s, color 0.2s;
-
-            &:hover {
-                border-color: var(--color-primary);
-                color: var(--color-primary);
-            }
-        }
-    }
-
-    &__summary {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-muted);
-        line-height: 1.6;
-        margin: 0 0 var(--space-6);
-        padding: var(--space-4);
-        border-left: 3px solid var(--color-border);
+    &__body {
+        padding: 24px; flex: 1;
+        .links { display: flex; gap: 16px; margin-bottom: 24px; .link-item { display: flex; align-items: center; gap: 8px; color: var(--color-text); text-decoration: none; font-size: 13px; font-weight: 600; &:hover { color: var(--color-primary); } } }
+        .grading { .criteria-item { margin-bottom: 16px; .criteria-info { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px; .max { color: var(--color-text-muted); } } .score-input { width: 100%; padding: 10px; background: var(--color-bg); border: 1px solid var(--color-border); color: white; font-weight: 800; &.error { border-color: #ef4444; } } } }
     }
 
     &__footer {
-        margin-top: var(--space-6);
-        display: flex;
-        justify-content: flex-end;
+        padding: 24px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;
+        .total { display: flex; align-items: baseline; gap: 8px; span { font-size: 12px; font-weight: 800; color: var(--color-text-muted); } .points { font-size: 24px; font-weight: 900; color: var(--color-primary); } }
+        .save-btn { background: var(--color-primary); border: none; padding: 12px 24px; font-weight: 800; color: white !important; }
     }
 }
 
-.rubric {
-    margin-bottom: var(--space-5);
-
-    &__title {
-        font-family: var(--font-display);
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        color: var(--color-text-muted);
-        margin: 0 0 var(--space-4);
-    }
-
-    &__item {
-        display: grid;
-        grid-template-columns: 1fr 100px;
-        align-items: center;
-        gap: var(--space-4);
-        padding: var(--space-3) 0;
-        border-bottom: 1px solid var(--color-border);
-
-        &:last-of-type { border-bottom: none; }
-    }
-
-    &__label {
-        display: flex;
-        align-items: baseline;
-        gap: var(--space-2);
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-        color: var(--color-text);
-    }
-
-    &__max {
-        font-size: 11px;
-        color: var(--color-text-muted);
-        font-weight: 400;
-    }
-
-    &__input {
-        width: 100%;
-        padding: 8px 12px;
-        border: 1px solid var(--color-border);
-        background: var(--color-bg);
-        color: var(--color-text);
-        font-size: var(--font-size-base);
-        font-family: var(--font-display);
-        font-weight: 700;
-        text-align: center;
-
-        &:focus {
-            outline: none;
-            border-color: var(--color-primary);
-        }
-
-        &::-webkit-inner-spin-button,
-        &::-webkit-outer-spin-button { opacity: 1; }
-    }
-
-    &__total {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: var(--space-4);
-        padding-top: var(--space-3);
-        border-top: 2px solid var(--color-text);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 2px;
-        color: var(--color-text-muted);
-    }
-
-    &__total-value {
-        font-family: var(--font-display);
-        font-size: var(--font-size-xl);
-        font-weight: 700;
-        color: var(--color-primary);
-    }
-}
-
-.comment-wrap {
-    margin-top: var(--space-5);
-}
-
-.comment-label {
-    display: block;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: var(--color-text-muted);
-    margin-bottom: var(--space-2);
-}
-
-.comment-input {
-    width: 100%;
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--color-border);
-    background: var(--color-bg);
-    color: var(--color-text);
-    font-size: var(--font-size-sm);
-    font-family: inherit;
-    line-height: 1.6;
-    resize: vertical;
-    box-sizing: border-box;
-
-    &:focus {
-        outline: none;
-        border-color: var(--color-primary);
-    }
-}
-
-.btn-submit {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    padding: 14px 28px;
-    background: var(--color-primary);
-    border: 2px solid var(--color-primary);
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-
-    &:hover:not(:disabled) {
-        background: #000;
-        border-color: #000;
-    }
-
-    &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-}
-
-.loading-state,
-.empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 0;
-    gap: 16px;
-    color: var(--color-text-muted);
-    font-size: 18px;
-
-    .empty-icon {
-        font-size: 48px;
-        color: var(--color-border);
-    }
-
-    h2 {
-        font-family: var(--font-display);
-        color: var(--color-text);
-        margin: 0;
-    }
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.loading-state, .empty-state { padding: 100px 0; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; .empty-icon { font-size: 48px; color: var(--color-text-muted); } }
 </style>
