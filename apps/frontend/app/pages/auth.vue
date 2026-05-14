@@ -48,7 +48,7 @@
         )
 
       .forgot-row(v-if="isLogin")
-        NuxtLink.forgot-row__link(to="/forgot-password") Забули пароль?
+        NuxtLink.forgot-row__link(:to="localePath('/forgot-password')") Забули пароль?
 
       VeeField(
         v-if="!isLogin"
@@ -154,6 +154,8 @@
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
+
 const authInitialValues = {
   email: '',
   password: '',
@@ -171,7 +173,7 @@ const route = useRoute()
 // Автоматичний редирект, як тільки користувач залогінився
 watch(() => loginStore.user, (user) => {
   if (user) {
-    navigateTo('/')
+    navigateTo(localePath('/'))
   }
 }, { immediate: true })
 

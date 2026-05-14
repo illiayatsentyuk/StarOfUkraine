@@ -1,5 +1,5 @@
 <template lang="pug">
-NuxtLink.tournament-card(:to="`/tournaments/${tournament.id}`")
+NuxtLink.tournament-card(:to="localePath(`/tournaments/${tournament.id}`)")
     .tournament-card__status(
         v-if="statusInfo"
         :style="{ backgroundColor: statusInfo.color }"
@@ -27,6 +27,8 @@ NuxtLink.tournament-card(:to="`/tournaments/${tournament.id}`")
 import { computed } from 'vue'
 import { getTournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
+
+const localePath = useLocalePath()
 
 const props = defineProps<{
     tournament: Tournament

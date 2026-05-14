@@ -2,7 +2,7 @@
 section.judge-dashboard
     header.dashboard-header
         .nav-info
-            NuxtLink.back-link(:to="`/tournaments/${tournamentId}`")
+            NuxtLink.back-link(:to="localePath(`/tournaments/${tournamentId}`)")
                 i.pi.pi-arrow-left
                 span НАЗАД ДО ТУРНІРУ
             h1.title ПАНЕЛЬ СУДДІВСТВА
@@ -130,6 +130,7 @@ section.judge-dashboard
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const store = useTasksStore()
 const tournamentStore = useTournamentsStore()

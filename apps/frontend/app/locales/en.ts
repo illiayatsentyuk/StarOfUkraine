@@ -21,6 +21,9 @@ export default {
     about: 'About',
     login: 'Sign In',
     logout: 'Sign Out',
+    create_tournament: 'Create Tournament',
+    create_team: 'Create Team',
+    team_label: 'Team:',
   },
 
   profile: {
@@ -49,7 +52,22 @@ export default {
       completed: 'Completed',
       cancelled: 'Cancelled',
     },
-    listing_title: 'Upcoming Tournaments',
+    listing_title: 'Active Tournaments',
+    archive_link: 'Tournament Archive',
+    no_data: 'No tournaments yet.',
+    loading_more: 'Loading...',
+    load_more: 'Load More',
+    filter_all: 'All',
+    filter_by_date: 'By Date',
+    filter_by_name: 'By Name',
+    filter_by_max_teams: 'Team Count',
+    filter_by_team_size_min: 'Min. Roster',
+    filter_by_team_size_max: 'Max. Roster',
+    filter_by_rounds: 'Rounds',
+    filter_by_reg_start: 'Reg. Start',
+    filter_by_reg_end: 'Reg. End',
+    status_all: 'All Statuses',
+    status_draft: 'Pending',
   },
 
   footer: {

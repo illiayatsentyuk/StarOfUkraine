@@ -36,6 +36,7 @@ import {
   TournamentResponseDto,
   UpdateTournamentDto,
 } from './dto';
+import { TeamResponseDto } from '../team/dto';
 import { TournamentService } from './tournament.service';
 
 @ApiTags('Tournaments')
@@ -269,5 +270,21 @@ export class TournamentController {
   @Serialize(LeaderboardRowDto)
   leaderboard(@Param('id') id: string) {
     return this.tournamentService.getLeaderboard(id);
+  }
+
+  @Public()
+  @Get(':id/teams')
+  @ApiParam({ name: 'id', description: 'Tournament ID' })
+  @ApiOperation({ summary: 'List all teams registered for a tournament' })
+  @ApiResponse({
+    status: 200,
+    description: 'Teams returned',
+    type: TeamResponseDto,
+    isArray: true,
+  })
+  @ApiResponse({ status: 404, description: 'Tournament not found' })
+  @Serialize(TeamResponseDto)
+  getTeams(@Param('id') id: string) {
+    return this.tournamentService.getTeams(id);
   }
 }

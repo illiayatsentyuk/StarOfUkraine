@@ -11,17 +11,17 @@ footer.app-footer
           h3.group-title {{ $t('footer.platform') }}
           ul.link-list
             li
-              NuxtLink.link(to="/") {{ $t('footer.tournaments') }}
+              NuxtLink.link(:to="localePath('/')") {{ $t('footer.tournaments') }}
             li
-              NuxtLink.link(to="/about") {{ $t('footer.about_us') }}
+              NuxtLink.link(:to="localePath('/about')") {{ $t('footer.about_us') }}
 
         .link-group
           h3.group-title {{ $t('footer.legal') }}
           ul.link-list
             li
-              NuxtLink.link(to="/privacy-policy") {{ $t('footer.privacy_policy') }}
+              NuxtLink.link(:to="localePath('/privacy-policy')") {{ $t('footer.privacy_policy') }}
             li
-              NuxtLink.link(to="/terms-of-use") {{ $t('footer.terms_of_use') }}
+              NuxtLink.link(:to="localePath('/terms-of-use')") {{ $t('footer.terms_of_use') }}
 
     .app-footer__divider
 
@@ -33,6 +33,7 @@ footer.app-footer
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const currentYear = new Date().getFullYear()
 </script>
 

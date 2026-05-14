@@ -15,9 +15,25 @@ aside.sidebar
 
         .divider
 
-        NuxtLink.sidebar__table-link(:to="`/tournaments/${tournamentId}/table`")
+        NuxtLink.sidebar__table-link(:to="localePath(`/tournaments/${tournamentId}/table`)")
             span.icon ↗
             span ТАБЛИЦЯ РЕЗУЛЬТАТІВ
+
+        .divider
+
+        //- Teams list
+        .sidebar__teams
+            h3.section-label КОМАНДИ УЧАСНИКИ
+            .sidebar__teams-hidden(v-if="shouldHideTeams")
+                i.pi.pi-eye-slash.teams-hidden-icon
+                span Список команд буде доступний після завершення реєстрації
+            .sidebar__teams-loading(v-else-if="loadingTeams")
+                i.pi.pi-spin.pi-spinner
+            .sidebar__teams-empty(v-else-if="!teams.length")
+                span Команд поки немає
+            .sidebar__teams-list(v-else)
+                .sidebar__team-row(v-for="team in teams" :key="team.id")
+                    span.team-name {{ team.name }}
 
         .divider
 
@@ -44,7 +60,7 @@ aside.sidebar
 
             NuxtLink.sidebar__judge-link(
                 v-if="isAdmin && tournament.id"
-                :to="`/tournaments/${tournament.id}/jury`"
+                :to="localePath(`/tournaments/${tournament.id}/jury`)"
             )
                 Button.sidebar__judge(
                     type="button"
@@ -54,12 +70,23 @@ aside.sidebar
 
             NuxtLink.sidebar__judge-link(
                 v-if="isJury && tournament.id"
-                :to="`/tournaments/${tournament.id}/admin`"
+                :to="localePath(`/tournaments/${tournament.id}/admin`)"
             )
                 Button.sidebar__judge(
                     type="button"
                     label="ПАНЕЛЬ СУДДІВСТВА"
                     icon="pi pi-users"
+                )
+
+            //- Login CTA for unauthenticated users
+            NuxtLink.sidebar__login-link(
+                v-if="!isAuthenticated && !isAdmin && !isJury"
+                :to="localePath('/auth')"
+            )
+                Button.sidebar__login(
+                    type="button"
+                    label="УВІЙТИ ДО УЧАСТІ"
+                    icon="pi pi-sign-in"
                 )
 
             //- Joined state
@@ -84,7 +111,7 @@ aside.sidebar
 
             NuxtLink.sidebar__team-link(
                 v-if="isAuthenticated && hasTeam && activeTeam"
-                :to="`/teams/${activeTeam.id}`"
+                :to="localePath(`/teams/${activeTeam.id}`)"
             )
                 Button.sidebar__manage-team(
                     type="button"
@@ -96,6 +123,8 @@ aside.sidebar
 <script setup lang="ts">
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
+
+const localePath = useLocalePath()
 
 const props = defineProps<{
     tournament: Tournament
@@ -109,6 +138,8 @@ const props = defineProps<{
     activeTeam: any
     joining: boolean
     shouldHideTeams: boolean
+    teams: Array<{ id: string; name: string; points?: number }>
+    loadingTeams: boolean
 }>()
 
 defineEmits<{
@@ -219,6 +250,57 @@ const joinLabel = computed(() =>
             }
         }
 
+        .sidebar__teams {
+            .section-label {
+                margin-bottom: 16px;
+            }
+
+            &-hidden,
+            &-empty {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 12px;
+                color: var(--color-text-muted);
+                padding: 4px 0;
+
+                .teams-hidden-icon {
+                    font-size: 14px;
+                    flex-shrink: 0;
+                }
+            }
+
+            &-loading {
+                color: var(--color-text-muted);
+                font-size: 16px;
+                padding: 4px 0;
+            }
+
+            &-list {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        .sidebar__team-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--color-border);
+
+            &:last-child {
+                border-bottom: none;
+            }
+
+            .team-name {
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--color-text);
+            }
+        }
+
         .sidebar__footer {
             display: flex;
             flex-direction: column;
@@ -245,6 +327,12 @@ const joinLabel = computed(() =>
             }
 
 
+            .sidebar__login-link {
+                text-decoration: none;
+                display: block;
+                width: 100%;
+            }
+
             .sidebar__judge-link {
                 text-decoration: none;
                 display: block;
@@ -252,6 +340,7 @@ const joinLabel = computed(() =>
             }
 
             .sidebar__judge-link :deep(.p-button),
+            .sidebar__login-link :deep(.p-button),
             .sidebar__team-link :deep(.p-button) {
                 width: 100%;
             }
@@ -336,6 +425,30 @@ const joinLabel = computed(() =>
                 &:focus-visible {
                     outline: 2px solid var(--color-text);
                     outline-offset: 2px;
+                }
+            }
+
+            :deep(.sidebar__login.p-button) {
+                width: 100%;
+                justify-content: center;
+                gap: var(--space-2);
+                background: transparent;
+                border: 2px solid var(--color-text);
+                color: var(--color-text);
+                font-family: var(--font-display);
+                font-size: 13px;
+                font-weight: 800;
+                padding: 18px var(--space-4);
+                border-radius: 0;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                cursor: pointer;
+                transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+
+                &:not(:disabled):hover {
+                    background: var(--color-text) !important;
+                    border-color: var(--color-text) !important;
+                    color: #fff !important;
                 }
             }
 

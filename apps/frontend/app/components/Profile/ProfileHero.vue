@@ -3,8 +3,8 @@
   .profile__avatar-ring
     .profile__avatar-wrap(:class="{ 'profile__avatar-wrap--uploadable': uploadable }" @click="uploadable && $emit('upload')")
       Avatar(
-        v-if="user.image"
-        :image="user.image"
+        v-if="avatarSrc"
+        :image="avatarSrc"
         size="xlarge"
         shape="circle"
       )
@@ -21,6 +21,7 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
+const config = useRuntimeConfig()
 
 const props = defineProps<{
   user: any
@@ -28,6 +29,13 @@ const props = defineProps<{
 }>()
 
 defineEmits<{ upload: [] }>()
+
+const avatarSrc = computed(() => {
+  const img = props.user?.image
+  if (!img) return null
+  if (img.startsWith('http://') || img.startsWith('https://')) return img
+  return `${config.public.apiURL}${img}`
+})
 
 const roleDisplayName = computed(() => {
   if (!props.user?.role) return t('profile.role_user')

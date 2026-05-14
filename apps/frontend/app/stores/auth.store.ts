@@ -64,15 +64,16 @@ export const useLoginStore = defineStore('login', () => {
                 user.value = response.data
                 isAdmin.value = response.data.role === 'ADMIN'
                 isJury.value = response.data.role === 'JURY'
-                image.value = response.data.image
+                image.value = response.data.image ?? null
                 authenticated.value = true
-                console.log('User fetched:', user.value)
             }
-
-        } catch (error) {
-            console.error('Fetch user failed:', error)
+        } catch {
+            // 401 is expected for unauthenticated visitors on public pages
             user.value = null
             isAdmin.value = false
+            isJury.value = false
+            image.value = null
+            authenticated.value = false
         } finally {
             loading.value = false
         }
@@ -119,9 +120,7 @@ export const useLoginStore = defineStore('login', () => {
         try {
             const formData = new FormData()
             formData.append('file', file)
-            const response = await useApi().patch('/users/me/avatar', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            })
+            const response = await useApi().patch('/users/me/avatar', formData)
             if (response.data) {
                 user.value = { ...user.value!, ...response.data }
                 image.value = response.data.image

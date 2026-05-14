@@ -108,6 +108,7 @@
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
 const teamsStore = useTeamsStore()
@@ -148,7 +149,7 @@ async function loadTeam() {
             }
         }
     } catch (e) {
-        router.push('/')
+        router.push(localePath('/'))
     }
 }
 
@@ -174,7 +175,7 @@ async function handleDeleteTeam() {
     if (!confirm('Ви впевнені, що хочете видалити команду?')) return
     try {
         await teamsStore.deleteTeam(teamId)
-        router.push('/')
+        router.push(localePath('/'))
     } catch (e) {}
 }
 

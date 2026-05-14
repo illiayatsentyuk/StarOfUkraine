@@ -5,7 +5,7 @@ section.tournament-detail
 
     template(v-else-if="tournament")
         .tournament-detail__nav
-            NuxtLink.back-link(to="/")
+            NuxtLink.back-link(:to="localePath('/')")
                 i.pi.pi-arrow-left.icon
                 span.text НАЗАД ДО СПИСКУ
 
@@ -42,7 +42,9 @@ section.tournament-detail
                 :hasTeam="!!teamsStore.activeTeam"
                 :activeTeam="teamsStore.activeTeam"
                 :joining="joining"
-                :shouldHideTeams="tournament.hideTeamsUntilRegistrationEnds"
+                :shouldHideTeams="shouldHideTeams"
+                :teams="teams"
+                :loadingTeams="loadingTeams"
                 @edit="openEditModal"
                 @delete="handleDelete"
                 @joinTournament="handleJoinTournament"
@@ -50,7 +52,7 @@ section.tournament-detail
 
     .error-state(v-else)
         p {{ fetchError ? 'Помилка завантаження' : 'Турнір не знайдено.' }}
-        NuxtLink(to="/") Повернутися до списку
+        NuxtLink(:to="localePath('/')") Повернутися до списку
 
     DeleteModal(
         v-if="tournament && authStore.isAdmin"
@@ -75,6 +77,7 @@ section.tournament-detail
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
 const tournamentStore = useTournamentsStore()
 const authStore = useLoginStore()
@@ -126,11 +129,19 @@ const canSeeTasks = computed(() => {
 })
 
 const refreshTeams = async () => {
-    if (shouldHideTeams.value || !tournament.value?.teams) return
-    teams.value = tournament.value.teams.map((t: any) => ({
-        id: t.id,
-        name: t.name,
-    }))
+    if (shouldHideTeams.value) {
+        teams.value = []
+        return
+    }
+    loadingTeams.value = true
+    try {
+        const response = await api.get(`/tournaments/${tournamentId.value}/teams`)
+        teams.value = response.data || []
+    } catch {
+        // silently ignore
+    } finally {
+        loadingTeams.value = false
+    }
 }
 
 // Головна дія: вступити в турнір
@@ -181,7 +192,7 @@ onMounted(async () => {
 
 watch(tournament, () => {
     refreshTeams()
-}, { immediate: true })
+})
 
 function handleDelete() {
     isDeleteModalOpen.value = true
@@ -196,7 +207,7 @@ async function onTournamentUpdated(updatedTournament: any) {
 }
 
 async function onTournamentDeleted() {
-    await navigateTo('/')
+    await navigateTo(localePath('/'))
 }
 
 const shuffleTeams = () => {

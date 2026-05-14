@@ -1,7 +1,7 @@
 <template lang="pug">
 section.tasks-page
     .tasks-page__nav
-        NuxtLink.back-link(:to="`/tournaments/${route.params.id}`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}`)")
             i.pi.pi-arrow-left.icon
             span.text НАЗАД ДО ТУРНІРУ
 
@@ -41,6 +41,7 @@ section.tasks-page
 import { ref, onMounted } from 'vue'
 import CreateTaskModal from '~/components/Tasks/CreateTaskModal.vue'
 
+const localePath = useLocalePath()
 const route = useRoute()
 const store = useTasksStore()
 const authStore = useLoginStore()

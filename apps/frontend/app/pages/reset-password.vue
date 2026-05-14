@@ -10,8 +10,8 @@
         h2 Недійсне посилання
         p У посиланні немає токена. Спробуйте запросити лист ще раз зі сторінки відновлення пароля.
       .card-footer
-        NuxtLink.footer-link(to="/forgot-password") Забули пароль?
-        NuxtLink.footer-link.footer-link--secondary(to="/auth") Увійти
+        NuxtLink.footer-link(:to="localePath('/forgot-password')") Забули пароль?
+        NuxtLink.footer-link.footer-link--secondary(:to="localePath('/auth')") Увійти
 
     template(v-else-if="!passwordChanged")
       .card-header
@@ -60,10 +60,11 @@
 
     .success-panel(v-else)
       p.success-panel__text Пароль успішно змінено. Тепер ви можете увійти.
-      NuxtLink.footer-link.footer-link--cta(to="/auth") На сторінку входу
+      NuxtLink.footer-link.footer-link--cta(:to="localePath('/auth')") На сторінку входу
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
 const toast = useServerSafeToast()
 const loading = ref(false)

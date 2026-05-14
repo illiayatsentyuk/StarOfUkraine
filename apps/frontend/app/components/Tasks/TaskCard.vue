@@ -28,12 +28,13 @@ const props = defineProps<{
     tournamentId?: string
 }>()
 
+const localePath = useLocalePath()
 const route = useRoute()
 const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
 const teamsStore = useTeamsStore()
 
 const taskLink = computed(() => ({
-    path: `/tournaments/${tournamentId.value}/tasks/${props.task.id}`,
+    path: localePath(`/tournaments/${tournamentId.value}/tasks/${props.task.id}`),
     query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
 }))
 

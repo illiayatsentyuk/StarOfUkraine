@@ -26,14 +26,18 @@ export const useTeamsStore = defineStore('teams', () => {
 
     const initActiveTeam = async () => {
         if (typeof window === 'undefined') return
-        const stored = window.localStorage.getItem('activeTeamId')
-        
-        let teamIdToUse = stored || null
-        
+
         const authStore = useLoginStore()
+        // `app.vue` already attempted `/auth/me` on initial load. If the user
+        // isn't authenticated, bail out instead of issuing another request —
+        // visitors on public pages should not trigger auth flows.
         if (!authStore.user) {
-            await authStore.fetchUser()
+            activeTeamId.value = null
+            return
         }
+
+        const stored = window.localStorage.getItem('activeTeamId')
+        let teamIdToUse = stored || null
         const user = authStore.user
 
         if (teamIdToUse && user) {

@@ -1,7 +1,7 @@
 <template lang="pug">
 section.evaluate-page
     .evaluate-page__nav
-        NuxtLink.back-link(:to="`/tournaments/${route.params.id}/tasks/${route.params.taskId}`")
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}/tasks/${route.params.taskId}`)")
             span.icon ←
             span.text НАЗАД ДО ЗАВДАННЯ
 
@@ -95,6 +95,7 @@ section.evaluate-page
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const route = useRoute()
 const api = useApi()
 const toast = useServerSafeToast()
@@ -182,11 +183,15 @@ onMounted(async () => {
     animation: fadeIn 0.4s ease-out;
 
     @include media($md) {
-        padding: 0 24px 40px;
+        padding: 32px 24px 40px;
     }
 
     &__nav {
         margin-bottom: 48px;
+
+        @include media($md) {
+            margin-bottom: 32px;
+        }
 
         .back-link {
             display: inline-flex;
@@ -211,9 +216,14 @@ onMounted(async () => {
         border-bottom: 2px solid var(--color-text);
         padding-bottom: 32px;
 
+        @include media($md) {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+        }
+
         .title {
             font-family: var(--font-display);
-            font-size: 56px;
+            font-size: clamp(32px, 6vw, 56px);
             font-weight: 700;
             line-height: 0.95;
             letter-spacing: -2px;

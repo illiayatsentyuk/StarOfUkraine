@@ -2,7 +2,7 @@
 section.tournaments-archive
     header.archive-header
         .nav-back
-            NuxtLink.back-link(to="/tournaments")
+            NuxtLink.back-link(:to="localePath('/tournaments')")
                 i.pi.pi-arrow-left
                 span НАЗАД ДО АКТИВНИХ
         h1.title Архів турнірів
@@ -35,6 +35,7 @@ section.tournaments-archive
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 
+const localePath = useLocalePath()
 const store = useTournamentsStore()
 
 onMounted(async () => {

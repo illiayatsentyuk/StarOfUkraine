@@ -37,7 +37,7 @@ VeeForm.form-content(
     )
 
   .forgot-password-row(v-if="isLogin")
-    NuxtLink.forgot-password-link(to="/forgot-password") Забули пароль?
+    NuxtLink.forgot-password-link(:to="localePath('/forgot-password')") Забули пароль?
 
   VeeField(
     v-if="!isLogin"
@@ -135,6 +135,8 @@ VeeForm.form-content(
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
+
 const props = defineProps<{
   isLogin: boolean
   loading: boolean

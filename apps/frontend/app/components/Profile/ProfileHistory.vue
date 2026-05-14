@@ -18,7 +18,7 @@ section.profile-history
 
       .team-card__tournaments(v-if="entry.tournaments.length")
         .tournament-row(v-for="t in entry.tournaments" :key="t.id")
-          NuxtLink.tournament-row__link(:to="`/tournaments/${t.id}`")
+          NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}`)")
             span.tournament-row__name {{ t.name }}
           .tournament-row__status(:class="`status--${t.status.toLowerCase()}`")
             span {{ statusLabel(t.status) }}
@@ -29,6 +29,7 @@ section.profile-history
 
 <script setup lang="ts">
 const { t } = useI18n()
+const localePath = useLocalePath()
 const config = useRuntimeConfig()
 
 const loading = ref(false)
