@@ -14,6 +14,7 @@ header.tournament-detail__hero
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useTeamsStore } from '~/stores/teams.store'
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 
 const props = defineProps<{
@@ -26,25 +27,13 @@ const props = defineProps<{
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
+const teamsStore = useTeamsStore()
 const tournamentId = computed(() => route.params.id as string)
 
-<<<<<<< HEAD
-const tasksLink = computed(() => {
-    const query: Record<string, string> = {}
-    if (props.joinedTeamId) {
-        query.teamId = props.joinedTeamId
-    }
-    return {
-        path: `/tournaments/${tournamentId.value}/tasks`,
-        query: Object.keys(query).length > 0 ? query : undefined,
-    }
-})
-=======
 const tasksLink = computed(() => ({
     path: localePath(`/tournaments/${tournamentId.value}/tasks`),
     query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
 }))
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 
 function handleTasksClick(e: MouseEvent) {
     if (tournamentId.value) {

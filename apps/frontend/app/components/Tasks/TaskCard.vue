@@ -42,22 +42,22 @@ const props = defineProps<{
     isAdmin?: boolean
 }>()
 
-<<<<<<< HEAD
 const store = useTasksStore()
+const teamsStore = useTeamsStore()
+const localePath = useLocalePath()
+const route = useRoute()
+
+const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
 
 const formatDate = (date: string | null) => {
     if (!date) return ''
     return new Date(date).toLocaleDateString('uk-UA')
 }
 
-const route = useRoute()
-const taskLink = computed(() => {
-    const query = route.query.teamId ? { teamId: route.query.teamId } : {}
-    return {
-        path: `/tournaments/${props.tournamentId}/tasks/${props.task.id}`,
-        query
-    }
-})
+const taskLink = computed(() => ({
+    path: localePath(`/tournaments/${tournamentId.value}/tasks/${props.task.id}`),
+    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
+}))
 
 const STATUS_LABELS: Record<string, string> = {
     DRAFT: 'ЧЕРНЕТКА',
@@ -67,17 +67,6 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const statusLabel = computed(() => STATUS_LABELS[props.task.status] ?? props.task.status)
-=======
-const localePath = useLocalePath()
-const route = useRoute()
-const tournamentId = computed(() => props.tournamentId || (route.params.id as string))
-const teamsStore = useTeamsStore()
-
-const taskLink = computed(() => ({
-    path: localePath(`/tournaments/${tournamentId.value}/tasks/${props.task.id}`),
-    query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
-}))
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 
 const maxPoints = computed(() =>
     props.task.criteria?.rubric?.reduce((sum, item) => sum + (item.maxPoints ?? 0), 0) ?? 0

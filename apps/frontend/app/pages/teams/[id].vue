@@ -43,16 +43,6 @@
             .info-card
                 h3.card-label ІНФОРМАЦІЯ
 
-<<<<<<< HEAD
-    //- Edit Modal
-    EditTeamModal(
-        v-if="isEditModalOpen"
-        :is-open="isEditModalOpen"
-        :team="team"
-        @close="isEditModalOpen = false"
-        @success="loadTeam"
-    )
-=======
                 .info-empty(v-if="!team.organization && !team.city && !team.telegram && !team.discord")
                     i.pi.pi-info-circle
                     span Інформація не вказана
@@ -150,7 +140,7 @@
                 button.btn-save(type="button" :disabled="saving" @click="handleUpdateTeam")
                     i.pi(:class="saving ? 'pi-spin pi-spinner' : 'pi-check'")
                     | &nbsp;Зберегти
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
+
 </template>
 
 <script setup lang="ts">
@@ -170,8 +160,6 @@ const isMember = computed(() => team.value?.members?.some(m => m.email === authS
 const joining = ref(false)
 
 const isEditModalOpen = ref(false)
-<<<<<<< HEAD
-=======
 const saving = ref(false)
 const editForm = ref({
     name: '',
@@ -181,15 +169,10 @@ const editForm = ref({
     discord: '',
     isAcceptNewMembers: true,
 })
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 
 async function loadTeam() {
     try {
         await teamsStore.fetchTeamById(teamId)
-<<<<<<< HEAD
-    } catch (e) {
-        router.push('/')
-=======
         if (team.value) {
             editForm.value = {
                 name: team.value.name,
@@ -202,7 +185,6 @@ async function loadTeam() {
         }
     } catch {
         router.push(localePath('/'))
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
     }
 }
 
@@ -215,8 +197,6 @@ async function handleJoinTeam() {
     finally { joining.value = false }
 }
 
-<<<<<<< HEAD
-=======
 async function handleUpdateTeam() {
     saving.value = true
     try {
@@ -226,7 +206,6 @@ async function handleUpdateTeam() {
     finally { saving.value = false }
 }
 
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 async function handleDeleteTeam() {
     if (!confirm('Ви впевнені, що хочете видалити команду?')) return
     try {
@@ -249,585 +228,364 @@ async function copyInviteLink() {
     }
 }
 
-onMounted(loadTeam)
+onMounted(() => {
+    loadTeam()
+})
 </script>
 
 <style scoped lang="scss">
-/* ─── Page shell ─────────────────────────────────────────── */
 .team-page {
-    max-width: 1040px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: var(--space-10) var(--space-5);
+    padding: 64px 48px;
 
-    @media (max-width: 768px) {
-        padding: var(--space-7) var(--space-4) var(--space-10);
+    @include media($md) {
+        padding: 32px 24px;
     }
 }
 
-/* ─── Header ─────────────────────────────────────────────── */
 .team-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: var(--space-6);
-    padding-bottom: var(--space-7);
-    margin-bottom: var(--space-7);
-    border-bottom: 2px solid var(--color-text);
-    flex-wrap: wrap;
+    align-items: flex-end;
+    margin-bottom: 64px;
+    gap: 32px;
 
-    @media (max-width: 768px) {
+    @include media($md) {
         flex-direction: column;
-        align-items: stretch;
-        padding-bottom: var(--space-5);
-        margin-bottom: var(--space-5);
+        align-items: flex-start;
+        margin-bottom: 48px;
     }
 
     &__identity {
         display: flex;
         align-items: center;
-        gap: var(--space-5);
-        min-width: 0;
+        gap: 32px;
+
+        @include media($sm) {
+            gap: 20px;
+        }
+
+        .team-avatar {
+            width: 120px;
+            height: 120px;
+            background: var(--color-surface);
+            border: 2px solid var(--color-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            font-family: var(--font-display);
+            font-weight: 800;
+
+            @include media($sm) {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+        }
+
+        .team-meta {
+            .team-name {
+                font-family: var(--font-display);
+                font-size: 56px;
+                line-height: 1;
+                margin: 0 0 12px 0;
+                text-transform: uppercase;
+
+                @include media($sm) {
+                    font-size: 32px;
+                }
+            }
+
+            .team-captain {
+                display: flex;
+                align-items: center;
+                color: var(--color-text-muted);
+                font-size: 16px;
+                font-weight: 600;
+            }
+        }
     }
 
     &__actions {
         display: flex;
-        gap: var(--space-3);
-        flex-wrap: wrap;
-        align-items: center;
+        gap: 12px;
 
-        @media (max-width: 768px) {
+        @include media($sm) {
             width: 100%;
+            flex-direction: column;
+        }
+
+        .btn-join {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+            color: white;
+            font-weight: 800;
         }
     }
 }
 
-.team-avatar {
-    width: 72px;
-    height: 72px;
-    flex-shrink: 0;
-    background: var(--color-primary);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 28px;
-    font-weight: 900;
-    letter-spacing: -1px;
-
-    @media (max-width: 480px) {
-        width: 56px;
-        height: 56px;
-        font-size: 22px;
-    }
-}
-
-.team-meta {
-    min-width: 0;
-}
-
-.team-name {
-    font-family: var(--font-display);
-    font-size: clamp(1.6rem, 5vw, 2.5rem);
-    font-weight: 900;
-    line-height: 1.05;
-    margin: 0 0 var(--space-1);
-    word-break: break-word;
-}
-
-.team-captain {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-    font-family: var(--font-sans);
-
-    .pi { font-size: 0.8rem; }
-}
-
-/* ─── Header buttons ─────────────────────────────────────── */
-:deep(.btn-join.p-button) {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 13px 20px;
-    border-radius: 0;
-    gap: 8px;
-    background: var(--color-primary) !important;
-    border: 2px solid var(--color-primary) !important;
-    color: #fff !important;
-    transition: background 0.2s, border-color 0.2s, transform 0.15s;
-
-    &:not(:disabled):hover {
-        background: var(--color-text) !important;
-        border-color: var(--color-text) !important;
-        transform: translateY(-2px);
-    }
-}
-
-:deep(.btn-edit.p-button) {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 11px 18px;
-    border-radius: 0;
-    gap: 8px;
-    border: 1px solid var(--color-border) !important;
-    color: var(--color-text) !important;
-    background: transparent !important;
-    transition: background 0.2s, border-color 0.2s, transform 0.15s;
-
-    &:hover {
-        background: var(--color-surface) !important;
-        border-color: var(--color-text) !important;
-        transform: translateY(-2px);
-    }
-}
-
-:deep(.btn-delete.p-button) {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    padding: 11px 18px;
-    border-radius: 0;
-    gap: 8px;
-    border: 1px solid var(--color-error, #e53935) !important;
-    color: var(--color-error, #e53935) !important;
-    background: transparent !important;
-    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
-
-    &:hover {
-        background: var(--color-error, #e53935) !important;
-        border-color: var(--color-error, #e53935) !important;
-        color: #fff !important;
-        transform: translateY(-2px);
-    }
-}
-
-/* ─── Body grid ──────────────────────────────────────────── */
 .team-body {
     display: grid;
-    grid-template-columns: 1fr 1.4fr;
-    gap: var(--space-5);
-    align-items: start;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
 
-    @media (max-width: 900px) {
+    @include media($md) {
         grid-template-columns: 1fr;
+        gap: 32px;
+    }
+
+    .info-card, .members-card {
+        background: var(--color-surface);
+        padding: 40px;
+        border: 1px solid var(--color-border);
+
+        @include media($sm) {
+            padding: 24px;
+        }
+
+        .card-label {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--color-text-muted);
+            letter-spacing: 2px;
+            margin: 0 0 32px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
     }
 }
 
-/* ─── Cards ──────────────────────────────────────────────── */
-.info-card,
-.members-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    padding: var(--space-7);
-
-    @media (max-width: 768px) {
-        padding: var(--space-5);
-    }
-}
-
-.card-label {
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--color-primary);
-    margin: 0 0 var(--space-5);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--color-border);
-
-    .members-count {
-        color: var(--color-text-muted);
-        font-weight: 700;
-    }
-}
-
-/* ─── Info card ──────────────────────────────────────────── */
 .info-rows {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
-}
+    gap: 20px;
 
-.info-row {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
+    .info-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
 
-.info-key {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-    font-family: var(--font-sans);
-}
+        .info-key {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+            letter-spacing: 1px;
+        }
 
-.info-val {
-    font-size: var(--font-size-base);
-    font-weight: 500;
-    color: var(--color-text);
-    word-break: break-all;
-}
-
-.info-empty,
-.members-empty {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-    font-family: var(--font-sans);
-    padding: var(--space-4) 0;
-
-    .pi { font-size: 1rem; }
+        .info-val {
+            font-size: 18px;
+            font-weight: 600;
+        }
+    }
 }
 
 .info-badge {
-    display: inline-flex;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid var(--color-border);
+    display: flex;
     align-items: center;
-    gap: 6px;
-    margin-top: var(--space-5);
-    padding: 6px 12px;
-    border: 1px solid var(--color-primary);
+    gap: 12px;
     color: var(--color-primary);
-    font-size: 11px;
     font-weight: 700;
-    letter-spacing: 0.5px;
-    font-family: var(--font-sans);
-
-    .pi { font-size: 0.85rem; }
+    font-size: 14px;
 }
 
-/* ─── Members card ───────────────────────────────────────── */
 .members-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-}
+    gap: 16px;
 
-.member-row {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    padding: var(--space-3) var(--space-4);
-    background: var(--color-bg);
-    border: 1px solid var(--color-border);
-    transition: border-color 0.2s;
+    .member-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+        background: var(--color-bg);
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
 
-    &--captain {
-        border-color: var(--color-primary);
-    }
+        &--captain {
+            border-color: var(--color-primary-soft);
+            background: var(--color-primary-soft);
+        }
 
-    &:hover {
-        border-color: var(--color-text);
-    }
-}
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--color-surface);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            border: 1px solid var(--color-border);
+        }
 
-.member-avatar {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    background: var(--color-border);
-    color: var(--color-text-muted);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 800;
+        .member-details {
+            display: flex;
+            flex-direction: column;
 
-    .member-row--captain & {
-        background: var(--color-primary);
-        color: #fff;
-    }
-}
+            .member-name {
+                font-weight: 700;
+                font-size: 16px;
+            }
 
-.member-details {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.member-name {
-    font-weight: 700;
-    font-size: var(--font-size-sm);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.member-role {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-
-    .member-row--captain & {
-        color: var(--color-primary);
+            .member-role {
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--color-text-muted);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+        }
     }
 }
 
-/* ─── Invite block ───────────────────────────────────────── */
 .invite-block {
-    margin-top: var(--space-5);
-}
+    margin-top: 40px;
 
-.invite-divider {
-    height: 1px;
-    background: var(--color-border);
-    margin-bottom: var(--space-5);
-}
-
-.invite-title {
-    font-family: var(--font-display);
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin: 0 0 var(--space-2);
-    display: flex;
-    align-items: center;
-
-    .pi { color: var(--color-primary); }
-}
-
-.invite-hint {
-    font-size: var(--font-size-sm);
-    color: var(--color-text-muted);
-    margin: 0 0 var(--space-3);
-    font-family: var(--font-sans);
-}
-
-.invite-row {
-    display: flex;
-    gap: var(--space-2);
-    flex-wrap: wrap;
-}
-
-:deep(.invite-url.p-inputtext) {
-    flex: 1;
-    min-width: 0;
-    font-family: monospace;
-    font-size: 12px;
-    border-radius: 0;
-    border: 1px solid var(--color-border);
-    background: var(--color-bg);
-    padding: 10px 12px;
-    color: var(--color-text-muted);
-}
-
-:deep(.btn-copy.p-button) {
-    border-radius: 0;
-    border: 1px solid var(--color-border) !important;
-    background: var(--color-surface) !important;
-    color: var(--color-text) !important;
-    transition: background 0.2s, border-color 0.2s;
-
-    &:hover {
-        background: var(--color-text) !important;
-        border-color: var(--color-text) !important;
-        color: var(--color-bg) !important;
+    .invite-divider {
+        height: 1px;
+        background: var(--color-border);
+        margin-bottom: 32px;
     }
-}
 
-/* ─── Edit dialog ────────────────────────────────────────── */
-:deep(.edit-dialog.p-dialog) {
-    border-radius: 0;
-    border: 1px solid var(--color-border);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
-    overflow: hidden;
-}
-
-:deep(.edit-dialog .p-dialog-header) {
-    background: var(--color-text);
-    color: var(--color-bg);
-    padding: var(--space-5) var(--space-6);
-    border-bottom: none;
-
-    .p-dialog-title {
-        font-family: var(--font-display);
-        font-size: 13px;
+    .invite-title {
+        font-size: 18px;
         font-weight: 800;
-        letter-spacing: 2px;
+        margin: 0 0 8px 0;
+        display: flex;
+        align-items: center;
     }
 
-    .p-dialog-header-icon {
-        color: var(--color-bg);
-        border-radius: 0;
-        opacity: 0.7;
-        transition: opacity 0.2s;
-
-        &:hover { opacity: 1; background: transparent; }
+    .invite-hint {
+        font-size: 14px;
+        color: var(--color-text-muted);
+        margin: 0 0 20px 0;
     }
-}
 
-:deep(.edit-dialog .p-dialog-content) {
-    background: var(--color-bg);
-    padding: var(--space-6);
-}
+    .invite-row {
+        display: flex;
+        gap: 12px;
 
-:deep(.edit-dialog .p-dialog-footer) {
-    background: var(--color-bg);
-    padding: 0 var(--space-6) var(--space-6);
-    border-top: none;
+        .invite-url {
+            flex: 1;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            font-weight: 600;
+            color: var(--color-text-muted);
+        }
+
+        .btn-copy {
+            background: var(--color-text);
+            border-color: var(--color-text);
+            color: var(--color-bg);
+        }
+    }
 }
 
 .edit-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-4);
-}
+    gap: 24px;
+    padding-top: 12px;
 
-.edit-field {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-}
+    .edit-field {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
 
-.edit-label {
-    font-family: var(--font-sans);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--color-text-muted);
-}
+        .edit-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-text-muted);
+        }
 
-:deep(.edit-input.p-inputtext) {
-    border-radius: 0;
-    border: 1px solid var(--color-border);
-    padding: 12px var(--space-4);
-    font-family: var(--font-sans);
-    font-size: var(--font-size-sm);
-    background: var(--color-surface);
-    color: var(--color-text);
-    transition: border-color 0.2s, box-shadow 0.2s;
-    width: 100%;
-
-    &:focus {
-        outline: none;
-        border-color: var(--color-text);
-        box-shadow: 0 0 0 1px var(--color-text);
+        .edit-input {
+            width: 100%;
+            background: var(--color-bg);
+            border: 1px solid var(--color-border);
+            padding: 12px;
+            font-weight: 600;
+        }
     }
 
-    &::placeholder { color: var(--color-text-muted); opacity: 0.6; }
-}
+    .edit-toggle {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        user-select: none;
+        margin-top: 8px;
 
-/* ─── Toggle switch ──────────────────────────────────────── */
-.edit-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    cursor: pointer;
-    user-select: none;
-    margin-top: var(--space-2);
-}
+        .toggle-track {
+            width: 44px;
+            height: 24px;
+            background: var(--color-border);
+            padding: 4px;
+            position: relative;
+            transition: background 0.2s ease;
 
-.toggle-track {
-    position: relative;
-    width: 44px;
-    height: 24px;
-    flex-shrink: 0;
-    background: var(--color-border);
-    border-radius: 12px;
-    transition: background 0.2s;
+            &--on {
+                background: var(--color-primary);
+                .toggle-knob { transform: translateX(20px); }
+            }
 
-    &--on {
-        background: var(--color-primary);
-    }
+            input { display: none; }
 
-    input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
+            .toggle-knob {
+                width: 16px;
+                height: 16px;
+                background: white;
+                transition: transform 0.2s ease;
+            }
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            font-weight: 700;
+        }
     }
 }
 
-.toggle-knob {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 18px;
-    height: 18px;
-    background: #fff;
-    border-radius: 50%;
-    transition: transform 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-
-    .toggle-track--on & {
-        transform: translateX(20px);
-    }
-}
-
-.toggle-label {
-    font-family: var(--font-sans);
-    font-size: var(--font-size-sm);
-    color: var(--color-text);
-    font-weight: 500;
-}
-
-/* ─── Dialog footer buttons ──────────────────────────────── */
 .edit-footer {
     display: flex;
-    gap: var(--space-3);
     justify-content: flex-end;
-}
+    gap: 16px;
+    width: 100%;
 
-.btn-cancel {
-    padding: 12px 20px;
-    background: transparent;
-    border: 1px solid var(--color-border);
-    color: var(--color-text-muted);
-    font-family: var(--font-sans);
-    font-size: var(--font-size-sm);
-    font-weight: 600;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s;
-
-    &:hover {
-        border-color: var(--color-text);
-        color: var(--color-text);
-    }
-}
-
-.btn-save {
-    display: inline-flex;
-    align-items: center;
-    padding: 12px 24px;
-    background: var(--color-primary);
-    border: 1px solid var(--color-primary);
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s, transform 0.15s;
-
-    &:not(:disabled):hover {
-        background: var(--color-text);
-        border-color: var(--color-text);
-        transform: translateY(-1px);
+    button {
+        padding: 12px 24px;
+        font-weight: 800;
+        font-size: 13px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
+    .btn-cancel {
+        background: transparent;
+        color: var(--color-text-muted);
+        &:hover { color: var(--color-text); }
+    }
+
+    .btn-save {
+        background: var(--color-primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        &:disabled { opacity: 0.5; cursor: not-allowed; }
     }
 }
 </style>

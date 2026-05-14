@@ -50,10 +50,8 @@ section.evaluate-page
                                 span.label {{ item.label }}
                                 span.max (макс. {{ item.maxPoints }})
                             input.score-input(
-                                type="number"
+                                type="number" :min="0" :max="item.maxPoints"
                                 v-model.number="scores[sub.id][item.id]"
-                                :min="0"
-                                :max="item.maxPoints"
                                 :class="{ 'error': scores[sub.id][item.id] > item.maxPoints }"
                             )
 
