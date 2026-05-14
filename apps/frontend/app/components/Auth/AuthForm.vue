@@ -126,7 +126,7 @@ VeeForm.form-content(
           type="checkbox"
           :name="field.name"
           :checked="field.value === true"
-          @change="handleChange($event.target.checked)"
+          @change="handleChange(($event.target as HTMLInputElement).checked)"
         )
         label.terms-check__legal(for="terms")
           | Я приймаю 

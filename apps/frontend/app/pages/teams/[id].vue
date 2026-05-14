@@ -43,16 +43,6 @@
             .info-card
                 h3.card-label ІНФОРМАЦІЯ
 
-<<<<<<< HEAD
-    //- Edit Modal
-    EditTeamModal(
-        v-if="isEditModalOpen"
-        :is-open="isEditModalOpen"
-        :team="team"
-        @close="isEditModalOpen = false"
-        @success="loadTeam"
-    )
-=======
                 .info-empty(v-if="!team.organization && !team.city && !team.telegram && !team.discord")
                     i.pi.pi-info-circle
                     span Інформація не вказана
@@ -134,13 +124,8 @@
                 label.edit-label Discord
                 InputText.edit-input(v-model="editForm.discord" placeholder="username#0000 або посилання")
 
-            label.edit-toggle
+            label.edit-toggle(@click.prevent="editForm.isAcceptNewMembers = !editForm.isAcceptNewMembers")
                 .toggle-track(:class="{ 'toggle-track--on': editForm.isAcceptNewMembers }")
-                    input(
-                        type="checkbox"
-                        :checked="editForm.isAcceptNewMembers"
-                        @change="editForm.isAcceptNewMembers = $event.target.checked"
-                    )
                     .toggle-knob
                 span.toggle-label Приймати нових учасників
 
@@ -150,7 +135,6 @@
                 button.btn-save(type="button" :disabled="saving" @click="handleUpdateTeam")
                     i.pi(:class="saving ? 'pi-spin pi-spinner' : 'pi-check'")
                     | &nbsp;Зберегти
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 </template>
 
 <script setup lang="ts">
@@ -170,8 +154,6 @@ const isMember = computed(() => team.value?.members?.some(m => m.email === authS
 const joining = ref(false)
 
 const isEditModalOpen = ref(false)
-<<<<<<< HEAD
-=======
 const saving = ref(false)
 const editForm = ref({
     name: '',
@@ -181,15 +163,10 @@ const editForm = ref({
     discord: '',
     isAcceptNewMembers: true,
 })
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 
 async function loadTeam() {
     try {
         await teamsStore.fetchTeamById(teamId)
-<<<<<<< HEAD
-    } catch (e) {
-        router.push('/')
-=======
         if (team.value) {
             editForm.value = {
                 name: team.value.name,
@@ -202,7 +179,6 @@ async function loadTeam() {
         }
     } catch {
         router.push(localePath('/'))
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
     }
 }
 
@@ -215,8 +191,6 @@ async function handleJoinTeam() {
     finally { joining.value = false }
 }
 
-<<<<<<< HEAD
-=======
 async function handleUpdateTeam() {
     saving.value = true
     try {
@@ -226,7 +200,6 @@ async function handleUpdateTeam() {
     finally { saving.value = false }
 }
 
->>>>>>> 60a8d4d270954affed3671334bbf063d9298018e
 async function handleDeleteTeam() {
     if (!confirm('Ви впевнені, що хочете видалити команду?')) return
     try {
@@ -748,13 +721,6 @@ onMounted(loadTeam)
     &--on {
         background: var(--color-primary);
     }
-
-    input {
-        position: absolute;
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
 }
 
 .toggle-knob {
@@ -766,7 +732,7 @@ onMounted(loadTeam)
     background: #fff;
     border-radius: 50%;
     transition: transform 0.2s;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 
     .toggle-track--on & {
         transform: translateX(20px);
