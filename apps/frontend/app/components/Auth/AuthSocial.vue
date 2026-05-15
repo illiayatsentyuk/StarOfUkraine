@@ -5,7 +5,7 @@
     p {{ isLogin ? 'Швидкий вхід за допомогою соцмереж або пошти' : 'Швидкий вхід або заповнення даних' }}
   
   .social-grid
-    button.social-btn(type="button" @click="$emit('loginGoogle')")
+    button.social-btn(type="button" @click="$emit('login-google')")
       i(class="pi pi-google")
       | Google
 
@@ -19,7 +19,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  (e: 'loginGoogle'): void
+  (e: 'login-google'): void
 }>()
 </script>
 

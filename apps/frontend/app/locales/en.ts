@@ -1,4 +1,4 @@
-export default {
+  export default {
   common: {
     back_home: 'Back to Home',
     search_placeholder: 'Search tournament...',
@@ -159,5 +159,12 @@ export default {
       create_btn: 'Create Tournament',
       error_creating: 'An error occurred while creating the tournament.',
     },
+  },
+  auth: {
+    no_account: 'No account?',
+    register_link: 'Register',
+    has_account: 'Already have an account?',
+    login_link: 'Login',
+    error: 'Authentication error',
   },
 }
