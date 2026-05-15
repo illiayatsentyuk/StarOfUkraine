@@ -37,7 +37,7 @@ section.profile-history
         
         .team-card__tournaments
           .tournament-row(v-for="t in history.juryTournaments" :key="t.id")
-            NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}/judge`)")
+            NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}/admin`)")
               span.tournament-row__name {{ t.name }}
             .tournament-row__status(:class="`status--${t.status.toLowerCase()}`")
               span {{ statusLabel(t.status) }}
