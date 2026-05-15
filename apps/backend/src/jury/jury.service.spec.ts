@@ -1,4 +1,9 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { Role } from 'src/enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getLoggerToken } from 'pino-nestjs';
 import { PrismaService } from '../prisma/prisma.service';
@@ -17,6 +22,10 @@ describe('JuryService', () => {
       delete: jest.fn(),
     },
     tournament: {
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+    },
+    user: {
       findUnique: jest.fn(),
     },
     submissionAssignment: {
@@ -60,6 +69,62 @@ describe('JuryService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('removeFromJury', () => {
+    const juryId = 'jury-1';
+    const actorUserId = 'admin-1';
+    const tournamentId = 't-1';
+
+    it('disconnects juror from tournament when tournamentId is provided', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue({
+        id: juryId,
+        userId: 'user-jury',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: actorUserId,
+        role: Role.ADMIN,
+      });
+      mockPrisma.tournament.findFirst.mockResolvedValue({ id: tournamentId });
+      mockPrisma.jury.update.mockResolvedValue({ id: juryId });
+
+      const result = await service.removeFromJury(
+        juryId,
+        actorUserId,
+        tournamentId,
+      );
+
+      expect(result.message).toBe('Jury removed from tournament successfully');
+      expect(mockPrisma.jury.update).toHaveBeenCalledWith({
+        where: { id: juryId },
+        data: { tournaments: { disconnect: { id: tournamentId } } },
+      });
+      expect(mockPrisma.jury.delete).not.toHaveBeenCalled();
+    });
+
+    it('throws User not found when actor id is invalid', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue({ id: juryId, userId: 'u1' });
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.removeFromJury(juryId, actorUserId, tournamentId),
+      ).rejects.toThrow(new NotFoundException('User not found'));
+    });
+
+    it('throws when non-admin tries to remove another juror', async () => {
+      mockPrisma.jury.findUnique.mockResolvedValue({
+        id: juryId,
+        userId: 'other-user',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: actorUserId,
+        role: Role.JURY,
+      });
+
+      await expect(
+        service.removeFromJury(juryId, actorUserId, tournamentId),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 
   describe('assignJury', () => {

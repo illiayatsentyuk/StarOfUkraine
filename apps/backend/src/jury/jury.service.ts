@@ -129,17 +129,35 @@ export class JuryService {
     return this.addJuryToTournament(jury.id, tournamentId);
   }
 
-  async removeFromJury(id: string, userId: string) {
+  async removeFromJury(id: string, actorUserId: string, tournamentId?: string) {
     const jury = await this.prisma.jury.findUnique({ where: { id } });
-    const user = await this.usersService.findOne(userId);
+    const actor = await this.prisma.user.findUnique({
+      where: { id: actorUserId },
+      select: { id: true, role: true },
+    });
 
-    if (!user) throw new NotFoundException('User not found');
+    if (!actor) throw new NotFoundException('User not found');
     if (!jury) throw new NotFoundException('Jury not found');
 
-    if (user.role !== Role.ADMIN && jury.userId !== userId) {
+    if (actor.role !== Role.ADMIN && jury.userId !== actorUserId) {
       throw new ForbiddenException(
         'You are not authorized to remove a jury from this tournament',
       );
+    }
+
+    if (tournamentId) {
+      const linked = await this.prisma.tournament.findFirst({
+        where: { id: tournamentId, jurors: { some: { id } } },
+      });
+      if (!linked) {
+        throw new NotFoundException('Jury is not assigned to this tournament');
+      }
+
+      await this.prisma.jury.update({
+        where: { id },
+        data: { tournaments: { disconnect: { id: tournamentId } } },
+      });
+      return { message: 'Jury removed from tournament successfully' };
     }
 
     await this.prisma.jury.delete({ where: { id } });

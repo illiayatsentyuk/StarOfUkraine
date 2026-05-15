@@ -1,9 +1,5 @@
 <template lang="pug">
 .jury-manager
-    .manager-header
-        h3.title {{ $t('tournament.jury_manager.title') }}
-        p.desc {{ $t('tournament.jury_manager.desc') }}
-
     .manager-content
         .search-section
             label.field-label {{ $t('tournament.jury_manager.add_label') }}
@@ -126,7 +122,9 @@ async function removeJuryMember(juryId: string) {
     if (!confirm(t('tournament.jury_manager.remove_confirm'))) return
     removingId.value = juryId
     try {
-        await api.delete(`/jury/${juryId}`)
+        await api.delete(`/jury/${juryId}`, {
+            params: { tournamentId: props.tournamentId },
+        })
         toast.success(t('tournament.jury_manager.remove_success'))
         await fetchJuryMembers()
     } catch (e: any) {
@@ -149,21 +147,6 @@ onMounted(() => {
 
     @media (max-width: 768px) {
         padding: 20px 16px;
-    }
-}
-
-.manager-header {
-    margin-bottom: 24px;
-    .title {
-        font-family: var(--font-display);
-        font-size: 18px;
-        font-weight: 800;
-        margin: 0 0 8px 0;
-    }
-    .desc {
-        font-size: 14px;
-        color: var(--color-text-muted);
-        margin: 0;
     }
 }
 

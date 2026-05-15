@@ -176,6 +176,12 @@ export class JuryController {
   @Delete(':id')
   @Roles(Role.ADMIN)
   @ApiParam({ name: 'id', description: 'Jury ID' })
+  @ApiQuery({
+    name: 'tournamentId',
+    required: false,
+    description:
+      'When set, removes the juror from this tournament only; otherwise deletes the jury profile',
+  })
   @ApiOperation({ summary: '[ADMIN] Remove a jury profile' })
   @ApiResponse({
     status: 200,
@@ -190,8 +196,12 @@ export class JuryController {
   })
   @ApiResponse({ status: 403, description: 'Forbidden — requires ADMIN' })
   @Serialize(JuryRemoveResponseDto)
-  removeFromJury(@Param('id') id: string, @GetCurrentUserId() userId: string) {
-    return this.juryService.removeFromJury(id, userId);
+  removeFromJury(
+    @Param('id') id: string,
+    @GetCurrentUserId() userId: string,
+    @Query('tournamentId') tournamentId?: string,
+  ) {
+    return this.juryService.removeFromJury(id, userId, tournamentId);
   }
 
   @Post('tournaments/:tournamentId/assign')
