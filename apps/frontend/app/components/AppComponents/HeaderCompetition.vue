@@ -8,7 +8,6 @@ header.header-competition
         SearchBar(v-model="localSearch" :loading="store.loading")
 
     .header-competition__nav
-        //- Desktop Nav
         .desktop-nav
             template(v-if="loginStore.isAdmin")
                 Button.create-btn(
@@ -18,13 +17,6 @@ header.header-competition
                 )
             
             template(v-if="loginStore.isAuthenticated")
-                NuxtLink.jury-link(
-                    v-if="loginStore.user.role === 'JURY' && route.params.id"
-                    :to="`/tournaments/${route.params.id}/judge`"
-                )
-                    i.pi.pi-verified
-                    span ПАНЕЛЬ ЖУРІ
-
                 Button.create-btn(
                     v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                     type="button"
@@ -36,7 +28,7 @@ header.header-competition
                     :to="`/teams/${loginStore.userTeam.id}`"
                 )
                     i.pi.pi-users
-                    span МОЯ КОМАНДА
+                    span {{ $t('nav.my_team').toUpperCase() }}
 
             LanguageSwitcher
 
@@ -60,7 +52,6 @@ header.header-competition
                 template(v-else)
                     button.login-btn(@click="goToLogin") {{ $t('nav.login').toUpperCase() }}
         
-        //- Mobile Burger Trigger
         Button.burger-btn(
             type="button"
             icon="pi pi-bars"
@@ -69,7 +60,6 @@ header.header-competition
             data-testid="burger-btn"
         )
 
-    //- Mobile Sidebar Menu
     Sidebar(v-model:visible="isMenuOpen" position="right" class="mobile-menu" :modal="true")
         .mobile-menu__content
             .mobile-menu__actions
@@ -81,14 +71,6 @@ header.header-competition
                     )
                 
                 template(v-if="loginStore.isAuthenticated")
-                    NuxtLink.jury-link(
-                        v-if="loginStore.user.role === 'JURY' && route.params.id"
-                        :to="`/tournaments/${route.params.id}/judge`"
-                        @click="isMenuOpen = false"
-                    )
-                        i.pi.pi-verified
-                        span ПАНЕЛЬ ЖУРІ
-
                     Button.create-btn(
                         v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
                         type="button"
@@ -101,7 +83,7 @@ header.header-competition
                         @click="isMenuOpen = false"
                     )
                         i.pi.pi-users
-                        span МОЯ КОМАНДА
+                        span {{ $t('nav.my_team').toUpperCase() }}
 
             .mobile-menu__user(v-if="loginStore.user")
                 NuxtLink.user-link(:to="localePath('/profile')" @click="isMenuOpen = false")
@@ -153,7 +135,6 @@ const isOpen = ref(false)
 const isTeamOpen = ref(false)
 const isMenuOpen = ref(false)
 
-// Синхронізуємо локальний пошук з глобальним стором тільки при зміні користувачем
 const localSearch = ref(store.search)
 watch(() => store.search, (newVal) => {
     if (localSearch.value !== newVal) {
@@ -374,6 +355,7 @@ function closeModal(){
         font-weight: 700;
         letter-spacing: 1.5px;
         text-transform: uppercase;
+
         text-decoration: none;
         transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 
@@ -381,6 +363,7 @@ function closeModal(){
             background: var(--color-text);
             color: var(--color-bg);
             border-color: var(--color-text);
+            cursor: pointer;
         }
 
         &:focus-visible {
@@ -581,7 +564,6 @@ function closeModal(){
 </style>
 
 <style lang="scss">
-// Глобальні стилі для маски та панелі (PrimeVue 4 / Aura)
 .p-sidebar-mask,
 .p-drawer-mask,
 .p-overlay-mask,

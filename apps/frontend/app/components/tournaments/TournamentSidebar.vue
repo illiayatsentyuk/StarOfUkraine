@@ -1,36 +1,36 @@
 <template lang="pug">
 aside.sidebar
     .sidebar__card
-        h3.section-label КЛЮЧОВІ ДАТИ 
+        h3.section-label {{ $t('tournament.sidebar.key_dates') }}
         .date-list
             .date-entry
-                span.label РЕЄСТРАЦІЯ ПОЧИНАЄТЬСЯ
+                span.label {{ $t('tournament.sidebar.reg_start') }}
                 span.value {{ formatDate(tournament.registrationStart) }}
             .date-entry
-                span.label РЕЄСТРАЦІЯ ЗАКІНЧУЄТЬСЯ
+                span.label {{ $t('tournament.sidebar.reg_end') }}
                 span.value {{ formatDate(tournament.registrationEnd) }}
             .date-entry.highlight
-                span.label ДАТА СТАРТУ
+                span.label {{ $t('tournament.sidebar.start_date') }}
                 span.value {{ formatDate(tournament.startDate) }}
 
         .divider
 
         NuxtLink.sidebar__table-link(:to="localePath(`/tournaments/${tournamentId}/table`)")
             span.icon ↗
-            span ТАБЛИЦЯ РЕЗУЛЬТАТІВ
+            span {{ $t('tournament.sidebar.results_table') }}
 
         .divider
 
         //- Teams list
         .sidebar__teams
-            h3.section-label КОМАНДИ УЧАСНИКИ
+            h3.section-label {{ $t('tournament.sidebar.teams_title') }}
             .sidebar__teams-hidden(v-if="shouldHideTeams")
                 i.pi.pi-eye-slash.teams-hidden-icon
-                span Список команд буде доступний після завершення реєстрації
+                span {{ $t('tournament.sidebar.teams_hidden') }}
             .sidebar__teams-loading(v-else-if="loadingTeams")
                 i.pi.pi-spin.pi-spinner
             .sidebar__teams-empty(v-else-if="!teams.length")
-                span Команд поки немає
+                span {{ $t('tournament.sidebar.no_teams') }}
             .sidebar__teams-list(v-else)
                 .sidebar__team-row(v-for="team in teams" :key="team.id")
                     span.team-name {{ team.name }}
@@ -39,13 +39,13 @@ aside.sidebar
 
         .sidebar__footer
             .status-info
-                span.label ПОТОЧНИЙ СТАТУС
-                span.value(v-if="status" :style="{ color: status.color }") {{ status.label }}
+                span.label {{ $t('tournament.sidebar.current_status') }}
+                span.value(v-if="status" :style="{ color: status.color }") {{ $t(status.label) }}
 
             Button.sidebar__edit(
                 v-if="isAdmin"
                 type="button"
-                label="Редагувати турнір"
+                :label="$t('tournament.sidebar.edit_btn')"
                 icon="pi pi-pencil"
                 @click="$emit('edit')"
                 data-testid="edit-tournament-btn"
@@ -54,7 +54,7 @@ aside.sidebar
             Button.sidebar__delete(
                 v-if="isAdmin"
                 type="button"
-                label="Видалити турнір"
+                :label="$t('tournament.sidebar.delete_btn')"
                 @click="$emit('delete')"
             )
 
@@ -64,7 +64,7 @@ aside.sidebar
             )
                 Button.sidebar__judge(
                     type="button"
-                    label="КЕРУВАННЯ ЖУРІ"
+                    :label="$t('tournament.sidebar.manage_jury')"
                     icon="pi pi-users"
                 )
 
@@ -74,7 +74,7 @@ aside.sidebar
             )
                 Button.sidebar__judge(
                     type="button"
-                    label="ПАНЕЛЬ ЖУРІ"
+                    :label="$t('tournament.sidebar.jury_panel')"
                     icon="pi pi-users"
                 )
 
@@ -85,7 +85,7 @@ aside.sidebar
             )
                 Button.sidebar__login(
                     type="button"
-                    label="УВІЙТИ ДО УЧАСТІ"
+                    :label="$t('tournament.sidebar.login_to_join')"
                     icon="pi pi-sign-in"
                 )
 
@@ -93,7 +93,7 @@ aside.sidebar
             Button.sidebar__joined(
                 v-if="isAuthenticated && !isAdmin && isAlreadyJoined"
                 type="button"
-                label="Ви вже в турнірі"
+                :label="$t('tournament.sidebar.already_joined')"
                 icon="pi pi-check"
                 :disabled="true"
             )
@@ -115,7 +115,7 @@ aside.sidebar
             )
                 Button.sidebar__manage-team(
                     type="button"
-                    label="КЕРУВАННЯ КОМАНДОЮ"
+                    :label="$t('tournament.sidebar.manage_team')"
                     icon="pi pi-users"
                 )
 </template>
@@ -124,7 +124,9 @@ aside.sidebar
 import type { TournamentStatusInfo } from '~/utils/tournament-status-ui'
 import type { Tournament } from '~/types'
 import { useLoginStore } from '~/stores/auth.store'
+import { useI18n } from 'vue-i18n'
 
+const { t } = useI18n()
 const localePath = useLocalePath()
 
 const props = defineProps<{
@@ -160,8 +162,8 @@ const firstTeamId = computed(() => {
 })
 
 const joinLabel = computed(() => {
-    if (props.isLoadingAuth) return 'ЗАВАНТАЖЕННЯ...'
-    return props.hasTeam ? 'ВСТУПИТИ В ТУРНІР' : 'СТВОРИТИ КОМАНДУ І ВСТУПИТИ'
+    if (props.isLoadingAuth) return t('common.loading').toUpperCase()
+    return props.hasTeam ? t('tournament.sidebar.join_btn') : t('tournament.sidebar.create_and_join_btn')
 })
 </script>
 

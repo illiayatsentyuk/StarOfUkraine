@@ -1,6 +1,6 @@
 <template lang="pug">
 .content-section.bracket-section-outer(v-if="rounds && rounds.length > 0")
-    h3.section-label СІТКА ТУРНІРУ
+    h3.section-label {{ $t('tournament.bracket.title') }}
     ClientOnly
         .bracket-wrapper(ref="wrapperRef" :class="{ 'is-admin': isAdmin }")
             VueTournamentBracket(
@@ -16,41 +16,41 @@
             )
 
     .side-config(v-if="isAdmin")
-        h4.side-config__title СТОРОНИ КОМАНД У МАТЧАХ
+        h4.side-config__title {{ $t('tournament.bracket.sides_title') }}
         .side-config__round(v-for="(round, ri) in localRounds" :key="`round-${ri}`")
-            .side-config__round-title Раунд {{ ri + 1 }}
+            .side-config__round-title {{ $t('tournament.bracket.round') }} {{ ri + 1 }}
             .side-config__match(v-for="(match, mi) in round.matchs" :key="match.id || `match-${ri}-${mi}`")
-                .side-config__match-title Матч {{ match.title || `${ri + 1}-${mi + 1}` }}
+                .side-config__match-title {{ $t('tournament.bracket.match') }} {{ match.title || `${ri + 1}-${mi + 1}` }}
                 .side-config__row(v-if="match.team1?.name")
                     span.side-config__team {{ match.team1.name }}
                     select.side-config__select(
                         :value="match.team1?.side || ''"
                         @change="onSideChange(match.id, 'team1', $event)"
                     )
-                        option(value="") Авто
-                        option(value="radiant") Radiant
-                        option(value="dire") Dire
+                        option(value="") {{ $t('tournament.bracket.auto') }}
+                        option(value="radiant") {{ $t('tournament.bracket.radiant') }}
+                        option(value="dire") {{ $t('tournament.bracket.dire') }}
                 .side-config__row(v-if="match.team2?.name")
                     span.side-config__team {{ match.team2.name }}
                     select.side-config__select(
                         :value="match.team2?.side || ''"
                         @change="onSideChange(match.id, 'team2', $event)"
                     )
-                        option(value="") Авто
-                        option(value="radiant") Radiant
-                        option(value="dire") Dire
+                        option(value="") {{ $t('tournament.bracket.auto') }}
+                        option(value="radiant") {{ $t('tournament.bracket.radiant') }}
+                        option(value="dire") {{ $t('tournament.bracket.dire') }}
                 .side-config__row.side-config__row--id
-                    label.side-config__label Match ID
+                    label.side-config__label {{ $t('tournament.bracket.match_id') }}
                     .side-config__id-group
                         input.side-config__input(
                             :value="match.dotaMatchId || ''"
-                            placeholder="ID матчу"
+                            :placeholder="$t('tournament.bracket.match_id_placeholder')"
                             @change="onMatchIdChange(match.id, $event)"
                         )
                         button.side-config__resolve-btn(
                             v-if="match.dotaMatchId"
                             @click="$emit('resolveMatch', match.id, match.dotaMatchId)"
-                            title="Розрахувати результат"
+                            :title="$t('tournament.bracket.resolve_title')"
                         )
                             i.pi.pi-check-circle
 </template>

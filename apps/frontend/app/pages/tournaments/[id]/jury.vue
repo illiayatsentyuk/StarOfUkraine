@@ -10,7 +10,7 @@
         p.desc Додавайте суддів, які будуть перевіряти роботи в цьому турнірі.
 
     .jury-page__content
-        TournamentJuryManager(:tournamentId="tournamentId")
+        TournamentJuryManager.jury-page__manager(:tournamentId="tournamentId")
 </template>
 
 <script setup lang="ts">
@@ -62,6 +62,12 @@ definePageMeta({
         .desc {
             color: var(--color-text-muted);
             font-size: clamp(14px, 3vw, 16px);
+        }
+    }
+
+    &__content {
+        .jury-page__manager {
+            border: 1px solid var(--color-border);
         }
     }
 }

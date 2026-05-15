@@ -15,6 +15,14 @@
                 i.pi.pi-play(v-else)
                 span АКТИВУВАТИ ПРИЙОМ
 
+            button.admin-btn.delete(
+                v-if="task.status === 'DRAFT'"
+                @click="handleDelete"
+                :disabled="loading"
+            )
+                i.pi.pi-trash
+                span ВИДАЛИТИ
+
             button.admin-btn.close(
                 v-if="task.status === 'ACTIVE'"
                 @click="handleClose"
@@ -90,6 +98,9 @@ const props = defineProps<{
     task: TournamentTask
 }>()
 
+const emit = defineEmits<{ deleted: [] }>()
+
+const { t } = useI18n()
 const tasksStore = useTasksStore()
 const loading = ref(false)
 const assigning = ref(false)
@@ -110,6 +121,17 @@ async function handleActivate() {
     loading.value = true
     try {
         await tasksStore.activateTask(props.task.id)
+    } finally {
+        loading.value = false
+    }
+}
+
+async function handleDelete() {
+    if (!confirm(t('task.admin.delete_confirm'))) return
+    loading.value = true
+    try {
+        await tasksStore.deleteTask(props.task.id)
+        emit('deleted')
     } finally {
         loading.value = false
     }
@@ -206,6 +228,7 @@ async function handleAssign() {
     letter-spacing: 1px;
 
     &.activate { background: #16a34a; color: white; &:hover:not(:disabled) { background: #15803d; } }
+    &.delete { background: transparent; border: 1px solid #dc2626; color: #dc2626; &:hover:not(:disabled) { background: #dc2626; color: white; } }
     &.close { background: #dc2626; color: white; &:hover:not(:disabled) { background: #b91c1c; } }
     &.distribute { background: #2563eb; color: white; &:hover:not(:disabled) { background: #1d4ed8; } }
     &.redistribute { background: var(--color-text); color: white; &:hover:not(:disabled) { opacity: 0.8; } }

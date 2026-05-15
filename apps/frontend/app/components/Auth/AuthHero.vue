@@ -1,7 +1,7 @@
 <template lang="pug">
 .header-section
-  h1.main-title Tournament Hub
-  p.subtitle {{ isLogin ? 'Увійдіть до свого профілю' : 'Створіть свій особистий профіль' }}
+  h1.main-title {{ $t('nav.home') }}
+  p.subtitle {{ isLogin ? $t('auth.login_subtitle') : $t('auth.register_subtitle') }}
 </template>
 
 <script setup lang="ts">

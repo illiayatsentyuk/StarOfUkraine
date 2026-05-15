@@ -1,16 +1,16 @@
 <template lang="pug">
 .social-auth
   .card-header
-    h2 {{ isLogin ? 'Вхід' : 'Реєстрація' }}
-    p {{ isLogin ? 'Швидкий вхід за допомогою соцмереж або пошти' : 'Швидкий вхід або заповнення даних' }}
+    h2 {{ isLogin ? $t('auth.social_login_title') : $t('auth.social_register_title') }}
+    p {{ isLogin ? $t('auth.social_login_desc') : $t('auth.social_register_desc') }}
   
   .social-grid
     button.social-btn(type="button" @click="$emit('login-google')")
       i(class="pi pi-google")
-      | Google
+      | {{ $t('auth.google_btn') }}
 
   .divider
-    span або пошта
+    span {{ $t('auth.or_email') }}
 </template>
 
 <script setup lang="ts">

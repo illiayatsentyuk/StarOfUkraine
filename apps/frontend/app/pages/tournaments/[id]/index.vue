@@ -148,7 +148,7 @@ const hasTeam = computed(() => {
 
 const canSeeTasks = computed(() => {
     if (loginStore.isAdmin || loginStore.isJury) return true
-    return tournament.value?.status !== 'DRAFT'
+    return tournament.value?.status === 'ONGOING'
 })
 
 const refreshTeams = async () => {

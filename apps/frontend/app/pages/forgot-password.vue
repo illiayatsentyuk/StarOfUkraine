@@ -2,12 +2,12 @@
 .registration-page
   .auth-card
     .header-section
-      h1.main-title Відновлення пароля
-      p.subtitle Введіть електронну пошту — надішлемо посилання для зміни пароля
+      h1.main-title {{ $t('auth.reset.forgot_title') }}
+      p.subtitle {{ $t('auth.reset.forgot_subtitle') }}
 
     .card-header
-      h2 Забули пароль?
-      p Якщо обліковий запис існує, ви отримаєте лист протягом кількох хвилин.
+      h2 {{ $t('auth.reset.forgot_heading') }}
+      p {{ $t('auth.reset.forgot_desc') }}
 
     VeeForm.form-content(
       v-if="!emailSent"
@@ -23,26 +23,27 @@
           :model-value="field.value"
           :name="field.name"
           type="email"
-          label="Електронна пошта *"
-          placeholder="example@mail.com"
+          :label="`${$t('auth.email_label')} *`"
+          :placeholder="$t('auth.email_placeholder')"
           :error-message="fieldErrorText(errorMessage, errors)"
           @update:model-value="emitFieldValue(field, handleChange, $event)"
           @blur="emitFieldBlur(field, handleBlur, $event)"
         )
 
-      button.submit-btn(type="submit" :disabled="loading") НАДІСЛАТИ ПОСИЛАННЯ
+      button.submit-btn(type="submit" :disabled="loading") {{ $t('auth.reset.submit_btn').toUpperCase() }}
 
     .success-panel(v-else)
-      p.success-panel__text Ми надіслали інструкції на вашу пошту (якщо обліковий запис існує).
-      p.success-panel__hint Перевірте теку «Спам», якщо листа немає у вхідних.
+      p.success-panel__text {{ $t('auth.reset.success_text') }}
+      p.success-panel__hint {{ $t('auth.reset.success_hint') }}
 
     .card-footer
       NuxtLink.footer-link.footer-link--row(:to="localePath('/auth')")
         i.pi.pi-arrow-left
-        span Повернутися до входу
+        span {{ $t('auth.reset.back_to_login') }}
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const localePath = useLocalePath()
 const toast = useServerSafeToast()
 const loading = ref(false)
@@ -87,13 +88,13 @@ const handleSubmit = async (values: ForgotForm) => {
       email: values.email.trim().toLowerCase(),
     })
     emailSent.value = true
-    toast.success('Перевірте пошту')
+    toast.success(t('auth.reset.toast_success'))
   } catch (err: unknown) {
     const status = (err as { response?: { status?: number } }).response?.status
     if (status === 404) {
-      toast.error('Користувача з такою поштою не знайдено')
+      toast.error(t('auth.reset.toast_user_not_found'))
     } else {
-      toast.error('Не вдалося надіслати лист. Спробуйте пізніше.')
+      toast.error(t('auth.reset.toast_send_failed'))
     }
   } finally {
     loading.value = false

@@ -25,6 +25,7 @@ describe('TasksService', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     $transaction: jest.fn((ops: Promise<unknown>[]) =>
       Promise.all(ops),
@@ -381,6 +382,46 @@ describe('TasksService', () => {
       await expect(service.closeSubmissions('task-1')).rejects.toThrow(
         BadRequestException,
       );
+    });
+  });
+
+  describe('deleteTask', () => {
+    const taskRow = {
+      id: 'task-1',
+      tournamentId: tournamentMock.id,
+      status: TaskStatus.DRAFT,
+    };
+
+    it('deletes task when status is DRAFT', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(taskRow);
+      mockPrisma.task.delete.mockResolvedValue(taskRow);
+
+      const result = await service.deleteTask('task-1');
+
+      expect(result).toEqual(taskRow);
+      expect(mockPrisma.task.delete).toHaveBeenCalledWith({
+        where: { id: 'task-1' },
+      });
+    });
+
+    it('throws when task not found', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteTask('missing')).rejects.toThrow(
+        new NotFoundException('Task not found'),
+      );
+    });
+
+    it('throws when task is not DRAFT', async () => {
+      mockPrisma.task.findUnique.mockResolvedValue({
+        ...taskRow,
+        status: TaskStatus.ACTIVE,
+      });
+
+      await expect(service.deleteTask('task-1')).rejects.toThrow(
+        new BadRequestException('Only draft tasks can be deleted'),
+      );
+      expect(mockPrisma.task.delete).not.toHaveBeenCalled();
     });
   });
 

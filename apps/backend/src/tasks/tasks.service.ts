@@ -178,6 +178,23 @@ export class TasksService {
     return updated;
   }
 
+  async deleteTask(id: string) {
+    const task = await this.prisma.task.findUnique({ where: { id } });
+    if (!task) throw new NotFoundException('Task not found');
+    if (task.status !== TaskStatus.DRAFT) {
+      throw new BadRequestException(
+        'Only draft tasks can be deleted',
+      );
+    }
+
+    const deleted = await this.prisma.task.delete({ where: { id } });
+    this.logger.info(
+      { taskId: id, tournamentId: task.tournamentId },
+      'Task deleted',
+    );
+    return deleted;
+  }
+
   async submitTask(taskId: string, dto: SubmitTaskDto) {
     const task = await this.prisma.task.findUnique({ where: { id: taskId } });
     if (!task) throw new NotFoundException('Task not found');

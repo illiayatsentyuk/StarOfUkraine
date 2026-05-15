@@ -1,19 +1,19 @@
 <template lang="pug">
 header.tasks-page__hero
   .hero-content
-    h1.title ЗАВДАННЯ ТУРНІРУ
-    p.subtitle(v-if="!loading") Доступно завдань: {{ taskCount }}
+    h1.title {{ $t('task.hero_title').toUpperCase() }}
+    p.subtitle(v-if="!loading") {{ $t('task.hero_available', { count: taskCount }) }}
   .hero-actions(v-if="isAdmin")
     Button.admin-btn.assign-btn(
       type="button"
-      label="РОЗПОДІЛИТИ ЖУРІ"
+      :label="$t('task.admin.distribute').toUpperCase()"
       icon="pi pi-users"
       :loading="loading"
       @click="emit('assignJury')"
     )
     Button.admin-btn.create-btn(
       type="button"
-      label="СТВОРИТИ ЗАВДАННЯ"
+      :label="$t('task.create.create_btn').toUpperCase()"
       icon="pi pi-plus"
       @click="emit('create')"
     )

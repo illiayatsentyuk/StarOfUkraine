@@ -1,48 +1,54 @@
 <template lang="pug">
 .content-section.submission-section
-    h3.section-title ВІДПРАВИТИ РЕЗУЛЬТАТ
+    h3.section-title {{ $t('task.submission.title') }}
 
-    .status-banner.status-banner--evaluated(v-if="mySubmission?.status === 'EVALUATED'")
+    .status-banner.status-banner--closed(v-if="task.status !== 'ACTIVE'")
+        i.pi.pi-lock
+        .banner-text
+            h4 {{ $t('task.status.submission_closed') }}
+            p {{ $t('task.submission.closed_desc') }}
+
+    .status-banner.status-banner--evaluated(v-else-if="mySubmission?.status === 'EVALUATED'")
         i.pi.pi-check-circle
         .banner-text
-            h4 Роботу оцінено
-            p Журі перевірило вашу роботу
+            h4 {{ $t('task.submission.evaluated_title') }}
+            p {{ $t('task.submission.evaluated_desc') }}
 
     .status-banner.status-banner--pending(v-else-if="mySubmission?.status === 'PENDING'")
         i.pi.pi-clock
         .banner-text
-            h4 Роботу відправлено
-            p Очікує перевірки журі
+            h4 {{ $t('task.submission.pending_title') }}
+            p {{ $t('task.submission.pending_desc') }}
         .resubmit-toggle
             button(type="button" @click="showResubmit = !showResubmit")
-                | {{ showResubmit ? 'Сховати' : 'Оновити посилання' }}
+                | {{ showResubmit ? $t('task.submission.hide') : $t('task.submission.update_link') }}
 
-        form.submission-form(v-if="showResubmit" @submit.prevent="handleSubmit")
+        form.submission-form(v-if="showResubmit && task.status === 'ACTIVE'" @submit.prevent="handleSubmit")
             .field
-                label Посилання на GitHub
+                label {{ $t('task.submission.github_label') }}
                 .input-wrapper
                     i.pi.pi-github
                     InputText.custom-input(v-model="submissionGithub" placeholder="https://github.com/..." required)
             .field
-                label Посилання на YouTube (Demo)
+                label {{ $t('task.submission.youtube_label') }}
                 .input-wrapper
                     i.pi.pi-youtube
                     InputText.custom-input(v-model="submissionYoutube" placeholder="https://youtube.com/...")
             .field
-                label Live Demo (опціонально)
+                label {{ $t('task.submission.live_label') }}
                 .input-wrapper
                     i.pi.pi-globe
                     InputText.custom-input(v-model="submissionLive" placeholder="https://myapp.vercel.app")
             Button.submit-btn(
                 type="submit"
-                label="ОНОВИТИ РОБОТУ"
+                :label="$t('task.submission.update_btn')"
                 :loading="loading"
                 :disabled="!submissionGithub.trim()"
             )
 
-    form.submission-form(v-else @submit.prevent="handleSubmit")
+    form.submission-form(v-else-if="task.status === 'ACTIVE'" @submit.prevent="handleSubmit")
         .field
-            label(for="github") Посилання на GitHub *
+            label(for="github") {{ $t('task.submission.github_label') }} *
             .input-wrapper
                 i.pi.pi-github
                 InputText#github.custom-input(
@@ -51,7 +57,7 @@
                     required
                 )
         .field
-            label(for="youtube") Відео-демо (YouTube) *
+            label(for="youtube") {{ $t('task.submission.youtube_label') }} *
             .input-wrapper
                 i.pi.pi-youtube
                 InputText#youtube.custom-input(
@@ -59,7 +65,7 @@
                     placeholder="https://youtube.com/..."
                 )
         .field
-            label(for="live") Live Demo (опціонально)
+            label(for="live") {{ $t('task.submission.live_label') }}
             .input-wrapper
                 i.pi.pi-globe
                 InputText#live.custom-input(
@@ -68,7 +74,7 @@
                 )
         Button.submit-btn(
             type="submit"
-            label="ВІДПРАВИТИ НА ПЕРЕВІРКУ"
+            :label="$t('task.submission.submit_btn')"
             :loading="loading"
             :disabled="!submissionGithub.trim()"
         )
@@ -149,6 +155,12 @@ function handleSubmit() {
         background: #dcfce7;
         border-color: #16a34a;
         color: #14532d;
+    }
+
+    &--closed {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #475569;
     }
 }
 

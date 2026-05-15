@@ -1,17 +1,17 @@
 <template lang="pug">
 .content-section.admin-section
-    h3.section-title ПАНЕЛЬ ПЕРЕВІРКИ
+    h3.section-title {{ $t('task.admin.panel_title') }}
     
     .loading-state(v-if="loading && submissions.length === 0")
         i.pi.pi-spin.pi-spinner
-        span Завантаження...
+        span {{ $t('task.admin.loading') }}
 
     .submissions-list(v-else)
         .submission-card(v-for="sub in submissions" :key="sub.id")
             .submission-header
                 span.team-name {{ sub.team?.name || sub.teamId }}
                 .status-badge(:class="sub.status")
-                    span {{ sub.status === 'PENDING' ? 'Очікує' : 'Оцінено' }}
+                    span {{ sub.status === 'PENDING' ? $t('task.admin.pending') : $t('task.admin.evaluated') }}
             
             .submission-links
                 a.link-icon(:href="sub.githubUrl" target="_blank" v-if="sub.githubUrl")
@@ -23,16 +23,16 @@
                 .criterion-grading(v-for="c in task?.criteria?.rubric || []" :key="c.id")
                     .c-info
                         span.c-name {{ c.label }}
-                        span.c-max max {{ c.maxPoints }}
+                        span.c-max {{ $t('task.admin.max_points') }} {{ c.maxPoints }}
                     
                     .c-input
                         InputText(v-model="gradingData[sub.id][c.id]" type="number" :max="c.maxPoints" placeholder="0")
                 
                 .comment-area
-                    Textarea(v-model="commentsData[sub.id]" placeholder="Коментар до роботи..." rows="2" autoResize)
+                    Textarea(v-model="commentsData[sub.id]" :placeholder="$t('task.admin.comment_placeholder')" rows="2" autoResize style="resize: none;")
 
                 Button.grade-btn(
-                    label="ЗБЕРЕГТИ ОЦІНКУ"
+                    :label="$t('task.admin.save_grade')"
                     @click="submitGrade(sub.id)"
                     :loading="loading"
                 )
@@ -150,7 +150,6 @@ function submitGrade(submissionId: string) {
 
         .c-input {
             :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; text-align: center; }
-            :deep(.p-rating) { gap: 4px; .p-rating-item .p-rating-icon { font-size: 14px; color: #f59e0b; } }
         }
     }
 
@@ -159,9 +158,10 @@ function submitGrade(submissionId: string) {
         :deep(.p-inputtextarea) {
             width: 100%;
             font-size: 13px;
-            border-color: var(--color-border);
             background: var(--color-bg);
             color: var(--color-text);
+            resize: none;
+            overflow-y: hidden;
         }
     }
 

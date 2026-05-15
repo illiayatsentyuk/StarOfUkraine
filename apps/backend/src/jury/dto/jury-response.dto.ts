@@ -1,6 +1,24 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 
+class JuryUserSummaryDto {
+  @Expose()
+  @ApiProperty()
+  id: string;
+
+  @Expose()
+  @ApiProperty()
+  email: string;
+
+  @Expose()
+  @ApiProperty()
+  nameId: string;
+
+  @Expose()
+  @ApiProperty()
+  name: string;
+}
+
 export class JuryRecordDto {
   @Expose()
   @ApiProperty()
@@ -17,6 +35,11 @@ export class JuryRecordDto {
   @Expose()
   @ApiProperty()
   updatedAt: Date;
+
+  @Expose()
+  @Type(() => JuryUserSummaryDto)
+  @ApiPropertyOptional({ type: JuryUserSummaryDto })
+  user?: JuryUserSummaryDto;
 }
 
 export class JuryRemoveResponseDto {

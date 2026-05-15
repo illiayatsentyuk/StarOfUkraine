@@ -221,24 +221,40 @@ export class UsersService {
             },
           },
         },
+        jury: {
+          select: {
+            tournaments: {
+              select: {
+                id: true,
+                name: true,
+                status: true,
+                startDate: true,
+              },
+              orderBy: { startDate: 'desc' as const },
+            },
+          },
+        },
       },
     });
 
     if (!user) throw new NotFoundException('User not found');
 
-    return user.teamsAsMember.map((team) => ({
-      team: { id: team.id, name: team.name },
-      tournaments: team.tournaments,
-      submissions: team.submissions.map((s) => ({
-        id: s.id,
-        taskId: s.taskId,
-        taskName: s.task.name,
-        tournamentId: s.task.tournamentId,
-        githubUrl: s.githubUrl,
-        videoUrl: s.videoUrl,
-        liveUrl: s.liveUrl,
-        status: s.status,
+    return {
+      teams: user.teamsAsMember.map((team) => ({
+        team: { id: team.id, name: team.name },
+        tournaments: team.tournaments,
+        submissions: team.submissions.map((s) => ({
+          id: s.id,
+          taskId: s.taskId,
+          taskName: s.task.name,
+          tournamentId: s.task.tournamentId,
+          githubUrl: s.githubUrl,
+          videoUrl: s.videoUrl,
+          liveUrl: s.liveUrl,
+          status: s.status,
+        })),
       })),
-    }));
+      juryTournaments: user.jury?.tournaments || [],
+    };
   }
 }

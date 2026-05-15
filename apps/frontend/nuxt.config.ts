@@ -73,6 +73,7 @@ export default defineNuxtConfig({
       { code: 'ua', iso: 'uk-UA', file: 'ua.ts', name: 'Українська' },
     ],
     defaultLocale: 'en',
+    lazy: false,
     langDir: 'app/locales',
     restructureDir: false,
     strategy: 'prefix_except_default',

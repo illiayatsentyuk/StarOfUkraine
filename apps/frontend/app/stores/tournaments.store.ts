@@ -18,6 +18,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
     const sortBy = ref('createdAt')
     const sortOrder = ref('DESC')
     const statusFilter = ref<TournamentStatusFilter>('all')
+    const initialized = ref(false)
     
     //think about delete
     const hasMore = computed(() => page.value <= totalPages.value)
@@ -41,6 +42,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
 
         if (resetData) {
             reset()
+            statusFilter.value = 'all'
         }
 
         try {
@@ -96,9 +98,10 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             tournaments.value.unshift(createdTournament)
             toast.success('Турнір успішно створено')
             return createdTournament
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Помилка API при додаванні турніру:', error)
-            toast.error('Помилка API при додаванні турніру')
+            const message = error?.response?.data?.message || 'Помилка API при додаванні турніру'
+            toast.error(message)
             throw error
         }
     }
@@ -124,9 +127,10 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             await api.delete(`/tournaments/${id}`)
             tournaments.value = tournaments.value.filter((t) => t.id !== id)
             toast.success('Турнір успішно видалено')
-        } catch (error) {
+        } catch (error: any) {
             console.error('Помилка API при видаленні турніру:', error)
-            toast.error('Помилка API при видаленні турніру')
+            const message = error?.response?.data?.message || 'Помилка API при видаленні турніру'
+            toast.error(message)
             throw error
         }
     }
@@ -141,9 +145,10 @@ export const useTournamentsStore = defineStore('tournaments', () => {
             tournaments.value = tournaments.value.map((t) => (t.id === id ? updatedTournament : t))
             toast.success('Турнір успішно оновлено')
             return updatedTournament
-        } catch (error: unknown) {
+        } catch (error: any) {
             console.error('Помилка API при оновленні турніру:', error)
-            toast.error('Помилка API при оновленні турніру')
+            const message = error?.response?.data?.message || 'Помилка API при оновленні турніру'
+            toast.error(message)
             throw error
         }
     }
@@ -180,6 +185,7 @@ export const useTournamentsStore = defineStore('tournaments', () => {
         sortBy,
         sortOrder,
         statusFilter,
+        initialized,
         reset,
         loadFromDatabase,
         fetchTournamentById,

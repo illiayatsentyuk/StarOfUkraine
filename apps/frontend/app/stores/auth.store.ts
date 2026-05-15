@@ -29,10 +29,11 @@ export const useLoginStore = defineStore('login', () => {
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
-        } catch (error) {
+        } catch (error: any) {
             user.value = null
             isAdmin.value = false
-            toast.error('Помилка при реєстрації')
+            const msg = error.response?.data?.message || 'Помилка при реєстрації'
+            toast.error(msg)
             throw error
         } finally {
             loading.value = false
@@ -49,10 +50,11 @@ export const useLoginStore = defineStore('login', () => {
             if (typeof window !== 'undefined') {
                 window.location.reload()
             }
-        } catch (error) {
+        } catch (error: any) {
             user.value = null
             isAdmin.value = false
-            toast.error('Неправильна пошта або пароль')
+            const msg = error.response?.data?.message || 'Неправильна пошта або пароль'
+            toast.error(msg)
             throw error
         } finally {
             loading.value = false
@@ -97,6 +99,7 @@ export const useLoginStore = defineStore('login', () => {
             authenticated.value = false
             if (typeof window !== 'undefined') {
                 window.localStorage.removeItem('activeTeamId')
+                navigateTo(useLocalePath()('/'))
                 window.location.reload()
             }
         }

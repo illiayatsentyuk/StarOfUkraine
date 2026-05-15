@@ -470,9 +470,21 @@ describe('TournamentService', () => {
 
       const result = await service.remove('tournament-1');
       expect(result).toEqual(tournamentMock);
+      expect(mockPrisma.tournament.findUnique).toHaveBeenCalledWith({
+        where: { id: 'tournament-1' },
+      });
       expect(mockPrisma.tournament.delete).toHaveBeenCalledWith({
         where: { id: 'tournament-1' },
       });
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('missing')).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
+      expect(mockPrisma.tournament.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -524,6 +536,7 @@ describe('TournamentService', () => {
     it('throws when registration is not open yet', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue({
         ...openTournament,
+        status: TournamentStatus.DRAFT,
         registrationStart: new Date(now.getTime() + 60_000),
         registrationEnd: new Date(now.getTime() + 120_000),
       });
@@ -533,6 +546,29 @@ describe('TournamentService', () => {
       ).rejects.toThrow(
         new BadRequestException('Registration has not started yet'),
       );
+    });
+
+    it('allows join before registrationStart when status is REGISTRATION_OPEN (admin override)', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        status: TournamentStatus.REGISTRATION_OPEN,
+        registrationStart: new Date(now.getTime() + 60_000),
+        registrationEnd: new Date(now.getTime() + 120_000),
+      });
+      mockPrisma.team.findUnique.mockResolvedValue({
+        id: 'team-1',
+        captain: { id: 'user-1' },
+        members: [{ id: 'user-1' }, { id: 'user-2' }],
+      });
+      mockPrisma.team.findMany.mockResolvedValue([]);
+      mockPrisma.tournament.update.mockResolvedValue({
+        ...openTournament,
+        teams: [{ id: 'team-1' }],
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).resolves.toBeDefined();
     });
 
     it('throws when registration is closed', async () => {

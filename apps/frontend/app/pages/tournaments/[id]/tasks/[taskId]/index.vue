@@ -23,6 +23,7 @@ section.task-detail
                 TaskDetailHero(
                     :task="task"
                     :isAdmin="authStore.isAdmin"
+                    @deleted="onTaskDeleted"
                 )
                 
                 .content-card
@@ -98,6 +99,10 @@ onMounted(async () => {
         }
     }
 })
+
+async function onTaskDeleted() {
+    await navigateTo(localePath(`/tournaments/${tournamentId.value}/tasks`))
+}
 
 async function handleSubmit(payload: { github: string; youtube: string; liveUrl?: string; summary?: string }) {
     if (!task.value) return

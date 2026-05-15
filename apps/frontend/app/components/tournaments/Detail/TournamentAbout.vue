@@ -1,7 +1,7 @@
 <template lang="pug">
 .content-section
-  h3.section-label ПРО ТУРНІР
-  p.description {{ description || 'Опис відсутній.' }}
+  h3.section-label {{ $t('tournament.info.about_title') }}
+  p.description {{ description || $t('tournament.info.no_description') }}
 </template>
 
 <script setup lang="ts">

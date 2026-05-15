@@ -1,11 +1,11 @@
 <template lang="pug">
 .card-footer
   template(v-if="isLogin")
-    | Немає акаунта? 
-    a(href="#" @click.prevent="$emit('toggleMode', false)") Зареєструватися
+    | {{ $t('auth.no_account') }}
+    a(href="#" @click.prevent="$emit('toggleMode', false)") {{ $t('auth.register_link') }}
   template(v-else)
-    | Вже є акаунт? 
-    a(href="#" @click.prevent="$emit('toggleMode', true)") Увійти
+    | {{ $t('auth.has_account') }}
+    a(href="#" @click.prevent="$emit('toggleMode', true)") {{ $t('auth.login_link') }}
 </template>
 
 <script setup lang="ts">

@@ -3,9 +3,9 @@
   .profile__empty
     .profile__empty-icon(aria-hidden="true")
       i.pi.pi-user
-    p.profile__empty-title Немає активної сесії
-    p.profile__empty-text Увійдіть, щоб переглянути профіль і керувати обліковим записом.
-    NuxtLink.profile__empty-cta(:to="localePath('/auth')") Увійти
+    p.profile__empty-title {{ $t('profile.empty_title') }}
+    p.profile__empty-text {{ $t('profile.empty_text') }}
+    NuxtLink.profile__empty-cta(:to="localePath('/auth')") {{ $t('profile.empty_cta') }}
 </template>
 
 <script setup lang="ts">

@@ -12,8 +12,8 @@ VeeForm.form-content(
       :model-value="field.value"
       :name="field.name"
       type="email"
-      label="Електронна пошта *"
-      placeholder="example@mail.com"
+      :label="`${$t('auth.email_label')} *`"
+      :placeholder="$t('auth.email_placeholder')"
       :error-message="fieldErrorText(errorMessage, errors)"
       @update:model-value="emitFieldValue(field, handleChange, $event)"
       @blur="emitFieldBlur(field, handleBlur, $event)"
@@ -28,8 +28,8 @@ VeeForm.form-content(
       :model-value="field.value"
       :name="field.name"
       type="text"
-      label="Пароль *"
-      placeholder="........"
+      :label="`${$t('auth.password_label')} *`"
+      :placeholder="$t('auth.password_placeholder')"
       is-password-field
       :error-message="fieldErrorText(errorMessage, errors)"
       @update:model-value="emitFieldValue(field, handleChange, $event)"
@@ -37,7 +37,7 @@ VeeForm.form-content(
     )
 
   .forgot-password-row(v-if="isLogin")
-    NuxtLink.forgot-password-link(:to="localePath('/forgot-password')") Забули пароль?
+    NuxtLink.forgot-password-link(:to="localePath('/forgot-password')") {{ $t('auth.forgot_password') }}
 
   VeeField(
     v-if="!isLogin"
@@ -49,8 +49,8 @@ VeeForm.form-content(
       :model-value="field.value"
       :name="field.name"
       type="password"
-      label="Повтор пароля *"
-      placeholder="........"
+      :label="`${$t('auth.confirm_password_label')} *`"
+      :placeholder="$t('auth.password_placeholder')"
       :error-message="fieldErrorText(errorMessage, errors)"
       @update:model-value="emitFieldValue(field, handleChange, $event)"
       @blur="emitFieldBlur(field, handleBlur, $event)"
@@ -60,7 +60,7 @@ VeeForm.form-content(
   .personal-info-box(v-if="!isLogin")
     .box-title
       i.pi.pi-user.icon-user
-      h3 Особисті дані
+      h3 {{ $t('auth.personal_info') }}
 
     VeeField(
       v-slot="{ field, errors, errorMessage, handleChange, handleBlur }"
@@ -71,8 +71,8 @@ VeeForm.form-content(
         :model-value="field.value"
         :name="field.name"
         type="text"
-        label="Повне ім'я *"
-        placeholder="Іван Іваненко"
+        :label="`${$t('auth.name_label')} *`"
+        :placeholder="$t('auth.name_placeholder')"
         :error-message="fieldErrorText(errorMessage, errors)"
         @update:model-value="emitFieldValue(field, handleChange, $event)"
         @blur="emitFieldBlur(field, handleBlur, $event)"
@@ -87,7 +87,7 @@ VeeForm.form-content(
           :model-value="field.value"
           :name="field.name"
           type="date"
-          label="Дата народження"
+          :label="$t('auth.birth_date_label')"
           is-mini
           :error-message="fieldErrorText(errorMessage, errors)"
           @update:model-value="emitFieldValue(field, handleChange, $event)"
@@ -102,15 +102,15 @@ VeeForm.form-content(
           :model-value="field.value"
           :name="field.name"
           type="select"
-          label="Стать"
+          :label="$t('auth.gender_label')"
           is-mini
           :error-message="fieldErrorText(errorMessage, errors)"
           @update:model-value="emitFieldValue(field, handleChange, $event)"
           @blur="emitFieldBlur(field, handleBlur, $event)"
         )
-          option(value="" disabled selected) Оберіть
-          option(value="male") Чоловіча
-          option(value="female") Жіноча
+          option(value="" disabled selected) {{ $t('auth.gender_select') }}
+          option(value="male") {{ $t('auth.gender_male') }}
+          option(value="female") {{ $t('auth.gender_female') }}
 
   VeeField(
     v-if="!isLogin"
@@ -129,12 +129,12 @@ VeeForm.form-content(
           @change="handleChange($event.target.checked)"
         )
         label.terms-check__legal(for="terms")
-          | Я приймаю 
-          a(href="#" @click.prevent.stop) Умови використання
-          |  та надаю згоду на обробку даних.
+          | {{ $t('auth.accept_terms_pre') }} 
+          a(href="#" @click.prevent.stop) {{ $t('auth.accept_terms_link') }}
+          |  {{ $t('auth.accept_terms_post') }}
       .error-message(v-if="fieldErrorText(errorMessage, errors)") {{ fieldErrorText(errorMessage, errors) }}
   
-  button.submit-btn(type="submit" :disabled="loading") {{ isLogin ? 'УВІЙТИ' : 'ЗАРЕЄСТРУВАТИСЯ' }}
+  button.submit-btn(type="submit" :disabled="loading") {{ isLogin ? $t('auth.login_btn') : $t('auth.register_btn') }}
 </template>
 
 <script setup lang="ts">

@@ -18,7 +18,7 @@
                     v-if="authStore.isAuthenticated && !isMember && team.isAcceptNewMembers"
                     type="button"
                     icon="pi pi-user-plus"
-                    label="ПРИЄДНАТИСЯ"
+                    :label="$t('team.join_btn')"
                     :loading="joining"
                     @click="handleJoinTeam"
                 )
@@ -26,14 +26,14 @@
                     Button.btn-edit(
                         type="button"
                         icon="pi pi-pencil"
-                        label="РЕДАГУВАТИ"
+                        :label="$t('team.edit_btn')"
                         outlined
                         @click="isEditModalOpen = true"
                     )
                     Button.btn-delete(
                         type="button"
                         icon="pi pi-trash"
-                        label="ВИДАЛИТИ"
+                        :label="$t('team.delete_btn')"
                         outlined
                         severity="danger"
                         @click="handleDeleteTeam"
@@ -41,18 +41,18 @@
 
         .team-body
             .info-card
-                h3.card-label ІНФОРМАЦІЯ
+                h3.card-label {{ $t('team.info_title') }}
 
                 .info-empty(v-if="!team.organization && !team.city && !team.telegram && !team.discord")
                     i.pi.pi-info-circle
-                    span Інформація не вказана
+                    span {{ $t('team.info_empty') }}
 
                 .info-rows(v-else)
                     .info-row(v-if="team.organization")
-                        span.info-key Організація
+                        span.info-key {{ $t('team.organization') }}
                         span.info-val {{ team.organization }}
                     .info-row(v-if="team.city")
-                        span.info-key Місто
+                        span.info-key {{ $t('team.city') }}
                         span.info-val {{ team.city }}
                     .info-row(v-if="team.telegram")
                         span.info-key Telegram
@@ -63,11 +63,11 @@
 
                 .info-badge(v-if="team.isAcceptNewMembers")
                     i.pi.pi-check-circle
-                    span Команда приймає нових учасників
+                    span {{ $t('team.accepting_members') }}
 
             .members-card
                 h3.card-label
-                    | УЧАСНИКИ
+                    | {{ $t('team.members_title') }}
                     span.members-count &nbsp;({{ team.members?.length || 0 }})
 
                 .members-list(v-if="team.members?.length")
@@ -79,66 +79,83 @@
                         .member-avatar {{ (member.nameId || member.name || '?')[0].toUpperCase() }}
                         .member-details
                             span.member-name {{ member.nameId || member.name }}
-                            span.member-role {{ member.email === team.captainEmail ? 'Капітан' : 'Учасник' }}
+                            span.member-role {{ member.email === team.captainEmail ? $t('team.captain') : $t('team.member') }}
 
                 .members-empty(v-else)
                     i.pi.pi-users
-                    span Учасників поки немає
+                    span {{ $t('team.no_members') }}
 
                 .invite-block(v-if="(isCaptain || isAdmin) && team.isAcceptNewMembers")
                     .invite-divider
                     h4.invite-title
                         i.pi.pi-link
-                        | &nbsp;Запросити учасників
-                    p.invite-hint Надішліть посилання, щоб людина могла приєднатися:
+                        | &nbsp;{{ $t('team.invite_title') }}
+                    p.invite-hint {{ $t('team.invite_hint') }}
                     .invite-row
                         InputText.invite-url(:value="inviteUrl" readonly)
                         Button.btn-copy(icon="pi pi-copy" @click="copyInviteLink")
 
+            .tournaments-card
+                h3.card-label
+                    | {{ $t('team.tournaments_title') || 'Tournaments' }}
+                    span.tournaments-count &nbsp;({{ team.tournaments?.length || 0 }})
+
+                .tournaments-list(v-if="team.tournaments?.length")
+                    .tournament-row(v-for="t in team.tournaments" :key="t.id")
+                        NuxtLink.tournament-link(:to="localePath(`/tournaments/${t.id}`)")
+                            span.tournament-name {{ t.name }}
+                        .tournament-status(:class="`status--${t.status.toLowerCase()}`")
+                            span {{ statusLabel(t.status) }}
+
+                .tournaments-empty(v-else)
+                    i.pi.pi-calendar-times
+                    span {{ $t('team.no_tournaments') || 'No tournaments yet' }}
+
     //- Edit modal
     Dialog.edit-dialog(
         v-model:visible="isEditModalOpen"
-        header="РЕДАГУВАННЯ КОМАНДИ"
+        :header="$t('team.edit_title')"
         :style="{ width: 'min(calc(100vw - 2rem), 500px)' }"
         modal
         :draggable="false"
     )
         .edit-form
             .edit-field
-                label.edit-label Назва команди *
-                InputText.edit-input(v-model="editForm.name" placeholder="Назва команди")
+                label.edit-label {{ $t('team.name_label') }} *
+                InputText.edit-input(v-model="editForm.name" :placeholder="$t('team.name_label')")
 
             .edit-field
-                label.edit-label Організація
-                InputText.edit-input(v-model="editForm.organization" placeholder="Назва організації")
+                label.edit-label {{ $t('team.organization') }}
+                InputText.edit-input(v-model="editForm.organization" :placeholder="$t('team.organization')")
 
             .edit-field
-                label.edit-label Місто
-                InputText.edit-input(v-model="editForm.city" placeholder="Київ")
+                label.edit-label {{ $t('team.city') }}
+                InputText.edit-input(v-model="editForm.city" :placeholder="$t('team.city_placeholder')")
 
             .edit-field
                 label.edit-label Telegram
-                InputText.edit-input(v-model="editForm.telegram" placeholder="@username або посилання")
+                InputText.edit-input(v-model="editForm.telegram" :placeholder="$t('team.telegram_placeholder')")
 
             .edit-field
                 label.edit-label Discord
-                InputText.edit-input(v-model="editForm.discord" placeholder="username#0000 або посилання")
+                InputText.edit-input(v-model="editForm.discord" :placeholder="$t('team.discord_placeholder')")
 
             label.edit-toggle(@click.prevent="editForm.isAcceptNewMembers = !editForm.isAcceptNewMembers")
                 .toggle-track(:class="{ 'toggle-track--on': editForm.isAcceptNewMembers }")
                     .toggle-knob
-                span.toggle-label Приймати нових учасників
+                span.toggle-label {{ $t('team.accept_toggle') }}
 
         template(#footer)
             .edit-footer
-                button.btn-cancel(type="button" @click="isEditModalOpen = false") Скасувати
+                button.btn-cancel(type="button" @click="isEditModalOpen = false") {{ $t('common.cancel') }}
                 button.btn-save(type="button" :disabled="saving" @click="handleUpdateTeam")
                     i.pi(:class="saving ? 'pi-spin pi-spinner' : 'pi-check'")
-                    | &nbsp;Зберегти
+                    | &nbsp;{{ $t('team.save_btn') }}
 
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
@@ -164,6 +181,17 @@ const editForm = ref({
     discord: '',
     isAcceptNewMembers: true,
 })
+
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    DRAFT: t('tournament.status.draft'),
+    REGISTRATION_OPEN: t('tournament.status.registration_open'),
+    ONGOING: t('tournament.status.ongoing'),
+    COMPLETED: t('tournament.status.completed'),
+    CANCELLED: t('tournament.status.cancelled'),
+  }
+  return map[status] ?? status
+}
 
 async function loadTeam() {
     try {
@@ -202,7 +230,7 @@ async function handleUpdateTeam() {
 }
 
 async function handleDeleteTeam() {
-    if (!confirm('Ви впевнені, що хочете видалити команду?')) return
+    if (!confirm(t('team.delete_confirm'))) return
     try {
         await teamsStore.deleteTeam(teamId)
         router.push(localePath('/'))
@@ -217,9 +245,9 @@ const inviteUrl = computed(() => {
 async function copyInviteLink() {
     try {
         await navigator.clipboard.writeText(inviteUrl.value)
-        toast.success('Посилання скопійовано')
+        toast.success(t('team.copy_success'))
     } catch {
-        toast.error('Не вдалося скопіювати посилання')
+        toast.error(t('team.copy_error'))
     }
 }
 
@@ -257,7 +285,7 @@ onMounted(() => {
         align-items: center;
         gap: 32px;
 
-        @include media($sm) {
+        @include media($s) {
             gap: 20px;
         }
 
@@ -273,7 +301,7 @@ onMounted(() => {
             font-family: var(--font-display);
             font-weight: 800;
 
-            @include media($sm) {
+            @include media($s) {
                 width: 80px;
                 height: 80px;
                 font-size: 40px;
@@ -288,7 +316,7 @@ onMounted(() => {
                 margin: 0 0 12px 0;
                 text-transform: uppercase;
 
-                @include media($sm) {
+                @include media($s) {
                     font-size: 32px;
                 }
             }
@@ -307,7 +335,7 @@ onMounted(() => {
         display: flex;
         gap: 12px;
 
-        @include media($sm) {
+        @include media($s) {
             width: 100%;
             flex-direction: column;
         }
@@ -331,12 +359,12 @@ onMounted(() => {
         gap: 32px;
     }
 
-    .info-card, .members-card {
+    .info-card, .members-card, .tournaments-card {
         background: var(--color-surface);
         padding: 40px;
         border: 1px solid var(--color-border);
 
-        @include media($sm) {
+        @include media($s) {
             padding: 24px;
         }
 
@@ -483,6 +511,54 @@ onMounted(() => {
             color: var(--color-bg);
         }
     }
+}
+
+.tournaments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .tournament-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+
+        .tournament-link {
+            text-decoration: none;
+            color: var(--color-text);
+            font-weight: 700;
+            font-size: 16px;
+            transition: color 0.2s ease;
+            &:hover { color: var(--color-primary); }
+        }
+
+        .tournament-status {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+
+            &.status--ongoing { background: #e8f5e9; color: #2e7d32; }
+            &.status--registration_open { background: #e3f2fd; color: #1565c0; }
+            &.status--completed { background: #f3e5f5; color: #6a1b9a; }
+            &.status--draft { background: var(--color-border); color: var(--color-text-muted); }
+            &.status--cancelled { background: #fce4ec; color: #b71c1c; }
+        }
+    }
+}
+
+.tournaments-empty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    i { font-size: 20px; }
 }
 
 .edit-form {

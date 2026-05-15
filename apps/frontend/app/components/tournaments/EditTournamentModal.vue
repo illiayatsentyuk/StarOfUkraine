@@ -83,6 +83,13 @@ async function onSubmit(values: Partial<Tournament>) {
 function closeModal() {
     emit('close')
 }
+
+function autoGrow(event: Event) {
+    const element = event.target as HTMLTextAreaElement
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = element.scrollHeight + 'px'
+}
 </script>
 
 <template lang="pug">
@@ -90,75 +97,75 @@ function closeModal() {
     .modal-overlay(@click="closeModal")
     .modal-content
         .modal-header
-            h2.modal-title РЕДАГУВАТИ ТУРНІР
+            h2.modal-title {{ $t('modals.edit.title') }}
             button.icon-btn(@click="closeModal" type="button")
                 i.pi.pi-times
         
         VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
             .form-group
-                label.form-label НАЗВА ТУРНІРУ *
+                label.form-label {{ $t('modals.create.name_label') }} *
                 VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву турніру" :class="{ 'is-invalid': errorMessage }")
+                    input.form-input(type="text" v-bind="field" :placeholder="$t('modals.create.name_placeholder')" :class="{ 'is-invalid': errorMessage }")
                     span.error-text(v-if="errorMessage") {{ errorMessage }}
             
             .form-group
-                label.form-label СТАТУС ТУРНІРУ
+                label.form-label {{ $t('modals.edit.status_label') }}
                 VeeField(name="status" v-slot="{ field }")
                     select.form-input(v-bind="field")
                         option(
                             v-for="opt in statusOptions"
                             :key="opt.value"
                             :value="opt.value"
-                        ) {{ opt.label }}
+                        ) {{ $t(`tournament.status.${opt.value.toLowerCase()}`) }}
 
             .form-group
-                label.form-label ОПИС ТА ПРАВИЛА
+                label.form-label {{ $t('modals.create.desc_label') }}
                 VeeField(name="description" v-slot="{ field }")
-                    textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
+                    textarea.form-input.form-textarea(v-bind="field" :placeholder="$t('modals.create.desc_placeholder')" @input="autoGrow")
             
             .form-row
                 .form-group
-                    label.form-label ДАТА СТАРТУ *
+                    label.form-label {{ $t('modals.create.start_date') }} *
                     VeeField(name="startDate" rules="required|not_past_date" v-slot="{ field, errorMessage, handleChange }")
                         FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
                 .form-group
-                    label.form-label ПОЧАТОК РЕЄСТРАЦІЇ
+                    label.form-label {{ $t('modals.create.reg_start') }}
                     VeeField(name="registrationStart" rules="required|not_past_date|before_date:@startDate" v-slot="{ field, errorMessage, handleChange }")
                         FormDateInput(:modelValue="field.value" @update:modelValue="handleChange" :invalid="!!errorMessage")
                         span.error-text(v-if="errorMessage") {{ errorMessage }}
             
             .form-row
                 .form-group
-                    label.form-label КІЛЬКІСТЬ РАУНДІВ
+                    label.form-label {{ $t('modals.create.rounds_label') }}
                     VeeField(name="rounds" rules="numeric" v-slot="{ field, errorMessage }")
-                        input.form-input(type="number" v-bind="field" placeholder="6" :class="{ 'is-invalid': errorMessage }")
+                        input.form-input(type="number" v-bind="field" :placeholder="$t('modals.create.rounds_placeholder')" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label МАКС. КОМАНД
+                    label.form-label {{ $t('modals.create.max_teams_label') }}
                     VeeField(name="maxTeams" rules="numeric" v-slot="{ field, errorMessage }")
-                        input.form-input(type="number" v-bind="field" placeholder="16" :class="{ 'is-invalid': errorMessage }")
+                        input.form-input(type="number" v-bind="field" :placeholder="$t('modals.create.max_teams_placeholder')" :class="{ 'is-invalid': errorMessage }")
             
             .form-row
                 .form-group
-                    label.form-label МІН. ГРАВЦІВ
+                    label.form-label {{ $t('modals.create.min_players') }}
                     VeeField(name="teamSizeMin" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
                         input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
                 .form-group
-                    label.form-label МАКС. ГРАВЦІВ
+                    label.form-label {{ $t('modals.create.max_players') }}
                     VeeField(name="teamSizeMax" rules="required|numeric|min_value:1" v-slot="{ field, errorMessage }")
                         input.form-input(type="number" v-bind="field" :class="{ 'is-invalid': errorMessage }")
             
             .form-group
-                label.form-label КІНЕЦЬ РЕЄСТРАЦІЇ
+                label.form-label {{ $t('modals.create.reg_end') }}
                 VeeField(name="registrationEnd" v-slot="{ field, handleChange }")
                     FormDateInput(:modelValue="field.value" @update:modelValue="handleChange")
             
             .checkbox-group
                 VeeField(name="hideTeamsUntilRegistrationEnds" type="checkbox" :value="true" v-slot="{ field }")
                     input.form-checkbox(type="checkbox" v-bind="field" id="hideTeamsEdit" :value="true")
-                    label.form-label.checkbox-label(for="hideTeamsEdit") СХОВАТИ КОМАНДИ ДО КІНЦЯ РЕЄСТРАЦІЇ
+                    label.form-label.checkbox-label(for="hideTeamsEdit") {{ $t('modals.create.hide_teams') }}
             
-            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'ЗБЕРЕЖЕННЯ...' : 'ЗБЕРЕГТИ' }}
+            button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? $t('modals.edit.saving') : $t('modals.edit.save_btn') }}
 </template>
 
 <style lang="scss" scoped>
@@ -300,7 +307,8 @@ function closeModal() {
 
 .form-textarea {
     min-height: 100px;
-    resize: vertical;
+    resize: none;
+    overflow-y: hidden;
 }
 
 .error-text {
