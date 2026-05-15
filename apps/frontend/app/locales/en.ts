@@ -462,11 +462,5 @@
       creating: 'CREATING...',
     }
   },
-  auth: {
-    no_account: 'No account?',
-    register_link: 'Register',
-    has_account: 'Already have an account?',
-    login_link: 'Login',
-    error: 'Authentication error',
-  },
+
 }
