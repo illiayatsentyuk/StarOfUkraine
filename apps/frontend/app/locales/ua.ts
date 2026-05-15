@@ -349,7 +349,7 @@ export default {
     points: 'балів',
     round: 'Раунд',
     status: {
-      draft: 'Чернетка',
+      draft: 'Заплановано',
       active: 'Активне',
       submission_closed: 'Здачу закрито',
       evaluated: 'Оцінено',
