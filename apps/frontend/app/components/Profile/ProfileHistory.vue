@@ -5,26 +5,42 @@ section.profile-history
   .profile-history__loading(v-if="loading")
     Loader
 
-  .profile-history__empty(v-else-if="!history.length")
+  .profile-history__empty(v-else-if="!history?.teams?.length && !history?.juryTournaments?.length")
     i.pi.pi-inbox
     p {{ $t('profile.history_empty') }}
 
   .profile-history__list(v-else)
-    .team-card(v-for="entry in history" :key="entry.team.id")
-      .team-card__header
-        i.pi.pi-users
-        h3.team-card__name {{ entry.team.name }}
-        span.team-card__badge {{ entry.submissions.length }} {{ $t('profile.submissions') }}
+    template(v-if="history?.teams?.length")
+      .team-card(v-for="entry in history.teams" :key="entry.team.id")
+        .team-card__header
+          i.pi.pi-users
+          h3.team-card__name {{ entry.team.name }}
+          span.team-card__badge {{ entry.submissions.length }} {{ $t('profile.submissions') }}
 
-      .team-card__tournaments(v-if="entry.tournaments.length")
-        .tournament-row(v-for="t in entry.tournaments" :key="t.id")
-          NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}`)")
-            span.tournament-row__name {{ t.name }}
-          .tournament-row__status(:class="`status--${t.status.toLowerCase()}`")
-            span {{ statusLabel(t.status) }}
+        .team-card__tournaments(v-if="entry.tournaments.length")
+          .tournament-row(v-for="t in entry.tournaments" :key="t.id")
+            NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}`)")
+              span.tournament-row__name {{ t.name }}
+            .tournament-row__status(:class="`status--${t.status.toLowerCase()}`")
+              span {{ statusLabel(t.status) }}
 
-      .team-card__empty-tournaments(v-else)
-        span {{ $t('profile.no_tournaments') }}
+        .team-card__empty-tournaments(v-else)
+          span {{ $t('profile.no_tournaments') }}
+
+    template(v-if="history?.juryTournaments?.length")
+      h2.profile-history__title.profile-history__title--jury {{ $t('profile.jury_history_title') || 'Tournaments Judging' }}
+      .team-card
+        .team-card__header
+          i.pi.pi-verified
+          h3.team-card__name {{ $t('profile.jury_panel') || 'Jury Panel' }}
+          span.team-card__badge {{ history.juryTournaments.length }} {{ $t('profile.tournaments') || 'tournaments' }}
+        
+        .team-card__tournaments
+          .tournament-row(v-for="t in history.juryTournaments" :key="t.id")
+            NuxtLink.tournament-row__link(:to="localePath(`/tournaments/${t.id}/judge`)")
+              span.tournament-row__name {{ t.name }}
+            .tournament-row__status(:class="`status--${t.status.toLowerCase()}`")
+              span {{ statusLabel(t.status) }}
 </template>
 
 <script setup lang="ts">
@@ -33,7 +49,7 @@ const localePath = useLocalePath()
 const config = useRuntimeConfig()
 
 const loading = ref(false)
-const history = ref<any[]>([])
+const history = ref<any>({ teams: [], juryTournaments: [] })
 
 const statusLabel = (status: string) => {
   const map: Record<string, string> = {
@@ -50,7 +66,7 @@ onMounted(async () => {
   loading.value = true
   try {
     const response = await useApi().get('/users/me/history')
-    history.value = response.data ?? []
+    history.value = response.data ?? { teams: [], juryTournaments: [] }
   } catch {
     // silently ignore — user will just see empty state
   } finally {
@@ -74,6 +90,10 @@ onMounted(async () => {
     letter-spacing: -0.5px;
     color: var(--color-text);
     margin: 0;
+
+    &--jury {
+      margin-top: var(--space-8);
+    }
   }
 
   &__loading,

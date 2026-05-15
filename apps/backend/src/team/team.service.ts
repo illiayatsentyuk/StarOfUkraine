@@ -32,6 +32,15 @@ const teamInclude = {
       evaluations: { select: { totalScore: true } },
     },
   },
+  tournaments: {
+    select: {
+      id: true,
+      name: true,
+      status: true,
+      startDate: true,
+    },
+    orderBy: { startDate: 'desc' as const },
+  },
 };
 
 function computePoints(team: {

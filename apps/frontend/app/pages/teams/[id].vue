@@ -95,6 +95,22 @@
                         InputText.invite-url(:value="inviteUrl" readonly)
                         Button.btn-copy(icon="pi pi-copy" @click="copyInviteLink")
 
+            .tournaments-card
+                h3.card-label
+                    | {{ $t('team.tournaments_title') || 'Tournaments' }}
+                    span.tournaments-count &nbsp;({{ team.tournaments?.length || 0 }})
+
+                .tournaments-list(v-if="team.tournaments?.length")
+                    .tournament-row(v-for="t in team.tournaments" :key="t.id")
+                        NuxtLink.tournament-link(:to="localePath(`/tournaments/${t.id}`)")
+                            span.tournament-name {{ t.name }}
+                        .tournament-status(:class="`status--${t.status.toLowerCase()}`")
+                            span {{ statusLabel(t.status) }}
+
+                .tournaments-empty(v-else)
+                    i.pi.pi-calendar-times
+                    span {{ $t('team.no_tournaments') || 'No tournaments yet' }}
+
     //- Edit modal
     Dialog.edit-dialog(
         v-model:visible="isEditModalOpen"
@@ -165,6 +181,17 @@ const editForm = ref({
     discord: '',
     isAcceptNewMembers: true,
 })
+
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    DRAFT: t('tournament.status.draft'),
+    REGISTRATION_OPEN: t('tournament.status.registration_open'),
+    ONGOING: t('tournament.status.ongoing'),
+    COMPLETED: t('tournament.status.completed'),
+    CANCELLED: t('tournament.status.cancelled'),
+  }
+  return map[status] ?? status
+}
 
 async function loadTeam() {
     try {
@@ -332,7 +359,7 @@ onMounted(() => {
         gap: 32px;
     }
 
-    .info-card, .members-card {
+    .info-card, .members-card, .tournaments-card {
         background: var(--color-surface);
         padding: 40px;
         border: 1px solid var(--color-border);
@@ -484,6 +511,54 @@ onMounted(() => {
             color: var(--color-bg);
         }
     }
+}
+
+.tournaments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    .tournament-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px;
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+
+        .tournament-link {
+            text-decoration: none;
+            color: var(--color-text);
+            font-weight: 700;
+            font-size: 16px;
+            transition: color 0.2s ease;
+            &:hover { color: var(--color-primary); }
+        }
+
+        .tournament-status {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+
+            &.status--ongoing { background: #e8f5e9; color: #2e7d32; }
+            &.status--registration_open { background: #e3f2fd; color: #1565c0; }
+            &.status--completed { background: #f3e5f5; color: #6a1b9a; }
+            &.status--draft { background: var(--color-border); color: var(--color-text-muted); }
+            &.status--cancelled { background: #fce4ec; color: #b71c1c; }
+        }
+    }
+}
+
+.tournaments-empty {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    i { font-size: 20px; }
 }
 
 .edit-form {

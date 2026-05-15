@@ -51,6 +51,17 @@ section.profile
             | {{ $t('profile.email_label') }}
           span.profile__detail-value {{ loginStore.user.email }}
 
+        .profile__detail(v-if="loginStore.userTeam")
+          span.profile__detail-label
+            i.pi.pi-users.profile__detail-icon(aria-hidden="true")
+            | {{ $t('nav.team_label') || 'Team' }}
+          .profile__detail-value-wrap
+            span.profile__detail-value {{ loginStore.userTeam.name }}
+            NuxtLink.profile__team-btn(
+              :to="localePath('/teams/' + loginStore.userTeam.id)"
+            )
+              i.pi.pi-external-link
+
       .profile__actions
         button.profile__logout(
           type="button"
@@ -69,6 +80,7 @@ section.profile
 </template>
 
 <script setup lang="ts">
+const localePath = useLocalePath()
 const loginStore = useLoginStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 
@@ -259,7 +271,8 @@ const saveName = async () => {
   color: var(--color-text);
 }
 
-.profile__edit-btn {
+.profile__edit-btn,
+.profile__team-btn {
   background: none;
   border: none;
   cursor: pointer;
