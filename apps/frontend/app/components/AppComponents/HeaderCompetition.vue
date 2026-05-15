@@ -374,6 +374,7 @@ function closeModal(){
         font-weight: 700;
         letter-spacing: 1.5px;
         text-transform: uppercase;
+
         text-decoration: none;
         transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 
@@ -381,6 +382,7 @@ function closeModal(){
             background: var(--color-text);
             color: var(--color-bg);
             border-color: var(--color-text);
+            cursor: pointer;
         }
 
         &:focus-visible {

@@ -17,7 +17,7 @@
             .form-group
                 label.form-label ОПИС ТА ПРАВИЛА
                 VeeField(name="description" v-slot="{ field }")
-                    textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила")
+                    textarea.form-input.form-textarea(v-bind="field" placeholder="Введіть опис та правила" @input="autoGrow")
             
             .form-row
                 .form-group
@@ -114,6 +114,13 @@ async function onSubmit(values: Tournament) {
 
 function closeModal() {
   emit("close")
+}
+
+function autoGrow(event: Event) {
+    const element = event.target as HTMLTextAreaElement
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = element.scrollHeight + 'px'
 }
 </script>
 
@@ -255,7 +262,8 @@ function closeModal() {
 
 .form-textarea {
     min-height: 100px;
-    resize: vertical;
+    resize: none;
+    overflow-y: hidden;
 }
 
 .error-text {

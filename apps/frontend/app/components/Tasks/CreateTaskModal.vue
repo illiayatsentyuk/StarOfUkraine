@@ -14,7 +14,7 @@
             
             .form-group
                 label.form-label ОПИС ТА ДЕТАЛІ
-                textarea.form-input.form-textarea(v-model="form.description" rows="3" placeholder="Вимоги та деталі...")
+                textarea.form-input.form-textarea(v-model="form.description" rows="3" placeholder="Вимоги та деталі..." @input="autoGrow")
 
             .form-group
                 label.form-label КІНЦЕВИЙ ТЕРМІН (ДЕДЛАЙН) *
@@ -23,23 +23,12 @@
             .divider-clean
 
             //- Система оцінювання
-            .form-group
+            .form-group(v-if="false")
                 label.form-label ТИП ОЦІНЮВАННЯ
                 .grading-toggle-clean
-                    button.toggle-btn(
-                        type="button"
-                        :class="{ active: form.gradingMode === 'points' }" 
-                        @click="form.gradingMode = 'points'"
-                    )
+                    button.toggle-btn.active(type="button")
                         i.pi.pi-list
                         span БАЛИ
-                    button.toggle-btn(
-                        type="button"
-                        :class="{ active: form.gradingMode === 'stars' }" 
-                        @click="form.gradingMode = 'stars'"
-                    )
-                        i.pi.pi-star
-                        span ЗІРКИ
 
             //- Критерії
             .form-group
@@ -53,15 +42,12 @@
                     .criterion-row(v-for="(c, i) in form.criteria" :key="i")
                         input.form-input.flex-1(v-model="c.name" placeholder="Назва критерію")
                         .value-box
-                            template(v-if="form.gradingMode === 'points'")
-                                input.form-input.value-input(
-                                    type="number"
-                                    v-model="c.max" 
-                                    min="1" 
-                                    placeholder="Max"
-                                )
-                            template(v-else)
-                                .stars-label 5 ЗІРОК
+                            input.form-input.value-input(
+                                type="number"
+                                v-model="c.max" 
+                                min="1" 
+                                placeholder="Max"
+                            )
                         button.remove-btn(type="button" @click="removeCriterion(i)")
                             i.pi.pi-trash
 
@@ -113,6 +99,13 @@ function addCriterion() {
 
 function removeCriterion(index: number) {
     form.value.criteria.splice(index, 1)
+}
+
+function autoGrow(event: Event) {
+    const element = event.target as HTMLTextAreaElement
+    if (!element) return
+    element.style.height = 'auto'
+    element.style.height = element.scrollHeight + 'px'
 }
 
 function handleSubmit() {
@@ -251,7 +244,8 @@ function handleSubmit() {
 
 .form-textarea {
     min-height: 100px;
-    resize: vertical;
+    resize: none;
+    overflow-y: hidden;
 }
 
 .divider-clean {

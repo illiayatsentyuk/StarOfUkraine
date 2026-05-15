@@ -29,7 +29,7 @@
                         InputText(v-model="gradingData[sub.id][c.id]" type="number" :max="c.maxPoints" placeholder="0")
                 
                 .comment-area
-                    Textarea(v-model="commentsData[sub.id]" placeholder="Коментар до роботи..." rows="2" autoResize)
+                    Textarea(v-model="commentsData[sub.id]" placeholder="Коментар до роботи..." rows="2" autoResize style="resize: none;")
 
                 Button.grade-btn(
                     label="ЗБЕРЕГТИ ОЦІНКУ"
@@ -150,7 +150,6 @@ function submitGrade(submissionId: string) {
 
         .c-input {
             :deep(.p-inputtext) { width: 80px; height: 32px; font-size: 13px; text-align: center; }
-            :deep(.p-rating) { gap: 4px; .p-rating-item .p-rating-icon { font-size: 14px; color: #f59e0b; } }
         }
     }
 
@@ -159,9 +158,10 @@ function submitGrade(submissionId: string) {
         :deep(.p-inputtextarea) {
             width: 100%;
             font-size: 13px;
-            border-color: var(--color-border);
             background: var(--color-bg);
             color: var(--color-text);
+            resize: none;
+            overflow-y: hidden;
         }
     }
 
