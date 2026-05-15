@@ -58,7 +58,7 @@ header.header-competition
                             @click="loginStore.logout"
                         )
                 template(v-else)
-                    NuxtLink.login-btn(:to="localePath('/auth')") {{ $t('nav.login').toUpperCase() }}
+                    button.login-btn(@click="goToLogin") {{ $t('nav.login').toUpperCase() }}
         
         //- Mobile Burger Trigger
         Button.burger-btn(
@@ -120,7 +120,7 @@ header.header-competition
                     @click="loginStore.logout(); isMenuOpen = false"
                 )
             template(v-else)
-                NuxtLink.login-btn(:to="localePath('/auth')" @click="isMenuOpen = false") {{ $t('nav.login').toUpperCase() }}
+                button.login-btn(@click="goToLogin(); isMenuOpen = false") {{ $t('nav.login').toUpperCase() }}
 
             .mobile-menu__lang
                 LanguageSwitcher
@@ -141,9 +141,14 @@ const store = useTournamentsStore()
 const loginStore = useLoginStore()
 const teamsStore = useTeamsStore()
 
-const showSearchBar = computed(
-  () => !isRouteWithoutTournamentSearch(route.path),
-)
+const showSearchBar = computed(() => {
+  const pathWithoutLocale = route.path.replace(/^\/(ua|en)(\/|$)/, '$2') || '/'
+  return !isRouteWithoutTournamentSearch(pathWithoutLocale)
+})
+
+function goToLogin() {
+  navigateTo(localePath('/auth'))
+}
 const isOpen = ref(false)
 const isTeamOpen = ref(false)
 const isMenuOpen = ref(false)
