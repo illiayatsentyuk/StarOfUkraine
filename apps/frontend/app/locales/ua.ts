@@ -51,7 +51,7 @@ export default {
   tournament: {
     status: {
       all: 'Всі',
-      draft: 'Чернетка',
+      draft: 'Заплановано',
       registration_open: 'Реєстрація відкрита',
       ongoing: 'Триває',
       completed: 'Завершено',
