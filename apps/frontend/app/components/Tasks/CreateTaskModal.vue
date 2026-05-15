@@ -3,60 +3,60 @@
     .modal-overlay(@click="$emit('close')")
     .modal-content
         .modal-header
-            h2.modal-title СТВОРИТИ ЗАВДАННЯ
+            h2.modal-title {{ $t('task.create.title') }}
             button.icon-btn(@click="$emit('close')" type="button")
                 i.pi.pi-times
         
         form.modal-form(@submit.prevent="handleSubmit")
             .form-group
-                label.form-label НАЗВА ЗАВДАННЯ *
-                input.form-input(v-model="form.title" placeholder="Наприклад: Розробка API" required)
+                label.form-label {{ $t('task.create.name_label') }} *
+                input.form-input(v-model="form.title" :placeholder="$t('task.create.name_placeholder')" required)
             
             .form-group
-                label.form-label ОПИС ТА ДЕТАЛІ
-                textarea.form-input.form-textarea(v-model="form.description" rows="3" placeholder="Вимоги та деталі..." @input="autoGrow")
+                label.form-label {{ $t('task.create.desc_label') }}
+                textarea.form-input.form-textarea(v-model="form.description" rows="3" :placeholder="$t('task.create.desc_placeholder')" @input="autoGrow")
 
             .form-group
-                label.form-label КІНЦЕВИЙ ТЕРМІН (ДЕДЛАЙН) *
+                label.form-label {{ $t('task.create.deadline_label') }} *
                 input.form-input(type="date" v-model="deadlineStr" required)
 
             .divider-clean
 
             //- Система оцінювання
             .form-group(v-if="false")
-                label.form-label ТИП ОЦІНЮВАННЯ
+                label.form-label {{ $t('task.create.grading_type') }}
                 .grading-toggle-clean
                     button.toggle-btn.active(type="button")
                         i.pi.pi-list
-                        span БАЛИ
+                        span {{ $t('task.create.grading_points') }}
 
             //- Критерії
             .form-group
                 .criteria-header
-                    label.form-label КРИТЕРІЇ ОЦІНКИ
+                    label.form-label {{ $t('task.create.criteria_label') }}
                     button.add-link(type="button" @click="addCriterion")
                         i.pi.pi-plus
-                        span ДОДАТИ КРИТЕРІЙ
+                        span {{ $t('task.create.add_criterion') }}
                 
                 .criteria-list-clean
                     .criterion-row(v-for="(c, i) in form.criteria" :key="i")
-                        input.form-input.flex-1(v-model="c.name" placeholder="Назва критерію")
+                        input.form-input.flex-1(v-model="c.name" :placeholder="$t('task.create.criterion_name')")
                         .value-box
                             input.form-input.value-input(
                                 type="number"
                                 v-model="c.max" 
                                 min="1" 
-                                placeholder="Max"
+                                :placeholder="$t('task.create.max_placeholder')"
                             )
                         button.remove-btn(type="button" @click="removeCriterion(i)")
                             i.pi.pi-trash
 
             .modal-footer
-                button.cancel-btn(type="button" @click="$emit('close')") СКАСУВАТИ
+                button.cancel-btn(type="button" @click="$emit('close')") {{ $t('common.cancel') }}
                 button.submit-btn(
                     type="submit" 
                     :disabled="loading"
-                ) {{ loading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ ЗАВДАННЯ' }}
+                ) {{ loading ? $t('task.create.creating') : $t('task.create.create_btn') }}
 </template>
 
 <script setup lang="ts">

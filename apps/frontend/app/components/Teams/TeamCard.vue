@@ -2,15 +2,15 @@
 .team-card
     h4.team-card__name {{ team.name || team.teamName }}
     p.team-card__meta
-        | Капітан:
+        | {{ $t('team.captain') }}:
         span  {{ team.captainName }}
     p.team-card__meta(v-if="team.city")
-        | Місто:
+        | {{ $t('team.city') }}:
         span  {{ team.city }}
     Button.team-card__delete(
         v-if="isAdmin"
         type="button"
-        label="Видалити команду"
+        :label="$t('team.delete_btn')"
         icon="pi pi-trash"
         @click="$emit('delete', team.id)"
     )

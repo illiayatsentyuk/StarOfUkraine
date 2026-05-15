@@ -5,8 +5,8 @@ section.tournament-info
 
     template(v-else)
         .tournament-info__header
-            h1.tournament-info__title НАЙБЛИЖЧІ ТУРНІРИ
-            .status-badge(v-if="store.tournaments.length") РЕЄСТРАЦІЯ ВІДКРИТА
+            h1.tournament-info__title {{ $t('tournament.info.upcoming') }}
+            .status-badge(v-if="store.tournaments.length") {{ $t('tournament.info.reg_open') }}
         
         .tournament-info__grid(v-if="store.tournaments.length")
             .tournament-card(v-for="tournament in store.tournaments" :key="tournament.id || tournament.name")
@@ -15,19 +15,19 @@ section.tournament-info
                     
                     .tournament-card__details
                         .detail-item
-                            span.label ДАТА СТАРТУ
+                            span.label {{ $t('modals.create.start_date') }}
                             span.value {{ formatDate(tournament.startDate) }}
                         .detail-item
-                            span.label МАКС. КОМАНД
+                            span.label {{ $t('modals.create.max_teams_label') }}
                             span.value {{ tournament.maxTeams }}
                         .detail-item
-                            span.label РАУНДІВ
+                            span.label {{ $t('modals.create.rounds_label') }}
                             span.value {{ tournament.rounds }}
                     
                     p.tournament-card__description {{ tournament.description }}
         
         .no-data(v-else)
-            p Турнірів поки немає.
+            p {{ $t('tournament.info.no_tournaments') }}
 </template>
 
 <script lang="ts" setup>

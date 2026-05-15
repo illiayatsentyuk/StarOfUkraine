@@ -1,31 +1,31 @@
 <template lang="pug">
 NuxtLink.task-card(:to="taskLink")
     .task-card__header
-        .status-badge(:class="`status-${task.status}`") {{ statusLabel }}
-        .points(v-if="maxPoints") {{ maxPoints }} БАЛІВ
+        .status-badge(:class="`status-${task.status}`") {{ $t(`task.status.${task.status.toLowerCase()}`) }}
+        .points(v-if="maxPoints") {{ maxPoints }} {{ $t('task.points').toUpperCase() }}
 
     h3.task-title {{ task.name }}
     p.task-desc {{ task.description }}
 
     .task-card__footer
         .task-card__footer__info
-            span.deadline(v-if="task.deadline") Дедлайн: {{ formatDate(task.deadline) }}
-            span.deadline(v-else) Без дедлайну
+            span.deadline(v-if="task.deadline") {{ $t('task.deadline') }}: {{ formatDate(task.deadline) }}
+            span.deadline(v-else) {{ $t('task.no_deadline') }}
             NuxtLink.detail-btn(:to="taskLink")
-                span ДЕТАЛІ
+                span {{ $t('common.details').toUpperCase() }}
                 i.pi.pi-arrow-right
         
         .task-card__admin-actions(v-if="isAdmin")
             Button.admin-btn.activate(
                 v-if="task.status === 'DRAFT'"
-                label="АКТИВУВАТИ"
+                :label="$t('task.admin.activate')"
                 icon="pi pi-play"
                 :loading="store.loading"
                 @click.stop.prevent="handleActivate"
             )
             Button.admin-btn.close(
                 v-if="task.status === 'ACTIVE'"
-                label="ЗАКРИТИ ЗДАЧУ"
+                :label="$t('task.admin.close')"
                 icon="pi pi-lock"
                 :loading="store.loading"
                 @click.stop.prevent="handleClose"
@@ -59,14 +59,6 @@ const taskLink = computed(() => ({
     query: teamsStore.activeTeamId ? { teamId: teamsStore.activeTeamId } : undefined,
 }))
 
-const STATUS_LABELS: Record<string, string> = {
-    DRAFT: 'ЧЕРНЕТКА',
-    ACTIVE: 'АКТИВНЕ',
-    SUBMISSION_CLOSED: 'ЗДАЧУ ЗАКРИТО',
-    EVALUATED: 'ОЦІНЕНО',
-}
-
-const statusLabel = computed(() => STATUS_LABELS[props.task.status] ?? props.task.status)
 
 const maxPoints = computed(() =>
     props.task.criteria?.rubric?.reduce((sum, item) => sum + (item.maxPoints ?? 0), 0) ?? 0

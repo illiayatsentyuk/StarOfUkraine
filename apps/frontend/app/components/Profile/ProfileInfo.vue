@@ -3,13 +3,13 @@
   .profile__detail
     span.profile__detail-label
       i.pi.pi-user.profile__detail-icon(aria-hidden="true")
-      | Ім'я
-    span.profile__detail-value {{ user.name || 'Не вказано' }}
+      | {{ $t('profile.name_label') }}
+    span.profile__detail-value {{ user.name || $t('profile.not_set') }}
 
   .profile__detail
     span.profile__detail-label
       i.pi.pi-envelope.profile__detail-icon(aria-hidden="true")
-      | Електронна пошта
+      | {{ $t('profile.email_label') }}
     span.profile__detail-value {{ user.email }}
 </template>
 

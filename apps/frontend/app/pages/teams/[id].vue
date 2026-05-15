@@ -18,7 +18,7 @@
                     v-if="authStore.isAuthenticated && !isMember && team.isAcceptNewMembers"
                     type="button"
                     icon="pi pi-user-plus"
-                    label="ПРИЄДНАТИСЯ"
+                    :label="$t('team.join_btn')"
                     :loading="joining"
                     @click="handleJoinTeam"
                 )
@@ -26,14 +26,14 @@
                     Button.btn-edit(
                         type="button"
                         icon="pi pi-pencil"
-                        label="РЕДАГУВАТИ"
+                        :label="$t('team.edit_btn')"
                         outlined
                         @click="isEditModalOpen = true"
                     )
                     Button.btn-delete(
                         type="button"
                         icon="pi pi-trash"
-                        label="ВИДАЛИТИ"
+                        :label="$t('team.delete_btn')"
                         outlined
                         severity="danger"
                         @click="handleDeleteTeam"
@@ -41,18 +41,18 @@
 
         .team-body
             .info-card
-                h3.card-label ІНФОРМАЦІЯ
+                h3.card-label {{ $t('team.info_title') }}
 
                 .info-empty(v-if="!team.organization && !team.city && !team.telegram && !team.discord")
                     i.pi.pi-info-circle
-                    span Інформація не вказана
+                    span {{ $t('team.info_empty') }}
 
                 .info-rows(v-else)
                     .info-row(v-if="team.organization")
-                        span.info-key Організація
+                        span.info-key {{ $t('team.organization') }}
                         span.info-val {{ team.organization }}
                     .info-row(v-if="team.city")
-                        span.info-key Місто
+                        span.info-key {{ $t('team.city') }}
                         span.info-val {{ team.city }}
                     .info-row(v-if="team.telegram")
                         span.info-key Telegram
@@ -63,11 +63,11 @@
 
                 .info-badge(v-if="team.isAcceptNewMembers")
                     i.pi.pi-check-circle
-                    span Команда приймає нових учасників
+                    span {{ $t('team.accepting_members') }}
 
             .members-card
                 h3.card-label
-                    | УЧАСНИКИ
+                    | {{ $t('team.members_title') }}
                     span.members-count &nbsp;({{ team.members?.length || 0 }})
 
                 .members-list(v-if="team.members?.length")
@@ -79,18 +79,18 @@
                         .member-avatar {{ (member.nameId || member.name || '?')[0].toUpperCase() }}
                         .member-details
                             span.member-name {{ member.nameId || member.name }}
-                            span.member-role {{ member.email === team.captainEmail ? 'Капітан' : 'Учасник' }}
+                            span.member-role {{ member.email === team.captainEmail ? $t('team.captain') : $t('team.member') }}
 
                 .members-empty(v-else)
                     i.pi.pi-users
-                    span Учасників поки немає
+                    span {{ $t('team.no_members') }}
 
                 .invite-block(v-if="(isCaptain || isAdmin) && team.isAcceptNewMembers")
                     .invite-divider
                     h4.invite-title
                         i.pi.pi-link
-                        | &nbsp;Запросити учасників
-                    p.invite-hint Надішліть посилання, щоб людина могла приєднатися:
+                        | &nbsp;{{ $t('team.invite_title') }}
+                    p.invite-hint {{ $t('team.invite_hint') }}
                     .invite-row
                         InputText.invite-url(:value="inviteUrl" readonly)
                         Button.btn-copy(icon="pi pi-copy" @click="copyInviteLink")
@@ -98,47 +98,48 @@
     //- Edit modal
     Dialog.edit-dialog(
         v-model:visible="isEditModalOpen"
-        header="РЕДАГУВАННЯ КОМАНДИ"
+        :header="$t('team.edit_title')"
         :style="{ width: 'min(calc(100vw - 2rem), 500px)' }"
         modal
         :draggable="false"
     )
         .edit-form
             .edit-field
-                label.edit-label Назва команди *
-                InputText.edit-input(v-model="editForm.name" placeholder="Назва команди")
+                label.edit-label {{ $t('team.name_label') }} *
+                InputText.edit-input(v-model="editForm.name" :placeholder="$t('team.name_label')")
 
             .edit-field
-                label.edit-label Організація
-                InputText.edit-input(v-model="editForm.organization" placeholder="Назва організації")
+                label.edit-label {{ $t('team.organization') }}
+                InputText.edit-input(v-model="editForm.organization" :placeholder="$t('team.organization')")
 
             .edit-field
-                label.edit-label Місто
-                InputText.edit-input(v-model="editForm.city" placeholder="Київ")
+                label.edit-label {{ $t('team.city') }}
+                InputText.edit-input(v-model="editForm.city" :placeholder="$t('team.city_placeholder')")
 
             .edit-field
                 label.edit-label Telegram
-                InputText.edit-input(v-model="editForm.telegram" placeholder="@username або посилання")
+                InputText.edit-input(v-model="editForm.telegram" :placeholder="$t('team.telegram_placeholder')")
 
             .edit-field
                 label.edit-label Discord
-                InputText.edit-input(v-model="editForm.discord" placeholder="username#0000 або посилання")
+                InputText.edit-input(v-model="editForm.discord" :placeholder="$t('team.discord_placeholder')")
 
             label.edit-toggle(@click.prevent="editForm.isAcceptNewMembers = !editForm.isAcceptNewMembers")
                 .toggle-track(:class="{ 'toggle-track--on': editForm.isAcceptNewMembers }")
                     .toggle-knob
-                span.toggle-label Приймати нових учасників
+                span.toggle-label {{ $t('team.accept_toggle') }}
 
         template(#footer)
             .edit-footer
-                button.btn-cancel(type="button" @click="isEditModalOpen = false") Скасувати
+                button.btn-cancel(type="button" @click="isEditModalOpen = false") {{ $t('common.cancel') }}
                 button.btn-save(type="button" :disabled="saving" @click="handleUpdateTeam")
                     i.pi(:class="saving ? 'pi-spin pi-spinner' : 'pi-check'")
-                    | &nbsp;Зберегти
+                    | &nbsp;{{ $t('team.save_btn') }}
 
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const router = useRouter()
@@ -202,7 +203,7 @@ async function handleUpdateTeam() {
 }
 
 async function handleDeleteTeam() {
-    if (!confirm('Ви впевнені, що хочете видалити команду?')) return
+    if (!confirm(t('team.delete_confirm'))) return
     try {
         await teamsStore.deleteTeam(teamId)
         router.push(localePath('/'))
@@ -217,9 +218,9 @@ const inviteUrl = computed(() => {
 async function copyInviteLink() {
     try {
         await navigator.clipboard.writeText(inviteUrl.value)
-        toast.success('Посилання скопійовано')
+        toast.success(t('team.copy_success'))
     } catch {
-        toast.error('Не вдалося скопіювати посилання')
+        toast.error(t('team.copy_error'))
     }
 }
 

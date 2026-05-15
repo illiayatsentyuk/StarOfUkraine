@@ -4,20 +4,20 @@ header.task-detail__hero
     .status-line
       .badge(:class="task.status.toLowerCase()")
           span.dot
-          span {{ statusLabel }}
-      .points {{ maxPoints }} pts
+          span {{ $t(`task.status.${task.status.toLowerCase()}`) }}
+      .points {{ maxPoints }} {{ $t('task.points') }}
     
     .admin-actions(v-if="isAdmin")
       Button.admin-btn.activate(
         v-if="task.status === 'DRAFT'"
-        label="АКТИВУВАТИ"
+        :label="$t('task.admin.activate')"
         icon="pi pi-play"
         :loading="store.loading"
         @click="handleActivate"
       )
       Button.admin-btn.close(
         v-if="task.status === 'ACTIVE'"
-        label="ЗАКРИТИ ЗДАЧУ"
+        :label="$t('task.admin.close')"
         icon="pi pi-lock"
         :loading="store.loading"
         @click="handleClose"
@@ -28,10 +28,10 @@ header.task-detail__hero
   .meta
     .meta-item
         i.pi.pi-calendar
-        span Раунд: {{ task.order }}
+        span {{ $t('task.round') }}: {{ task.order }}
     .meta-item(v-if="task.deadline")
         i.pi.pi-clock
-        span Дедлайн: {{ formatDate(task.deadline) }}
+        span {{ $t('task.deadline') }}: {{ formatDate(task.deadline) }}
 </template>
 
 <script setup lang="ts">

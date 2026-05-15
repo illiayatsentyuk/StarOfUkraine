@@ -4,15 +4,15 @@ section.tournaments-archive
         .nav-back
             NuxtLink.back-link(:to="localePath('/tournaments')")
                 i.pi.pi-arrow-left
-                span НАЗАД ДО АКТИВНИХ
-        h1.title Архів турнірів
-        p.subtitle Історія перемог та завершених змагань
+                span {{ $t('tournament.archive.back_to_active') }}
+        h1.title {{ $t('tournament.archive.title') }}
+        p.subtitle {{ $t('tournament.archive.subtitle') }}
 
     .archive-filters
         .search-box
             i.pi.pi-search
-            input(type="text" v-model="store.search" placeholder="Пошук в архіві...")
-        .results-count(v-if="completedTournaments.length") Знайдено: {{ completedTournaments.length }}
+            input(type="text" v-model="store.search" :placeholder="$t('tournament.archive.search_placeholder')")
+        .results-count(v-if="completedTournaments.length") {{ $t('tournament.archive.found', { count: completedTournaments.length }) }}
 
     .archive-grid(v-if="completedTournaments.length")
         TournamentCard(
@@ -24,12 +24,12 @@ section.tournaments-archive
     
     .loading-state(v-else-if="store.loading")
         i.pi.pi-spin.pi-spinner
-        span Завантаження історії...
+        span {{ $t('tournament.archive.loading') }}
 
     .empty-state(v-else)
         i.pi.pi-box
-        h3 Архів порожній
-        p Поки що немає завершених турнірів
+        h3 {{ $t('tournament.archive.empty_title') }}
+        p {{ $t('tournament.archive.empty_desc') }}
 </template>
 
 <script setup lang="ts">

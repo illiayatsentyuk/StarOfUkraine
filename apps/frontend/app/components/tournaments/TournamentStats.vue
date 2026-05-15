@@ -1,13 +1,13 @@
 <template lang="pug">
 .stats-section
     .stat-box
-        span.label РАУНДІВ
+        span.label {{ $t('modals.create.rounds_label') }}
         span.value {{ rounds || '—' }}
     .stat-box
-        span.label ГРАВЦІВ У КОМАНДІ
+        span.label {{ $t('modals.create.team_size') }}
         span.value {{ teamSizeMin }} — {{ teamSizeMax }}
     .stat-box
-        span.label МАКС. КОМАНД
+        span.label {{ $t('modals.create.max_teams_label') }}
         span.value {{ maxTeams }}
 </template>
 

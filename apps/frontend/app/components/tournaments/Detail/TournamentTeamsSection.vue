@@ -1,10 +1,10 @@
 <template lang="pug">
 .content-section
-  h3.section-label КОМАНДИ
-  p.description(v-if="shouldHideTeams") Список команд буде доступний після завершення реєстрації.
+  h3.section-label {{ $t('tournament.info.teams_title') }}
+  p.description(v-if="shouldHideTeams") {{ $t('tournament.info.teams_hidden_desc') }}
   template(v-else)
-    p.description(v-if="loadingTeams") Завантаження команд...
-    p.description(v-else-if="!teams || !teams.length") Нікого немає. Після реєстрації команд тут зʼявиться список і таблиця лідерів.
+    p.description(v-if="loadingTeams") {{ $t('tournament.info.teams_loading') }}
+    p.description(v-else-if="!teams || !teams.length") {{ $t('tournament.info.no_teams_desc') }}
     TournamentTeamsTable(
       v-if="teams && teams.length"
       :teams="teams"

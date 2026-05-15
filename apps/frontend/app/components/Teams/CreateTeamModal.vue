@@ -3,49 +3,49 @@
     .modal-overlay(@click="closeModal")
     .modal-content
         .modal-header
-            h2.modal-title СТВОРИТИ КОМАНДУ
+            h2.modal-title {{ $t('modals.team.create_title') }}
             button.icon-btn(@click="closeModal" type="button")
                 i.pi.pi-times
         
         VeeForm.modal-form(@submit="onSubmit" :initial-values="initialValues")
             .form-group
-                label.form-label НАЗВА КОМАНДИ *
+                label.form-label {{ $t('modals.team.name_label') }} *
                 VeeField(name="name" rules="required" v-slot="{ field, errorMessage }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть назву команди" :class="{ 'is-invalid': errorMessage }")
+                    input.form-input(type="text" v-bind="field" :placeholder="$t('modals.team.name_placeholder')" :class="{ 'is-invalid': errorMessage }")
                     span.error-text(v-if="errorMessage") {{ errorMessage }}
 
             .form-group
-                label.form-label ІМ'Я КАПІТАНА
+                label.form-label {{ $t('modals.team.captain_label') }}
                 VeeField(name="captainName" v-slot="{ field }")
-                    input.form-input(type="text" v-bind="field" placeholder="Введіть ім'я капітана")
+                    input.form-input(type="text" v-bind="field" :placeholder="$t('modals.team.captain_placeholder')")
 
             .form-group
-                label.form-label МІСТО
+                label.form-label {{ $t('modals.team.city_label') }}
                 VeeField(name="city" v-slot="{ field }")
-                    input.form-input(type="text" v-bind="field" placeholder="Місто")
+                    input.form-input(type="text" v-bind="field" :placeholder="$t('modals.team.city_placeholder')")
 
             .form-row
                 .form-group
-                    label.form-label ОРГАНІЗАЦІЯ
+                    label.form-label {{ $t('modals.team.org_label') }}
                     VeeField(name="organization" v-slot="{ field }")
-                        input.form-input(v-bind="field" placeholder="Організація")
+                        input.form-input(v-bind="field" :placeholder="$t('modals.team.org_placeholder')")
                 .form-group
                     label.form-label TELEGRAM
                     VeeField(name="telegram" v-slot="{ field }")
-                        input.form-input(v-bind="field" placeholder="@telegram")
+                        input.form-input(v-bind="field" :placeholder="$t('modals.team.telegram_placeholder')")
 
             .form-group
                 label.form-label DISCORD
                 VeeField(name="discord" v-slot="{ field }")
-                    input.form-input(v-bind="field" placeholder="@discord")
+                    input.form-input(v-bind="field" :placeholder="$t('modals.team.discord_placeholder')")
 
             .members-note
                 i.pi.pi-info-circle
-                p Після створення команди поділіться її назвою з учасниками — вони зможуть знайти команду у списку та приєднатися самостійно.
+                p {{ $t('modals.team.members_note') }}
 
             .modal-footer
-                button.cancel-btn(type="button" @click="closeModal") СКАСУВАТИ
-                button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? 'СТВОРЕННЯ...' : 'СТВОРИТИ КОМАНДУ' }}
+                button.cancel-btn(type="button" @click="closeModal") {{ $t('common.cancel').toUpperCase() }}
+                button.submit-btn(type="submit" :disabled="isLoading") {{ isLoading ? $t('modals.team.creating') : $t('modals.team.create_btn') }}
 </template>
 
 <script lang="ts" setup>

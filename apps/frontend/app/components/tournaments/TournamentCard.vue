@@ -4,7 +4,7 @@ NuxtLink.tournament-card(:to="localePath(`/tournaments/${tournament.id}`)")
         v-if="statusInfo"
         :style="{ backgroundColor: statusInfo.color }"
     )
-        span {{ statusInfo.label }}
+        span {{ $t(statusInfo.label) }}
 
     h3.tournament-card__title {{ tournament.name }}
 
@@ -12,12 +12,12 @@ NuxtLink.tournament-card(:to="localePath(`/tournaments/${tournament.id}`)")
         .detail-group
             span.detail-label
                 i.pi.pi-calendar.mr-2
-                | ДАТА СТАРТУ
+                | {{ $t('modals.create.start_date') }}
             span.detail-value {{ formatDate(tournament.startDate) }}
         .detail-group
             span.detail-label
                 i.pi.pi-users.mr-2
-                | МАКС. КОМАНД
+                | {{ $t('modals.create.max_teams_label') }}
             span.detail-value {{ tournament.maxTeams }}
 
     p.tournament-card__description {{ tournament.description }}

@@ -1,16 +1,16 @@
 <template lang="pug">
 .content-section.tournament-teams-panel(v-if="!shouldHideTeams && teams && teams.length")
-    h3.section-label(v-if="isAdmin") ПОСІВ КОМАНД
-    h3.section-label(v-else) СПИСОК КОМАНД
+    h3.section-label(v-if="isAdmin") {{ $t('tournament.teams_table.seeding') }}
+    h3.section-label(v-else) {{ $t('tournament.teams_table.list') }}
     
-    p.tournament-teams-panel__hint(v-if="isAdmin") Перетягніть рядки, щоб змінити порядок.
+    p.tournament-teams-panel__hint(v-if="isAdmin") {{ $t('tournament.teams_table.drag_hint') }}
 
     .tournament-teams-panel__card
         .tournament-teams-panel__actions(v-if="isAdmin")
             button.tournament-teams-panel__btn(
                 type="button"
                 @click="$emit('shuffle')"
-            ) Перемішати випадково
+            ) {{ $t('tournament.teams_table.shuffle_btn') }}
 
         ClientOnly
             .tournament-teams-panel__table-wrap
@@ -19,8 +19,8 @@
                         tr
                             th.tournament-teams-panel__th.tournament-teams-panel__th--drag(v-if="isAdmin")
                             th.tournament-teams-panel__th #
-                            th.tournament-teams-panel__th Команда
-                            th.tournament-teams-panel__th Очки
+                            th.tournament-teams-panel__th {{ $t('tournament.teams_table.team') }}
+                            th.tournament-teams-panel__th {{ $t('tournament.teams_table.points') }}
 
                     VueDraggableNext(
                         v-model="internalTeams"
@@ -35,7 +35,7 @@
                         )
                             td.drag-handle(v-if="isAdmin") ⋮⋮
                             td.tournament-teams-panel__num {{ index + 1 }}
-                            td.tournament-teams-panel__team {{ element.name || element.teamName || 'Без назви' }}
+                            td.tournament-teams-panel__team {{ element.name || element.teamName || $t('tournament.teams_table.no_name') }}
                             td.tournament-teams-panel__pts {{ element.points != null ? element.points : '—' }}
 </template>
 

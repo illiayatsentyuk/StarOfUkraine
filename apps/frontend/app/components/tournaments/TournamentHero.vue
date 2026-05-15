@@ -1,6 +1,6 @@
 <template lang="pug">
 header.tournament-detail__hero
-    .status-badge(v-if="status" :style="{ backgroundColor: status.color }") {{ status.label }}
+    .status-badge(v-if="status" :style="{ backgroundColor: status.color }") {{ $t(status.label) }}
     h1.title {{ name }}
     .tournament-detail__hero__actions(v-if="canSeeTasks")
         NuxtLink.task-btn(
@@ -8,7 +8,7 @@ header.tournament-detail__hero
             @click="handleTasksClick"
         )
             i.pi.pi-list
-            span ПЕРЕГЛЯНУТИ ЗАВДАННЯ
+            span {{ $t('tournament.view_tasks') }}
 </template>
 
 <script setup lang="ts">

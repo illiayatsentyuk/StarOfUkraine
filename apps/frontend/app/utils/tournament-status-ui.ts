@@ -16,16 +16,16 @@ export function getTournamentStatusInfo(status?: string | null): TournamentStatu
 
     switch (status) {
         case 'REGISTRATION_OPEN':
-            return { code: 'REGISTRATION_OPEN', label: 'РЕЄСТРАЦІЯ', color: 'var(--color-primary)' }
+            return { code: 'REGISTRATION_OPEN', label: 'tournament.status.registration_open', color: 'var(--color-primary)' }
         case 'ONGOING':
-            return { code: 'ONGOING', label: 'ТРИВАЄ', color: '#ff8800' }
+            return { code: 'ONGOING', label: 'tournament.status.ongoing', color: '#ff8800' }
         case 'COMPLETED':
-            return { code: 'COMPLETED', label: 'ЗАВЕРШЕНО', color: '#00cc00' }
+            return { code: 'COMPLETED', label: 'tournament.status.completed', color: '#00cc00' }
         case 'CANCELLED':
-            return { code: 'CANCELLED', label: 'СКАСОВАНО', color: '#666666' }
+            return { code: 'CANCELLED', label: 'tournament.status.cancelled', color: '#666666' }
         case 'DRAFT':
         default:
-            return { code: 'DRAFT', label: 'ОЧІКУВАННЯ', color: '#000000' }
+            return { code: 'DRAFT', label: 'tournament.status.draft', color: '#000000' }
     }
 }
 

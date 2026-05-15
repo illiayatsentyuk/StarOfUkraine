@@ -1,18 +1,18 @@
 <template lang="pug">
 .jury-manager
     .manager-header
-        h3.title КЕРУВАННЯ ЖУРІ
-        p.desc Додавайте суддів, які будуть перевіряти роботи в цьому турнірі.
+        h3.title {{ $t('tournament.jury_manager.title') }}
+        p.desc {{ $t('tournament.jury_manager.desc') }}
 
     .manager-content
         .search-section
-            label.field-label ДОДАТИ НОВОГО СУДДЮ
+            label.field-label {{ $t('tournament.jury_manager.add_label') }}
             .search-box
                 i.pi.pi-search
                 input(
                     type="text"
                     v-model="searchQuery"
-                    placeholder="Введіть email або нікнейм..."
+                    :placeholder="$t('tournament.jury_manager.search_placeholder')"
                     @input="handleSearch"
                 )
 
@@ -23,18 +23,18 @@
                         span.email {{ user.email }}
                     Button.add-btn(
                         icon="pi pi-plus"
-                        label="ДОДАТИ"
+                        :label="$t('common.add').toUpperCase()"
                         size="small"
                         :loading="addingId === user.id"
                         @click="addJuryMember(user.id)"
                     )
                 .results-footer
-                    span Знайдено {{ searchResults.length }} користувачів
+                    span {{ $t('tournament.jury_manager.found_count', { count: searchResults.length }) }}
 
         .jury-list-section
-            label.field-label ПОТОЧНИЙ СКЛАД ЖУРІ ({{ juryMembers.length }})
+            label.field-label {{ $t('tournament.jury_manager.current_list') }} ({{ juryMembers.length }})
             .empty-list(v-if="!juryMembers.length && !loading")
-                span Суддів ще не додано
+                span {{ $t('tournament.jury_manager.empty_list') }}
 
             .jury-grid(v-else)
                 .jury-card(v-for="member in juryMembers" :key="member.id")
@@ -52,6 +52,7 @@
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 import { ref, onMounted } from 'vue'
 
 const props = defineProps<{
@@ -110,7 +111,7 @@ async function addJuryMember(userId: string) {
             tournamentId: props.tournamentId,
             userId,
         })
-        toast.success('Користувача додано до журі')
+        toast.success(t('tournament.jury_manager.add_success'))
         searchQuery.value = ''
         searchResults.value = []
         await fetchJuryMembers()
@@ -122,11 +123,11 @@ async function addJuryMember(userId: string) {
 }
 
 async function removeJuryMember(juryId: string) {
-    if (!confirm('Видалити цього суддю з турніру?')) return
+    if (!confirm(t('tournament.jury_manager.remove_confirm'))) return
     removingId.value = juryId
     try {
         await api.delete(`/jury/${juryId}`)
-        toast.success('Суддю видалено')
+        toast.success(t('tournament.jury_manager.remove_success'))
         await fetchJuryMembers()
     } catch (e: any) {
         toast.error(e.response?.data?.message || 'Помилка видалення')
