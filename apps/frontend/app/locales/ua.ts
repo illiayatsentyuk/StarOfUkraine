@@ -464,11 +464,5 @@ export default {
       creating: 'СТВОРЕННЯ...',
     }
   },
-  auth: {
-    no_account: 'Немає акаунта?',
-    register_link: 'Зареєструватися',
-    has_account: 'Вже є акаунт?',
-    login_link: 'Увійти',
-    error: 'Помилка авторизації',
-  },
+
 }
