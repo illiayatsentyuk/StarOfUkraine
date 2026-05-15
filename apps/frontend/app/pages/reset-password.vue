@@ -2,21 +2,21 @@
 .registration-page
   .auth-card
     .header-section
-      h1.main-title Новий пароль
-      p.subtitle Встановіть новий пароль для вашого облікового запису
+      h1.main-title {{ $t('auth.reset.new_title') }}
+      p.subtitle {{ $t('auth.reset.new_subtitle') }}
 
     template(v-if="!tokenFromQuery")
       .card-header
-        h2 Недійсне посилання
-        p У посиланні немає токена. Спробуйте запросити лист ще раз зі сторінки відновлення пароля.
+        h2 {{ $t('auth.reset.invalid_link_title') }}
+        p {{ $t('auth.reset.invalid_link_desc') }}
       .card-footer
-        NuxtLink.footer-link(:to="localePath('/forgot-password')") Забули пароль?
-        NuxtLink.footer-link.footer-link--secondary(:to="localePath('/auth')") Увійти
+        NuxtLink.footer-link(:to="localePath('/forgot-password')") {{ $t('auth.forgot_password') }}
+        NuxtLink.footer-link.footer-link--secondary(:to="localePath('/auth')") {{ $t('auth.login_link') }}
 
     template(v-else-if="!passwordChanged")
       .card-header
-        h2 Зміна пароля
-        p Мінімум 8 символів.
+        h2 {{ $t('auth.reset.change_title') }}
+        p {{ $t('auth.reset.change_desc') }}
 
       VeeForm.form-content(
         :initial-values="{ password: '', confirmPassword: '' }"
@@ -31,8 +31,8 @@
             :model-value="field.value"
             :name="field.name"
             type="password"
-            label="Новий пароль *"
-            placeholder="········"
+            :label="`${$t('auth.reset.new_password_label')} *`"
+            :placeholder="$t('auth.password_placeholder')"
             is-password-field
             :error-message="fieldErrorText(errorMessage, errors)"
             @update:model-value="emitFieldValue(field, handleChange, $event)"
@@ -48,22 +48,23 @@
             :model-value="field.value"
             :name="field.name"
             type="password"
-            label="Підтвердження пароля *"
-            placeholder="········"
+            :label="`${$t('auth.confirm_password_label')} *`"
+            :placeholder="$t('auth.password_placeholder')"
             is-password-field
             :error-message="fieldErrorText(errorMessage, errors)"
             @update:model-value="emitFieldValue(field, handleChange, $event)"
             @blur="emitFieldBlur(field, handleBlur, $event)"
           )
 
-        button.submit-btn(type="submit" :disabled="loading") ЗБЕРЕГТИ ПАРОЛЬ
+        button.submit-btn(type="submit" :disabled="loading") {{ $t('auth.reset.save_password_btn').toUpperCase() }}
 
     .success-panel(v-else)
-      p.success-panel__text Пароль успішно змінено. Тепер ви можете увійти.
-      NuxtLink.footer-link.footer-link--cta(:to="localePath('/auth')") На сторінку входу
+      p.success-panel__text {{ $t('auth.reset.success_changed') }}
+      NuxtLink.footer-link.footer-link--cta(:to="localePath('/auth')") {{ $t('auth.reset.go_to_login') }}
 </template>
 
 <script setup lang="ts">
+const { t } = useI18n()
 const localePath = useLocalePath()
 const route = useRoute()
 const toast = useServerSafeToast()
@@ -117,9 +118,9 @@ const handleSubmit = async (values: ResetForm) => {
       password: values.password,
     })
     passwordChanged.value = true
-    toast.success('Пароль оновлено')
+    toast.success(t('auth.reset.toast_password_updated'))
   } catch {
-    toast.error('Не вдалося змінити пароль. Посилання могло прострочитися.')
+    toast.error(t('auth.reset.toast_password_failed'))
   } finally {
     loading.value = false
   }

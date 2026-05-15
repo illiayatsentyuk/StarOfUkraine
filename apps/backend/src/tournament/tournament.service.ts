@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { Prisma } from '@prisma/client';
+import { Prisma, TournamentStatus } from '@prisma/client';
 import type { Cache } from 'cache-manager';
 import { InjectPinoLogger, PinoLogger } from 'pino-nestjs';
 import {
@@ -167,11 +167,14 @@ export class TournamentService {
 
     const registrationStart = new Date(tournament.registrationStart);
     const registrationEnd = new Date(tournament.registrationEnd);
-    if (now < registrationStart) {
-      throw new BadRequestException('Registration has not started yet');
-    }
+    const adminOpenedRegistration =
+      tournament.status === TournamentStatus.REGISTRATION_OPEN;
+
     if (now > registrationEnd) {
       throw new BadRequestException('Registration is closed');
+    }
+    if (now < registrationStart && !adminOpenedRegistration) {
+      throw new BadRequestException('Registration has not started yet');
     }
 
     const teams = tournament.teams ?? [];

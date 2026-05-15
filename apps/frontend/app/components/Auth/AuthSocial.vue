@@ -7,7 +7,7 @@
   .social-grid
     button.social-btn(type="button" @click="$emit('login-google')")
       i(class="pi pi-google")
-      | {{ $t('auth.google_login').replace('УВІЙТИ ЧЕРЕЗ ', '').replace('SIGN IN WITH ', '') || 'Google' }}
+      | {{ $t('auth.google_btn') }}
 
   .divider
     span {{ $t('auth.or_email') }}

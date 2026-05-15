@@ -258,7 +258,7 @@ onMounted(() => {
         align-items: center;
         gap: 32px;
 
-        @include media($sm) {
+        @include media($s) {
             gap: 20px;
         }
 
@@ -274,7 +274,7 @@ onMounted(() => {
             font-family: var(--font-display);
             font-weight: 800;
 
-            @include media($sm) {
+            @include media($s) {
                 width: 80px;
                 height: 80px;
                 font-size: 40px;
@@ -289,7 +289,7 @@ onMounted(() => {
                 margin: 0 0 12px 0;
                 text-transform: uppercase;
 
-                @include media($sm) {
+                @include media($s) {
                     font-size: 32px;
                 }
             }
@@ -308,7 +308,7 @@ onMounted(() => {
         display: flex;
         gap: 12px;
 
-        @include media($sm) {
+        @include media($s) {
             width: 100%;
             flex-direction: column;
         }
@@ -337,7 +337,7 @@ onMounted(() => {
         padding: 40px;
         border: 1px solid var(--color-border);
 
-        @include media($sm) {
+        @include media($s) {
             padding: 24px;
         }
 

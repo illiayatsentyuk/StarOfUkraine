@@ -7,14 +7,14 @@
     input.search-bar__input(
         v-model="model"
         type="text"
-        placeholder="Пошук турніру..."
-        aria-label="Пошук"
+        :placeholder="$t('common.search_placeholder')"
+        :aria-label="$t('common.search_placeholder')"
         :disabled="loading"
     )
     button.search-bar__clear(
         v-if="model"
         @click="model = ''"
-        aria-label="Очистити"
+        :aria-label="$t('common.clear_search')"
         type="button"
     )
         svg(xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round")

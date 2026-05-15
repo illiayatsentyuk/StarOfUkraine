@@ -23,7 +23,7 @@ header.header-competition
                     :to="`/tournaments/${route.params.id}/judge`"
                 )
                     i.pi.pi-verified
-                    span ПАНЕЛЬ ЖУРІ
+                    span {{ $t('nav.jury_panel').toUpperCase() }}
 
                 Button.create-btn(
                     v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
@@ -36,7 +36,7 @@ header.header-competition
                     :to="`/teams/${loginStore.userTeam.id}`"
                 )
                     i.pi.pi-users
-                    span МОЯ КОМАНДА
+                    span {{ $t('nav.my_team').toUpperCase() }}
 
             LanguageSwitcher
 
@@ -87,7 +87,7 @@ header.header-competition
                         @click="isMenuOpen = false"
                     )
                         i.pi.pi-verified
-                        span ПАНЕЛЬ ЖУРІ
+                        span {{ $t('nav.jury_panel').toUpperCase() }}
 
                     Button.create-btn(
                         v-if="!loginStore.hasTeam && loginStore.user.role === 'USER'"
@@ -101,7 +101,7 @@ header.header-competition
                         @click="isMenuOpen = false"
                     )
                         i.pi.pi-users
-                        span МОЯ КОМАНДА
+                        span {{ $t('nav.my_team').toUpperCase() }}
 
             .mobile-menu__user(v-if="loginStore.user")
                 NuxtLink.user-link(:to="localePath('/profile')" @click="isMenuOpen = false")

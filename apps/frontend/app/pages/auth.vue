@@ -32,6 +32,7 @@
 <script setup lang="ts">
 import { useLoginStore } from '~/stores/auth.store'
 
+const { t } = useI18n()
 const localePath = useLocalePath()
 const loginStore = useLoginStore()
 const route = useRoute()
@@ -77,7 +78,7 @@ const handleRegister = async (values: FormData) => {
       await loginStore.signupByEmail(values)
     }
   } catch (e: any) {
-    const msg = e.response?.data?.message || 'Помилка авторизації'
+    const msg = e.response?.data?.message || t('auth.error')
     toast.error(msg)
   }
 }

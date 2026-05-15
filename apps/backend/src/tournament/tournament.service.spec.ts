@@ -524,6 +524,7 @@ describe('TournamentService', () => {
     it('throws when registration is not open yet', async () => {
       mockPrisma.tournament.findUnique.mockResolvedValue({
         ...openTournament,
+        status: TournamentStatus.DRAFT,
         registrationStart: new Date(now.getTime() + 60_000),
         registrationEnd: new Date(now.getTime() + 120_000),
       });
@@ -533,6 +534,29 @@ describe('TournamentService', () => {
       ).rejects.toThrow(
         new BadRequestException('Registration has not started yet'),
       );
+    });
+
+    it('allows join before registrationStart when status is REGISTRATION_OPEN (admin override)', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue({
+        ...openTournament,
+        status: TournamentStatus.REGISTRATION_OPEN,
+        registrationStart: new Date(now.getTime() + 60_000),
+        registrationEnd: new Date(now.getTime() + 120_000),
+      });
+      mockPrisma.team.findUnique.mockResolvedValue({
+        id: 'team-1',
+        captain: { id: 'user-1' },
+        members: [{ id: 'user-1' }, { id: 'user-2' }],
+      });
+      mockPrisma.team.findMany.mockResolvedValue([]);
+      mockPrisma.tournament.update.mockResolvedValue({
+        ...openTournament,
+        teams: [{ id: 'team-1' }],
+      });
+
+      await expect(
+        service.joinTournament('tournament-1', { teamId: 'team-1' }),
+      ).resolves.toBeDefined();
     });
 
     it('throws when registration is closed', async () => {
