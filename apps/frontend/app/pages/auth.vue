@@ -1,27 +1,32 @@
 <template lang="pug">
 .registration-page
-  .auth-card
-    AuthHero(:isLogin="isLogin")
+  .auth-container
+    NuxtLink.back-link(:to="localePath('/')")
+      i.pi.pi-arrow-left
+      span {{ $t('common.back_home') }}
 
-    AuthSocial(
-      :isLogin="isLogin"
-      @login-google="() => loginStore.loginByGoogle()"
-    )
-    
-    AuthForm(
-      :isLogin="isLogin"
-      :loading="loginStore.loading"
-      :initialValues="authInitialValues"
-      @submit="handleRegister"
-    )
-    
-    .card-footer
-      template(v-if="isLogin")
-        | {{ $t('auth.no_account') }} 
-        a(href="#" @click.prevent="isLogin = false") {{ $t('auth.register_link') }}
-      template(v-else)
-        | {{ $t('auth.has_account') }} 
-        a(href="#" @click.prevent="isLogin = true") {{ $t('auth.login_link') }}
+    .auth-card
+      AuthHero(:isLogin="isLogin")
+
+      AuthSocial(
+        :isLogin="isLogin"
+        @login-google="() => loginStore.loginByGoogle()"
+      )
+      
+      AuthForm(
+        :isLogin="isLogin"
+        :loading="loginStore.loading"
+        :initialValues="authInitialValues"
+        @submit="handleRegister"
+      )
+      
+      .card-footer
+        template(v-if="isLogin")
+          | {{ $t('auth.no_account') }} 
+          a(href="#" @click.prevent="isLogin = false") {{ $t('auth.register_link') }}
+        template(v-else)
+          | {{ $t('auth.has_account') }} 
+          a(href="#" @click.prevent="isLogin = true") {{ $t('auth.login_link') }}
 </template>
 
 <script setup lang="ts">
@@ -80,7 +85,6 @@ const handleRegister = async (values: FormData) => {
 
 <style scoped lang="scss">
 .registration-page {
-  position: relative;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -89,8 +93,40 @@ const handleRegister = async (values: FormData) => {
   background: var(--color-bg-secondary);
 }
 
-.auth-card {
+.auth-container {
   width: min(100%, 520px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  width: fit-content;
+  padding: 4px 0;
+  transition: all 0.2s ease;
+
+  i {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+  }
+
+  &:hover {
+    color: var(--color-primary);
+    i { transform: translateX(-4px); }
+  }
+}
+
+.auth-card {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 0;
