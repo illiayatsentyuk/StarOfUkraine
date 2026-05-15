@@ -27,10 +27,17 @@ section.tasks-page
             :isAdmin="authStore.isAdmin"
         )
 
+    .blocked-state(v-else-if="accessBlocked")
+        i.pi.pi-lock
+        h2 {{ $t('tournament.tasks.not_started_title') }}
+        p {{ $t('tournament.tasks.not_started_desc') }}
+        NuxtLink.back-link(:to="localePath(`/tournaments/${route.params.id}`)")
+            span {{ $t('tournament.tasks.back_to_tournament') }}
+
     .empty-state(v-else)
         i.pi.pi-inbox.empty-icon
-        h2 Завдань поки немає
-        p Слідкуйте за оновленнями турніру.
+        h2 {{ $t('tournament.tasks.empty_title') }}
+        p {{ $t('tournament.tasks.empty_desc') }}
 
     CreateTaskModal(
         :isOpen="isModalOpen"

@@ -144,7 +144,10 @@ export class TournamentService {
   }
 
   async remove(id: string) {
-    await this.findOne(id);
+    const existing = await this.prisma.tournament.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException('Tournament not found');
+    }
 
     const deleted = await this.prisma.tournament.delete({ where: { id } });
 

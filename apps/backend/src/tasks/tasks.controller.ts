@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -261,6 +262,32 @@ export class TasksController {
   @Serialize(TaskResponseDto)
   closeSubmissions(@Param('id') id: string) {
     return this.tasksService.closeSubmissions(id);
+  }
+
+  @Delete('tasks/:id')
+  @Roles(Role.ADMIN)
+  @ApiBearerAuth()
+  @ApiCookieAuth('access_token')
+  @ApiParam({ name: 'id', description: 'Task ID' })
+  @ApiOperation({ summary: '[ADMIN] Delete a draft task' })
+  @ApiOkResponse({
+    description: 'Task deleted',
+    schema: { example: tasksExamples.taskResponse },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Task is not in DRAFT status',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized',
+    schema: { example: authExamples.unauthorized },
+  })
+  @ApiResponse({ status: 404, description: 'Task not found' })
+  @ApiForbiddenResponse({ description: 'Forbidden — requires ADMIN' })
+  @Serialize(TaskResponseDto)
+  deleteTask(@Param('id') id: string) {
+    return this.tasksService.deleteTask(id);
   }
 
   @Post('tasks/:id/submit')

@@ -23,6 +23,13 @@ NuxtLink.task-card(:to="taskLink")
                 :loading="store.loading"
                 @click.stop.prevent="handleActivate"
             )
+            Button.admin-btn.delete(
+                v-if="task.status === 'DRAFT'"
+                :label="$t('task.admin.delete')"
+                icon="pi pi-trash"
+                :loading="store.loading"
+                @click.stop.prevent="handleDelete"
+            )
             Button.admin-btn.close(
                 v-if="task.status === 'ACTIVE'"
                 :label="$t('task.admin.close')"
@@ -42,6 +49,7 @@ const props = defineProps<{
     isAdmin?: boolean
 }>()
 
+const { t } = useI18n()
 const store = useTasksStore()
 const teamsStore = useTeamsStore()
 const localePath = useLocalePath()
@@ -70,6 +78,11 @@ async function handleActivate() {
 
 async function handleClose() {
     await store.closeSubmissions(props.task.id)
+}
+
+async function handleDelete() {
+    if (!confirm(t('task.admin.delete_confirm'))) return
+    await store.deleteTask(props.task.id)
 }
 </script>
 
@@ -215,6 +228,13 @@ async function handleClose() {
                 border-color: #64748b;
                 color: white;
                 &:hover { background: #475569; border-color: #475569; }
+            }
+
+            &.delete {
+                background: transparent;
+                border-color: var(--color-error, #ef4444);
+                color: var(--color-error, #ef4444);
+                &:hover { background: var(--color-error, #ef4444); border-color: var(--color-error, #ef4444); color: white; }
             }
 
             :deep(.p-button-icon) {

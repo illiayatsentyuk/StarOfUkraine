@@ -470,9 +470,21 @@ describe('TournamentService', () => {
 
       const result = await service.remove('tournament-1');
       expect(result).toEqual(tournamentMock);
+      expect(mockPrisma.tournament.findUnique).toHaveBeenCalledWith({
+        where: { id: 'tournament-1' },
+      });
       expect(mockPrisma.tournament.delete).toHaveBeenCalledWith({
         where: { id: 'tournament-1' },
       });
+    });
+
+    it('throws when tournament not found', async () => {
+      mockPrisma.tournament.findUnique.mockResolvedValue(null);
+
+      await expect(service.remove('missing')).rejects.toThrow(
+        new NotFoundException('Tournament not found'),
+      );
+      expect(mockPrisma.tournament.delete).not.toHaveBeenCalled();
     });
   });
 

@@ -158,6 +158,20 @@ export const useTasksStore = defineStore('tasks', () => {
         }
     }
 
+    const deleteTask = async (taskId: string) => {
+        loading.value = true
+        try {
+            await api.delete(`/tasks/${taskId}`)
+            tasks.value = tasks.value.filter((t) => t.id !== taskId)
+            toast.success('Завдання видалено')
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || 'Не вдалося видалити завдання')
+            throw err
+        } finally {
+            loading.value = false
+        }
+    }
+
     const assignJury = async (tournamentId: string, submissionsPerJury: number = 5) => {
         loading.value = true
         try {
@@ -203,6 +217,7 @@ export const useTasksStore = defineStore('tasks', () => {
         gradeSubmission,
         activateTask,
         closeSubmissions,
+        deleteTask,
         assignJury,
     }
 })

@@ -54,8 +54,11 @@ const inputText = ref('')
 const isDeleting = ref(false)
 
 const isConfirmed = computed(() => {
-    if (!props.tournament || !props.tournament.name) return false
-    return inputText.value === props.tournament.name.toUpperCase()
+    if (!props.tournament?.name) return false
+    return (
+        inputText.value.trim().toUpperCase() ===
+        props.tournament.name.trim().toUpperCase()
+    )
 })
 
 const handleDelete = async () => {

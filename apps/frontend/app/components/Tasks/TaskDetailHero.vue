@@ -15,6 +15,13 @@ header.task-detail__hero
         :loading="store.loading"
         @click="handleActivate"
       )
+      Button.admin-btn.delete(
+        v-if="task.status === 'DRAFT'"
+        :label="$t('task.admin.delete')"
+        icon="pi pi-trash"
+        :loading="store.loading"
+        @click="handleDelete"
+      )
       Button.admin-btn.close(
         v-if="task.status === 'ACTIVE'"
         :label="$t('task.admin.close')"
@@ -43,6 +50,9 @@ const props = defineProps<{
   isAdmin?: boolean
 }>()
 
+const emit = defineEmits<{ deleted: [] }>()
+
+const { t } = useI18n()
 const store = useTasksStore()
 
 const STATUS_LABELS: Record<string, string> = {
@@ -74,6 +84,12 @@ async function handleActivate() {
 
 async function handleClose() {
     await store.closeSubmissions(props.task.id)
+}
+
+async function handleDelete() {
+    if (!confirm(t('task.admin.delete_confirm'))) return
+    await store.deleteTask(props.task.id)
+    emit('deleted')
 }
 </script>
 
@@ -155,6 +171,13 @@ async function handleClose() {
             border-color: #64748b;
             color: white;
             &:hover { background: #475569; border-color: #475569; }
+        }
+
+        &.delete {
+            background: transparent;
+            border-color: var(--color-error, #ef4444);
+            color: var(--color-error, #ef4444);
+            &:hover { background: var(--color-error, #ef4444); border-color: var(--color-error, #ef4444); color: white; }
         }
 
         :deep(.p-button-icon) {

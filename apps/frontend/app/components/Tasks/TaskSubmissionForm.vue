@@ -2,7 +2,13 @@
 .content-section.submission-section
     h3.section-title {{ $t('task.submission.title') }}
 
-    .status-banner.status-banner--evaluated(v-if="mySubmission?.status === 'EVALUATED'")
+    .status-banner.status-banner--closed(v-if="task.status !== 'ACTIVE'")
+        i.pi.pi-lock
+        .banner-text
+            h4 {{ $t('task.status.submission_closed') }}
+            p {{ $t('task.submission.closed_desc') }}
+
+    .status-banner.status-banner--evaluated(v-else-if="mySubmission?.status === 'EVALUATED'")
         i.pi.pi-check-circle
         .banner-text
             h4 {{ $t('task.submission.evaluated_title') }}
@@ -17,7 +23,7 @@
             button(type="button" @click="showResubmit = !showResubmit")
                 | {{ showResubmit ? $t('task.submission.hide') : $t('task.submission.update_link') }}
 
-        form.submission-form(v-if="showResubmit" @submit.prevent="handleSubmit")
+        form.submission-form(v-if="showResubmit && task.status === 'ACTIVE'" @submit.prevent="handleSubmit")
             .field
                 label {{ $t('task.submission.github_label') }}
                 .input-wrapper
@@ -40,7 +46,7 @@
                 :disabled="!submissionGithub.trim()"
             )
 
-    form.submission-form(v-else @submit.prevent="handleSubmit")
+    form.submission-form(v-else-if="task.status === 'ACTIVE'" @submit.prevent="handleSubmit")
         .field
             label(for="github") {{ $t('task.submission.github_label') }} *
             .input-wrapper
@@ -149,6 +155,12 @@ function handleSubmit() {
         background: #dcfce7;
         border-color: #16a34a;
         color: #14532d;
+    }
+
+    &--closed {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #475569;
     }
 }
 
