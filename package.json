@@ -9,7 +9,6 @@
     "check-types": "turbo run check-types",
     "prepare": "husky",
     "dev:docker": "docker compose up --build",
-    "dev:docker:d": "docker compose up --build -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f"
   },
